@@ -229,6 +229,55 @@
             color: #666;
         }
 
+        .sensitivity-control {
+            width: 100%;
+            max-width: 500px;
+            padding: 0 1rem;
+            margin: 0.5rem auto;
+            display: none;
+        }
+
+        .sensitivity-control.active {
+            display: block;
+        }
+
+        .sensitivity-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.3rem;
+        }
+
+        .sensitivity-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #2a2a3a;
+            outline: none;
+        }
+
+        .sensitivity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #6c5ce7;
+            cursor: pointer;
+        }
+
+        .debug-info {
+            font-size: 0.7rem;
+            color: #444;
+            text-align: center;
+            margin-top: 0.4rem;
+            font-variant-numeric: tabular-nums;
+            font-family: monospace;
+        }
+
         /* History */
         .history {
             width: 100%;
@@ -328,6 +377,16 @@
         <div class="mic-status" id="micStatus">點擊開始偵測</div>
     </div>
 
+    <!-- Sensitivity -->
+    <div class="sensitivity-control" id="sensitivityControl">
+        <div class="sensitivity-label">
+            <span>靈敏度</span>
+            <span id="sensitivityValue">中</span>
+        </div>
+        <input type="range" class="sensitivity-slider" id="sensitivitySlider" min="1" max="10" value="5" step="1">
+        <div class="debug-info" id="debugInfo"></div>
+    </div>
+
     <!-- History -->
     <div class="history" id="historySection" style="display:none;">
         <div class="history-title">偵測紀錄</div>
@@ -383,6 +442,11 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
+        const sensitivityControl = $('#sensitivityControl');
+        const sensitivitySlider = $('#sensitivitySlider');
+        const sensitivityValue = $('#sensitivityValue');
+        const debugInfo = $('#debugInfo');
+
         // --- Mode Switching ---
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -392,12 +456,19 @@
 
                 tapArea.classList.toggle('active', state.mode === 'tap');
                 micArea.classList.toggle('active', state.mode === 'mic');
+                sensitivityControl.classList.toggle('active', state.mode === 'mic');
 
                 // Stop mic if switching away
                 if (state.mode === 'tap' && state.listening) {
                     stopMic();
                 }
             });
+        });
+
+        // --- Sensitivity ---
+        const sensitivityLabels = ['', '極高', '很高', '高', '中高', '中', '中低', '低', '很低', '極低', '最低'];
+        sensitivitySlider.addEventListener('input', () => {
+            sensitivityValue.textContent = sensitivityLabels[parseInt(sensitivitySlider.value)];
         });
 
         // --- Display ---
@@ -592,55 +663,78 @@
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
 
-            // Focus on low frequencies (bass) for beat detection
-            // With 1024 FFT and 44100 sample rate, each bin ≈ 43Hz
-            // We want roughly 0-300Hz range → first ~7 bins
-            const bassEnd = Math.ceil(300 / (state.audioCtx.sampleRate / analyser.fftSize));
-            let bassEnergy = 0;
-            for (let i = 0; i < bassEnd; i++) {
-                bassEnergy += dataArray[i] * dataArray[i];
-            }
-            bassEnergy = Math.sqrt(bassEnergy / bassEnd);
+            const binHz = state.audioCtx.sampleRate / analyser.fftSize;
 
-            // Keep energy history (last ~1 second at 60fps)
-            state.energyHistory.push(bassEnergy);
-            const historySize = 60;
+            // Use wider frequency range: 60-500Hz (bass + low-mid)
+            // Phone speakers/mic often miss deep bass, so include more range
+            const lowBin = Math.floor(60 / binHz);
+            const highBin = Math.ceil(500 / binHz);
+            let energy = 0;
+            for (let i = lowBin; i < highBin && i < bufferLength; i++) {
+                energy += dataArray[i] * dataArray[i];
+            }
+            energy = Math.sqrt(energy / (highBin - lowBin));
+
+            // Keep energy history (~1.5 seconds)
+            state.energyHistory.push(energy);
+            const historySize = 90;
             if (state.energyHistory.length > historySize) {
                 state.energyHistory.shift();
             }
 
-            // Calculate average and threshold
-            const avg = state.energyHistory.reduce((a, b) => a + b, 0) / state.energyHistory.length;
-            const threshold = avg * 1.4;
+            // Sensitivity: slider 1 (most sensitive) to 10 (least sensitive)
+            // Maps to threshold multiplier 1.1 to 2.0
+            const sens = parseInt(sensitivitySlider.value);
+            const thresholdMultiplier = 1.0 + sens * 0.1;
+
+            // Calculate average energy (exclude top 10% to avoid peaks skewing average)
+            const sorted = [...state.energyHistory].sort((a, b) => a - b);
+            const trimCount = Math.floor(sorted.length * 0.9);
+            const trimmed = sorted.slice(0, trimCount);
+            const avg = trimmed.length > 0 ? trimmed.reduce((a, b) => a + b, 0) / trimmed.length : 0;
+            const threshold = avg * thresholdMultiplier;
+
+            // Minimum energy floor: very low (3) to allow quiet environments
+            const minEnergy = 3;
             const now = performance.now();
 
-            // Beat detected if energy exceeds threshold and enough time since last beat
-            const minBeatInterval = 250; // max 240 BPM
+            // Min interval between beats: 200ms = max 300 BPM
+            const minBeatInterval = 200;
             const lastBeat = state.beatTimes.length > 0 ? state.beatTimes[state.beatTimes.length - 1] : 0;
 
-            if (bassEnergy > threshold && bassEnergy > 20 && (now - lastBeat) > minBeatInterval) {
+            const isBeat = energy > threshold && energy > minEnergy && (now - lastBeat) > minBeatInterval;
+
+            // Debug info
+            debugInfo.textContent = `能量: ${energy.toFixed(1)} | 閾值: ${threshold.toFixed(1)} | 倍率: ${thresholdMultiplier.toFixed(1)}x | 節拍數: ${state.beatTimes.length}`;
+
+            if (isBeat) {
                 state.beatTimes.push(now);
                 pulseRing();
 
-                // Keep only recent beats (last 10 seconds)
-                const cutoff = now - 10000;
+                // Keep only recent beats (last 8 seconds)
+                const cutoff = now - 8000;
                 state.beatTimes = state.beatTimes.filter(t => t > cutoff);
 
-                // Calculate BPM from beat intervals
-                if (state.beatTimes.length >= 3) {
+                // Calculate BPM from beat intervals (need at least 2 beats = 1 interval)
+                if (state.beatTimes.length >= 2) {
                     const intervals = [];
                     for (let i = 1; i < state.beatTimes.length; i++) {
                         intervals.push(state.beatTimes[i] - state.beatTimes[i - 1]);
                     }
-                    // Remove outliers (keep intervals within 50% of median)
-                    const sorted = [...intervals].sort((a, b) => a - b);
-                    const median = sorted[Math.floor(sorted.length / 2)];
-                    const filtered = intervals.filter(v => v > median * 0.5 && v < median * 1.5);
 
-                    if (filtered.length >= 2) {
-                        const avgInterval = filtered.reduce((a, b) => a + b, 0) / filtered.length;
+                    let finalIntervals = intervals;
+
+                    // Only apply outlier filtering if we have enough data
+                    if (intervals.length >= 4) {
+                        const sortedIntervals = [...intervals].sort((a, b) => a - b);
+                        const median = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
+                        finalIntervals = intervals.filter(v => v > median * 0.4 && v < median * 1.6);
+                    }
+
+                    if (finalIntervals.length >= 1) {
+                        const avgInterval = finalIntervals.reduce((a, b) => a + b, 0) / finalIntervals.length;
                         const bpm = 60000 / avgInterval;
-                        if (bpm >= 40 && bpm <= 240) {
+                        if (bpm >= 30 && bpm <= 300) {
                             updateBpmDisplay(bpm, `偵測到 ${state.beatTimes.length} 個節拍`);
                         }
                     }
@@ -648,7 +742,7 @@
             }
 
             // Draw visualizer
-            drawMicVisual(dataArray, bufferLength, bassEnergy, threshold);
+            drawMicVisual(dataArray, bufferLength, energy, threshold);
 
             state.animFrameId = requestAnimationFrame(detectBeats);
         }
