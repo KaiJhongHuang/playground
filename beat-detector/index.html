@@ -702,7 +702,7 @@
                 let method = '';
 
                 try {
-                    const result = essentia.PercivalBpmEstimator(signal, 2048, 1024, 210, 50, 44100);
+                    const result = essentia.PercivalBpmEstimator(signal, 2048, 1024, 220, 110, 44100);
                     bpm = result.bpm;
                     method = 'Percival';
                 } catch (e1) {
@@ -711,7 +711,7 @@
 
                 if (!bpm || bpm <= 0) {
                     try {
-                        const result = essentia.RhythmExtractor2013(signal, 210, 40, "multifeature");
+                        const result = essentia.RhythmExtractor2013(signal, 220, 110, "multifeature");
                         bpm = result.bpm;
                         method = 'RhythmExtractor';
                         if (result.ticks) result.ticks.delete();
@@ -726,7 +726,13 @@
 
                 const seconds = (totalSamples / state.sampleRate).toFixed(1);
 
-                if (bpm && bpm > 30 && bpm < 300) {
+                // Normalize: if outside 110-220, try doubling or halving
+                if (bpm && bpm > 0) {
+                    if (bpm < 110 && bpm * 2 <= 220) bpm = bpm * 2;
+                    else if (bpm > 220 && bpm / 2 >= 110) bpm = bpm / 2;
+                }
+
+                if (bpm && bpm >= 60 && bpm <= 300) {
                     updateBpmDisplay(bpm, `分析 ${seconds}s 音訊`);
                     micStatus.textContent = `偵測到 ${Math.round(bpm)} BPM`;
                     micDetail.textContent = `演算法: ${method} | 取樣率: ${state.sampleRate}Hz | 音訊: ${seconds}s`;
