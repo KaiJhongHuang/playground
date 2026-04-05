@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>BPM 節拍偵測器</title>
-    <script src="https://cdn.jsdelivr.net/npm/essentia.js@0.1.3/dist/essentia-wasm.web.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/essentia.js@0.1.3/dist/essentia.js-core.js"></script>
+    <!-- essentia.js loaded in Web Worker only -->
     <style>
         * {
             margin: 0;
@@ -389,18 +388,92 @@
 
     <script>
     (() => {
-        // --- Essentia.js ---
-        let essentia = null;
-        let essentiaReady = false;
+        // =====================
+        //  WEB WORKER (inline)
+        //  Essentia runs here, off the main thread
+        // =====================
+        const workerCode = `
+            importScripts(
+                'https://cdn.jsdelivr.net/npm/essentia.js@0.1.3/dist/essentia-wasm.web.js',
+                'https://cdn.jsdelivr.net/npm/essentia.js@0.1.3/dist/essentia.js-core.js'
+            );
 
-        // Initialize essentia WASM
-        EssentiaWASM().then(function(wasmModule) {
-            essentia = new Essentia(wasmModule);
-            essentiaReady = true;
-            console.log('Essentia.js ready:', essentia.version);
-        }).catch(function(err) {
-            console.error('Failed to load Essentia.js:', err);
-        });
+            let essentia = null;
+            let ready = false;
+            let analyzing = false;
+
+            EssentiaWASM().then(function(wasmModule) {
+                essentia = new Essentia(wasmModule);
+                ready = true;
+                self.postMessage({ type: 'ready' });
+            }).catch(function(err) {
+                self.postMessage({ type: 'error', message: 'WASM load failed: ' + err });
+            });
+
+            function resampleTo44100(input, fromRate) {
+                if (fromRate === 44100) return input;
+                var ratio = 44100 / fromRate;
+                var outputLength = Math.round(input.length * ratio);
+                var output = new Float32Array(outputLength);
+                for (var i = 0; i < outputLength; i++) {
+                    var srcIndex = i / ratio;
+                    var floor = Math.floor(srcIndex);
+                    var frac = srcIndex - floor;
+                    var a = input[floor] || 0;
+                    var b = input[Math.min(floor + 1, input.length - 1)] || 0;
+                    output[i] = a + frac * (b - a);
+                }
+                return output;
+            }
+
+            self.onmessage = function(e) {
+                if (e.data.type !== 'analyze') return;
+                if (!ready || !essentia || analyzing) return;
+
+                analyzing = true;
+                var audioData = e.data.audioData;
+                var sampleRate = e.data.sampleRate;
+
+                try {
+                    var resampled = resampleTo44100(audioData, sampleRate);
+                    var signal = essentia.arrayToVector(resampled);
+
+                    var bpm = 0;
+                    var method = '';
+
+                    try {
+                        var result = essentia.PercivalBpmEstimator(signal, 2048, 1024, 210, 50, 44100);
+                        bpm = result.bpm;
+                        method = 'Percival';
+                    } catch (e1) {}
+
+                    if (!bpm || bpm <= 0) {
+                        try {
+                            var result2 = essentia.RhythmExtractor2013(signal, 210, 40, "multifeature");
+                            bpm = result2.bpm;
+                            method = 'RhythmExtractor';
+                            if (result2.ticks) result2.ticks.delete();
+                            if (result2.estimates) result2.estimates.delete();
+                            if (result2.bpmIntervals) result2.bpmIntervals.delete();
+                        } catch (e2) {}
+                    }
+
+                    signal.delete();
+
+                    self.postMessage({ type: 'result', bpm: bpm, method: method });
+                } catch (err) {
+                    self.postMessage({ type: 'error', message: err.message || String(err) });
+                } finally {
+                    analyzing = false;
+                }
+            };
+        `;
+        const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(workerBlob);
+        const worker = new Worker(workerUrl);
+
+        let workerReady = false;
+        worker.onmessage = handleWorkerMessage;
 
         // --- State ---
         const state = {
@@ -415,10 +488,10 @@
             micStream: null,
             listening: false,
             scriptNode: null,
-            // Audio buffer for essentia analysis
+            // Audio buffer
             audioBuffer: [],
-            bufferDuration: 6, // seconds of audio to accumulate
-            analysisInterval: 3, // re-analyze every N seconds
+            bufferDuration: 6,
+            analysisInterval: 3,
             lastAnalysisTime: 0,
             sampleRate: 44100,
             animFrameId: null,
@@ -442,6 +515,34 @@
         const resetBtn = $('#resetBtn');
         const canvas = $('#visualizer');
         const ctx = canvas.getContext('2d');
+
+        // --- Worker message handler ---
+        function handleWorkerMessage(e) {
+            const msg = e.data;
+            if (msg.type === 'ready') {
+                workerReady = true;
+                console.log('Essentia Worker ready');
+            } else if (msg.type === 'result') {
+                if (!state.listening) return;
+                const bpm = msg.bpm;
+                const method = msg.method;
+                const totalSamples = state.audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
+                const seconds = (totalSamples / state.sampleRate).toFixed(1);
+
+                if (bpm && bpm > 30 && bpm < 300) {
+                    updateBpmDisplay(bpm, '分析 ' + seconds + 's 音訊');
+                    micStatus.textContent = '偵測到 ' + Math.round(bpm) + ' BPM';
+                    micDetail.textContent = '演算法: ' + method + ' | 取樣率: ' + state.sampleRate + 'Hz | 音訊: ' + seconds + 's';
+                    pulseRing();
+                } else {
+                    micStatus.textContent = '偵測中... 請確認音樂正在播放';
+                    micDetail.textContent = bpm ? '原始值: ' + bpm.toFixed(1) + ' (超出範圍)' : '尚未偵測到節拍';
+                }
+            } else if (msg.type === 'error') {
+                console.error('Worker error:', msg.message);
+                micDetail.textContent = '分析錯誤: ' + msg.message;
+            }
+        }
 
         // --- Canvas resize ---
         function resizeCanvas() {
@@ -578,7 +679,7 @@
         }
 
         // =====================
-        //  MICROPHONE + ESSENTIA
+        //  MICROPHONE + WORKER
         // =====================
         micButton.addEventListener('click', toggleMic);
 
@@ -591,14 +692,13 @@
         }
 
         async function startMic() {
-            if (!essentiaReady) {
+            if (!workerReady) {
                 micStatus.textContent = 'Essentia.js 載入中，請稍候...';
-                // Wait for essentia to be ready
                 const waitStart = Date.now();
-                while (!essentiaReady && Date.now() - waitStart < 10000) {
+                while (!workerReady && Date.now() - waitStart < 15000) {
                     await new Promise(r => setTimeout(r, 200));
                 }
-                if (!essentiaReady) {
+                if (!workerReady) {
                     micStatus.textContent = 'Essentia.js 載入失敗';
                     return;
                 }
@@ -611,18 +711,18 @@
 
                 const source = state.audioCtx.createMediaStreamSource(state.micStream);
 
-                // Analyser for visualization
+                // Analyser for visualization only
                 state.analyser = state.audioCtx.createAnalyser();
                 state.analyser.fftSize = 2048;
                 state.analyser.smoothingTimeConstant = 0.3;
                 source.connect(state.analyser);
 
-                // ScriptProcessor to capture raw PCM samples for essentia
+                // ScriptProcessor to capture raw PCM for worker
                 const bufferSize = 4096;
                 state.scriptNode = state.audioCtx.createScriptProcessor(bufferSize, 1, 1);
                 state.scriptNode.onaudioprocess = onAudioProcess;
                 source.connect(state.scriptNode);
-                state.scriptNode.connect(state.audioCtx.destination); // required for it to work
+                state.scriptNode.connect(state.audioCtx.destination);
 
                 state.listening = true;
                 state.audioBuffer = [];
@@ -645,121 +745,48 @@
             if (!state.listening) return;
 
             const input = e.inputBuffer.getChannelData(0);
-            // Copy samples into our buffer
             const samples = new Float32Array(input);
             state.audioBuffer.push(samples);
 
-            // Calculate total samples
-            const totalSamples = state.audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
+            let totalSamples = state.audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
             const totalSeconds = totalSamples / state.sampleRate;
             const targetSamples = state.bufferDuration * state.sampleRate;
 
-            // Update progress bar
             const progress = Math.min(100, (totalSeconds / state.bufferDuration) * 100);
             bufferProgressBar.style.width = progress + '%';
 
-            // Trim old samples if buffer is too long (keep last bufferDuration seconds)
+            // Trim old samples
             while (totalSamples > targetSamples * 1.5) {
-                state.audioBuffer.shift();
+                const removed = state.audioBuffer.shift();
+                totalSamples -= removed.length;
             }
 
-            // Run analysis when we have enough data
+            // Send to worker when ready
             const now = performance.now() / 1000;
             if (totalSeconds >= state.bufferDuration && now - state.lastAnalysisTime >= state.analysisInterval) {
                 state.lastAnalysisTime = now;
-                runEssentiaAnalysis();
+                sendToWorker();
             }
         }
 
-        // Resample audio to 44100Hz (required by essentia's rhythm algorithms)
-        function resampleTo44100(input, fromRate) {
-            if (fromRate === 44100) return input;
-            const ratio = 44100 / fromRate;
-            const outputLength = Math.round(input.length * ratio);
-            const output = new Float32Array(outputLength);
-            for (let i = 0; i < outputLength; i++) {
-                const srcIndex = i / ratio;
-                const floor = Math.floor(srcIndex);
-                const frac = srcIndex - floor;
-                const a = input[floor] || 0;
-                const b = input[Math.min(floor + 1, input.length - 1)] || 0;
-                output[i] = a + frac * (b - a);
+        function sendToWorker() {
+            // Merge chunks into single array
+            const totalSamples = state.audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
+            const merged = new Float32Array(totalSamples);
+            let offset = 0;
+            for (const chunk of state.audioBuffer) {
+                merged.set(chunk, offset);
+                offset += chunk.length;
             }
-            return output;
-        }
 
-        function runEssentiaAnalysis() {
-            if (!essentiaReady || !essentia) return;
+            micStatus.textContent = '分析中...';
 
-            try {
-                // Merge buffer chunks into a single Float32Array
-                const totalSamples = state.audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
-                const merged = new Float32Array(totalSamples);
-                let offset = 0;
-                for (const chunk of state.audioBuffer) {
-                    merged.set(chunk, offset);
-                    offset += chunk.length;
-                }
-
-                // Resample to 44100Hz if needed (essentia requires it)
-                const resampled = resampleTo44100(merged, state.sampleRate);
-                const signal = essentia.arrayToVector(resampled);
-
-                let bpm = 0;
-                let method = '';
-
-                // Try PercivalBpmEstimator first (fast, robust)
-                try {
-                    const result = essentia.PercivalBpmEstimator(signal,
-                        2048,   // frameSize
-                        1024,   // hopSize
-                        210,    // maxBPM
-                        50,     // minBPM
-                        44100   // sampleRate
-                    );
-                    bpm = result.bpm;
-                    method = 'Percival';
-                } catch (e1) {
-                    console.warn('PercivalBpmEstimator failed:', e1);
-                }
-
-                // Fallback: RhythmExtractor2013 (more accurate, uses multi-feature)
-                if (!bpm || bpm <= 0) {
-                    try {
-                        const result = essentia.RhythmExtractor2013(signal,
-                            210,             // maxTempo
-                            40,              // minTempo
-                            "multifeature"   // method
-                        );
-                        bpm = result.bpm;
-                        method = 'RhythmExtractor';
-                        // Free WASM memory for vector outputs
-                        if (result.ticks) result.ticks.delete();
-                        if (result.estimates) result.estimates.delete();
-                        if (result.bpmIntervals) result.bpmIntervals.delete();
-                    } catch (e2) {
-                        console.warn('RhythmExtractor2013 failed:', e2);
-                    }
-                }
-
-                // Free the input signal vector
-                signal.delete();
-
-                const seconds = (totalSamples / state.sampleRate).toFixed(1);
-
-                if (bpm && bpm > 30 && bpm < 300) {
-                    updateBpmDisplay(bpm, `分析 ${seconds}s 音訊`);
-                    micStatus.textContent = `偵測到 ${Math.round(bpm)} BPM`;
-                    micDetail.textContent = `演算法: ${method} | 裝置取樣率: ${state.sampleRate}Hz | 音訊: ${seconds}s`;
-                    pulseRing();
-                } else {
-                    micStatus.textContent = '偵測中... 請確認音樂正在播放';
-                    micDetail.textContent = bpm ? `原始值: ${bpm.toFixed(1)} (超出範圍)` : '尚未偵測到節拍';
-                }
-            } catch (err) {
-                console.error('Essentia analysis error:', err);
-                micDetail.textContent = '分析錯誤: ' + err.message;
-            }
+            // Transfer the buffer to worker (zero-copy)
+            worker.postMessage({
+                type: 'analyze',
+                audioData: merged,
+                sampleRate: state.sampleRate
+            }, [merged.buffer]);
         }
 
         function stopMic() {
@@ -790,7 +817,7 @@
             if (state.bpm > 0) addHistory(state.bpm);
         }
 
-        // --- Visualizer loop (separate from analysis) ---
+        // --- Visualizer loop (main thread, lightweight) ---
         function drawVisualizerLoop() {
             if (!state.listening) return;
 
