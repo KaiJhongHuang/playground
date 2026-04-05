@@ -671,6 +671,23 @@
             }
         }
 
+        // Resample audio to 44100Hz (required by essentia's rhythm algorithms)
+        function resampleTo44100(input, fromRate) {
+            if (fromRate === 44100) return input;
+            const ratio = 44100 / fromRate;
+            const outputLength = Math.round(input.length * ratio);
+            const output = new Float32Array(outputLength);
+            for (let i = 0; i < outputLength; i++) {
+                const srcIndex = i / ratio;
+                const floor = Math.floor(srcIndex);
+                const frac = srcIndex - floor;
+                const a = input[floor] || 0;
+                const b = input[Math.min(floor + 1, input.length - 1)] || 0;
+                output[i] = a + frac * (b - a);
+            }
+            return output;
+        }
+
         function runEssentiaAnalysis() {
             if (!essentiaReady || !essentia) return;
 
@@ -684,37 +701,56 @@
                     offset += chunk.length;
                 }
 
-                // Convert to essentia vector
-                const signal = essentia.arrayToVector(merged);
+                // Resample to 44100Hz if needed (essentia requires it)
+                const resampled = resampleTo44100(merged, state.sampleRate);
+                const signal = essentia.arrayToVector(resampled);
 
-                // Try PercivalBpmEstimator first (robust, returns just BPM)
                 let bpm = 0;
                 let method = '';
 
+                // Try PercivalBpmEstimator first (fast, robust)
                 try {
-                    const result = essentia.PercivalBpmEstimator(signal);
+                    const result = essentia.PercivalBpmEstimator(signal,
+                        2048,   // frameSize
+                        1024,   // hopSize
+                        210,    // maxBPM
+                        50,     // minBPM
+                        44100   // sampleRate
+                    );
                     bpm = result.bpm;
                     method = 'Percival';
                 } catch (e1) {
                     console.warn('PercivalBpmEstimator failed:', e1);
                 }
 
-                // Fallback: try RhythmExtractor2013 if Percival fails or returns 0
+                // Fallback: RhythmExtractor2013 (more accurate, uses multi-feature)
                 if (!bpm || bpm <= 0) {
                     try {
-                        const result = essentia.RhythmExtractor2013(signal);
+                        const result = essentia.RhythmExtractor2013(signal,
+                            210,             // maxTempo
+                            40,              // minTempo
+                            "multifeature"   // method
+                        );
                         bpm = result.bpm;
                         method = 'RhythmExtractor';
+                        // Free WASM memory for vector outputs
+                        if (result.ticks) result.ticks.delete();
+                        if (result.estimates) result.estimates.delete();
+                        if (result.bpmIntervals) result.bpmIntervals.delete();
                     } catch (e2) {
                         console.warn('RhythmExtractor2013 failed:', e2);
                     }
                 }
 
+                // Free the input signal vector
+                signal.delete();
+
+                const seconds = (totalSamples / state.sampleRate).toFixed(1);
+
                 if (bpm && bpm > 30 && bpm < 300) {
-                    const seconds = (totalSamples / state.sampleRate).toFixed(1);
                     updateBpmDisplay(bpm, `分析 ${seconds}s 音訊`);
                     micStatus.textContent = `偵測到 ${Math.round(bpm)} BPM`;
-                    micDetail.textContent = `演算法: ${method} | 取樣率: ${state.sampleRate}Hz | 音訊長度: ${seconds}s`;
+                    micDetail.textContent = `演算法: ${method} | 裝置取樣率: ${state.sampleRate}Hz | 音訊: ${seconds}s`;
                     pulseRing();
                 } else {
                     micStatus.textContent = '偵測中... 請確認音樂正在播放';
