@@ -59,6 +59,9 @@ function formatTime(isoStr) {
 /* ---------- API ---------- */
 
 async function api(action, params = {}) {
+    if (typeof window.__DEMO_API__ === 'function') {
+        return await window.__DEMO_API__(action, params);
+    }
     if (!state.apiUrl) throw new Error('Apps Script URL 未設定');
     const url = new URL(state.apiUrl);
     url.searchParams.set('action', action);
@@ -75,14 +78,21 @@ async function api(action, params = {}) {
 /* ---------- boot ---------- */
 
 function init() {
-    state.apiUrl = localStorage.getItem(LS_URL_KEY) || '';
+    const isDemo = window.DEMO_MODE === true;
+    state.apiUrl = isDemo ? '__demo__' : (localStorage.getItem(LS_URL_KEY) || '');
     $('today-date').textContent = formatHeaderToday();
 
-    $('save-url').addEventListener('click', onSaveUrl);
-    $('url-input').addEventListener('keydown', (e) => {
+    const saveBtn = $('save-url');
+    if (saveBtn) saveBtn.addEventListener('click', onSaveUrl);
+    const urlInput = $('url-input');
+    if (urlInput) urlInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') onSaveUrl();
     });
-    $('change-url').addEventListener('click', onChangeUrl);
+    const changeBtn = $('change-url');
+    if (changeBtn) {
+        if (isDemo) changeBtn.classList.add('hidden');
+        else changeBtn.addEventListener('click', onChangeUrl);
+    }
     $('refresh').addEventListener('click', loadBootstrap);
     $('error-retry').addEventListener('click', loadBootstrap);
 
@@ -95,33 +105,37 @@ function init() {
 
 function showSetup() {
     hideAll();
-    $('setup').classList.remove('hidden');
-    $('url-input').value = state.apiUrl || '';
-    $('url-input').focus();
+    const s = $('setup'); if (s) s.classList.remove('hidden');
+    const ui = $('url-input');
+    if (ui) { ui.value = state.apiUrl || ''; ui.focus(); }
 }
 
 function hideAll() {
     ['setup', 'loading', 'today-section', 'history-section', 'footer-actions', 'error-box']
-        .forEach(id => $(id).classList.add('hidden'));
+        .forEach(id => { const el = $(id); if (el) el.classList.add('hidden'); });
+}
+
+function show(id) {
+    const el = $(id); if (el) el.classList.remove('hidden');
 }
 
 function showLoading() {
     hideAll();
-    $('loading').classList.remove('hidden');
+    show('loading');
 }
 
 function showMain() {
     hideAll();
-    $('today-section').classList.remove('hidden');
-    $('history-section').classList.remove('hidden');
-    $('footer-actions').classList.remove('hidden');
+    show('today-section');
+    show('history-section');
+    show('footer-actions');
 }
 
 function showError(msg) {
     hideAll();
-    $('error-msg').textContent = msg;
-    $('error-box').classList.remove('hidden');
-    $('footer-actions').classList.remove('hidden');
+    const m = $('error-msg'); if (m) m.textContent = msg;
+    show('error-box');
+    show('footer-actions');
 }
 
 function onSaveUrl() {

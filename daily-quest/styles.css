@@ -335,6 +335,60 @@ footer a:hover {
     color: #ccc;
 }
 
+/* demo banner */
+.demo-banner {
+    width: 100%;
+    background: #3a2e14;
+    color: #f0d98c;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    border-bottom: 1px solid #5a4520;
+    font-size: 0.9rem;
+}
+
+.demo-banner-text { flex: 1 1 auto; min-width: 0; }
+
+.demo-banner button.ghost {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.82rem;
+    border-color: #7a6030;
+    color: #f0d98c;
+    background: transparent;
+}
+
+.demo-banner button.ghost:hover {
+    background: #4a3a1a;
+    color: #fff;
+}
+
+.demo-banner .ghost-link {
+    color: #f0d98c;
+    text-decoration: none;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #7a6030;
+    border-radius: 8px;
+}
+
+.demo-banner .ghost-link:hover {
+    background: #4a3a1a;
+    color: #fff;
+}
+
+/* setup demo link */
+.setup .demo-link {
+    margin-top: 0.6rem;
+    display: inline-block;
+    color: #8ab4f8;
+    font-size: 0.88rem;
+    text-decoration: none;
+}
+.setup .demo-link:hover { text-decoration: underline; }
+
 @media (max-width: 480px) {
     header { padding-top: 1.5rem; }
     header h1 { font-size: 1.7rem; }

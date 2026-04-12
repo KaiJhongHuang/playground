@@ -3,33 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Quest — 每日任務</title>
+    <title>Daily Quest — 試用 Demo</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <div id="demo-banner" class="demo-banner">
+        <span class="demo-banner-text">🧪 試用模式 · 資料僅存在本分頁，關掉即消失</span>
+        <button id="demo-reset" class="ghost">重置試用資料</button>
+        <a class="ghost-link" href="./index.html">離開試用 →</a>
+    </div>
+
     <header>
         <h1>Daily Quest</h1>
         <p id="today-date">—</p>
     </header>
 
     <main>
-        <!-- 設定頁：首次使用或尚未設定 Apps Script URL 時顯示 -->
-        <section id="setup" class="card setup hidden">
-            <h2>初次設定</h2>
-            <p>請貼上你的 Google Apps Script Web App URL。</p>
-            <p class="muted">不知道怎麼取得？請看 <a href="./README.md">README</a>。</p>
-            <input id="url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
-            <button id="save-url" class="primary">儲存並載入</button>
-            <p id="setup-error" class="error hidden"></p>
-            <p><a class="demo-link" href="./demo.html">或先用假資料試用 demo →</a></p>
-        </section>
-
-        <!-- 載入中 -->
         <section id="loading" class="card loading hidden">
             <p>載入中…</p>
         </section>
 
-        <!-- 主畫面 -->
         <section id="today-section" class="card hidden">
             <div class="card-header">
                 <h2>今日任務</h2>
@@ -47,11 +40,9 @@
         </section>
 
         <section id="footer-actions" class="footer-actions hidden">
-            <button id="change-url" class="ghost">更換 Apps Script URL</button>
             <button id="refresh" class="ghost">重新整理</button>
         </section>
 
-        <!-- 錯誤提示 -->
         <section id="error-box" class="card error-box hidden">
             <h2>發生錯誤</h2>
             <p id="error-msg"></p>
@@ -60,9 +51,13 @@
     </main>
 
     <footer>
-        <p>Phase 1 MVP · <a href="../">← 回首頁</a></p>
+        <p>Phase 1 MVP · Demo · <a href="../">← 回 Playground</a></p>
     </footer>
 
+    <script src="./demo.js"></script>
     <script src="./app.js"></script>
+    <script>
+        document.getElementById('demo-reset').addEventListener('click', () => window.resetDemoState());
+    </script>
 </body>
 </html>
