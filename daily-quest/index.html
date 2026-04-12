@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Quest — 每日任務</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header>
+        <h1>Daily Quest</h1>
+        <p id="today-date">—</p>
+    </header>
+
+    <main>
+        <!-- 設定頁：首次使用或尚未設定 Apps Script URL 時顯示 -->
+        <section id="setup" class="card setup hidden">
+            <h2>初次設定</h2>
+            <p>請貼上你的 Google Apps Script Web App URL。</p>
+            <p class="muted">不知道怎麼取得？請看 <a href="./README.md">README</a>。</p>
+            <input id="url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+            <button id="save-url" class="primary">儲存並載入</button>
+            <p id="setup-error" class="error hidden"></p>
+        </section>
+
+        <!-- 載入中 -->
+        <section id="loading" class="card loading hidden">
+            <p>載入中…</p>
+        </section>
+
+        <!-- 主畫面 -->
+        <section id="today-section" class="card hidden">
+            <div class="card-header">
+                <h2>今日任務</h2>
+                <span id="today-progress" class="progress-badge">0 / 0</span>
+            </div>
+            <ul id="task-list" class="task-list"></ul>
+        </section>
+
+        <section id="history-section" class="card hidden">
+            <div class="card-header">
+                <h2>過往紀錄</h2>
+                <span class="muted" id="history-range"></span>
+            </div>
+            <div id="history-table" class="history-table"></div>
+        </section>
+
+        <section id="footer-actions" class="footer-actions hidden">
+            <button id="change-url" class="ghost">更換 Apps Script URL</button>
+            <button id="refresh" class="ghost">重新整理</button>
+        </section>
+
+        <!-- 錯誤提示 -->
+        <section id="error-box" class="card error-box hidden">
+            <h2>發生錯誤</h2>
+            <p id="error-msg"></p>
+            <button id="error-retry" class="primary">重試</button>
+        </section>
+    </main>
+
+    <footer>
+        <p>Phase 1 MVP · <a href="../">← 回首頁</a></p>
+    </footer>
+
+    <script src="./app.js"></script>
+</body>
+</html>

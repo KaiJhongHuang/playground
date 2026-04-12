@@ -102,25 +102,13 @@ playground/
 
 **目標：最陽春可用版本。能記錄、能讀過往紀錄、能看到今日待辦即可。**
 
-- [ ] `daily-quest/apps-script.gs`
-  - 初始化 Sheet（自動建立 Tasks / Logs / Meta 分頁與欄位）
-  - `doGet({action: "bootstrap"})` 回傳 tasks、近 90 天 logs
-  - `doPost({action: "complete", task_id, completed_at})` 寫入 log
-- [ ] `daily-quest/index.html`
-  - 單頁，兩個區塊：**今日任務** + **過往紀錄**
-  - 今日任務：列出當日所有任務，已完成的顯示 ✅ 與時間
-  - 過往紀錄：近 30 天的列表（日期 → 當日完成任務清單 + 時間）
-- [ ] `daily-quest/styles.css`
-  - 延續 playground 深色風，大型按鈕、手機友善
-- [ ] `daily-quest/app.js`
-  - 讀取 LocalStorage 的 Apps Script URL（沒有則顯示輸入框）
-  - `bootstrap()` 載入資料
-  - 點任務 → POST `complete`
-  - Render 今日清單 + 過往清單
-- [ ] `daily-quest/README.md`
-  - 一步步教學：建立 Google Sheet → 貼上 Apps Script → 部署 → 複製 URL → 貼進網頁
-- [ ] 更新 `index.html` 新增卡片連結
-- [ ] Commit + push 到 `main`
+- [x] `daily-quest/apps-script.gs` — 自動建立 Sheet 分頁，提供 `bootstrap` / `complete` / `logs` API
+- [x] `daily-quest/index.html` — 今日任務 + 過往紀錄兩個區塊
+- [x] `daily-quest/styles.css` — 延續 playground 深色風、手機友善
+- [x] `daily-quest/app.js` — LocalStorage URL 設定、bootstrap、打卡、render
+- [x] `daily-quest/README.md` — 一步步部署教學
+- [x] 更新 `index.html` 新增卡片連結
+- [x] Commit + push 到 `main`
 
 **Phase 1 完成後，使用者已經可以每天打卡與檢視過往紀錄。**
 
@@ -183,7 +171,7 @@ playground/
 # 當前進度
 
 - [x] Phase 0 — 規劃（本文件）
-- [ ] Phase 1 — MVP
+- [x] Phase 1 — MVP
 - [ ] Phase 2 — 歷史視覺化
 - [ ] Phase 3 — 遊戲化基礎
 - [ ] Phase 4 — 75 Hard 挑戰 + 成就
