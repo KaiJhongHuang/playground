@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a14">
+    <title>Hero Growth — 英雄成長</title>
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --bg2: #10101e;
+            --card: #141428;
+            --card-border: #1e1e38;
+            --text: #e8e8f0;
+            --text-dim: #9090a8;
+            --text-muted: #606078;
+            --str: #e74c3c;
+            --con: #2ecc71;
+            --agi: #f1c40f;
+            --wis: #3498db;
+            --wil: #9b59b6;
+            --cha: #e67e22;
+            --gold: #ffd700;
+            --danger: #ff5566;
+            --success: #4caf50;
+            --tab-h: 58px;
+            --safe-b: env(safe-area-inset-bottom, 0px);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: calc(var(--tab-h) + var(--safe-b) + 12px);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        @media (min-width: 481px) {
+            body { border-left: 1px solid var(--card-border); border-right: 1px solid var(--card-border); }
+        }
+        button, input, select, textarea { font: inherit; color: inherit; }
+        button { cursor: pointer; border: none; background: none; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* === TAB SYSTEM === */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            height: calc(var(--tab-h) + var(--safe-b));
+            padding-bottom: var(--safe-b);
+            background: var(--bg2);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            z-index: 100;
+        }
+        .tab-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            transition: color 0.15s;
+            min-height: 44px;
+        }
+        .tab-btn .tab-icon { font-size: 1.4rem; line-height: 1; }
+        .tab-btn.active { color: var(--gold); }
+        .tab-panel { display: none; padding: 1rem; animation: fadeIn 0.2s ease; }
+        .tab-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+        /* === COMMON === */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            min-height: 44px;
+            padding: 0 1rem;
+            border-radius: 10px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            color: var(--text);
+            font-weight: 500;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--gold); color: #000; border-color: var(--gold); }
+        .btn-danger { color: var(--danger); border-color: var(--danger); }
+        .btn-full { display: flex; width: 100%; }
+        .btn-ghost { background: transparent; }
+        .hidden { display: none !important; }
+        .text-dim { color: var(--text-dim); }
+        .text-center { text-align: center; }
+        .row { display: flex; gap: 0.5rem; }
+        .row > * { flex: 1; }
+        .stack { display: flex; flex-direction: column; gap: 0.75rem; }
+        .section-title {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        /* === DASHBOARD === */
+        .hero-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: linear-gradient(135deg, #1a1a35, #141428);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .hero-name { font-size: 1.2rem; font-weight: 600; }
+        .hero-level {
+            display: flex;
+            align-items: baseline;
+            gap: 0.3rem;
+            color: var(--gold);
+            font-weight: 700;
+        }
+        .hero-level .lv-num { font-size: 1.8rem; }
+        .streak-bar {
+            text-align: center;
+            padding: 0.6rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .streak-bar .flame { font-size: 1.2rem; }
+        .radar-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+        #radarCanvas { display: block; }
+        .attr-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        .attr-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .attr-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--c, var(--gold)) 0%, transparent 40%);
+            opacity: 0.08;
+            pointer-events: none;
+        }
+        .attr-card-head {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+        .attr-card-icon { font-size: 1.1rem; }
+        .attr-card-name { font-size: 0.85rem; color: var(--text-dim); }
+        .attr-card-lv { font-size: 1.4rem; font-weight: 700; color: var(--c, var(--gold)); }
+        .exp-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.4rem;
+        }
+        .exp-bar-fill {
+            height: 100%;
+            background: var(--c, var(--gold));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .exp-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        /* === CHALLENGE === */
+        .wizard-head {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            min-height: 36px;
+        }
+        .wizard-back {
+            padding: 0.4rem 0.8rem;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            background: transparent;
+        }
+        .wizard-title { font-size: 1.1rem; font-weight: 600; }
+        .step { display: none; }
+        .step.active { display: block; }
+
+        .attr-select-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .attr-select-btn {
+            padding: 1rem;
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            min-height: 90px;
+            transition: all 0.15s;
+        }
+        .attr-select-btn .icon { font-size: 1.8rem; }
+        .attr-select-btn .name { font-weight: 600; color: var(--c, var(--text)); }
+        .attr-select-btn.selected {
+            border-color: var(--c);
+            background: color-mix(in srgb, var(--c) 15%, var(--card));
+        }
+        .activity-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .activity-btn {
+            padding: 0.9rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .activity-btn:active { background: var(--bg2); }
+        .activity-btn .chevron { color: var(--text-muted); }
+
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .diff-btn {
+            padding: 0.75rem 0.5rem;
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            border-radius: 10px;
+            text-align: center;
+        }
+        .diff-btn .mult { display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+        .diff-btn.selected { border-color: var(--gold); color: var(--gold); }
+
+        .time-presets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+            margin-bottom: 0.8rem;
+        }
+        .time-btn {
+            padding: 0.6rem 0;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .time-btn.selected { border-color: var(--gold); color: var(--gold); }
+        .time-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        /* === TIMER === */
+        .timer-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+        }
+        .timer-meta { text-align: center; margin-bottom: 1rem; }
+        .timer-meta .activity { font-size: 1.2rem; font-weight: 600; }
+        .timer-meta .sub { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.2rem; }
+        .timer-circle { position: relative; width: 240px; height: 240px; margin: 1rem 0; }
+        .timer-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .timer-circle .bg-ring { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 10; }
+        .timer-circle .fg-ring {
+            fill: none;
+            stroke: var(--gold);
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s linear;
+        }
+        .timer-circle.paused .fg-ring { stroke: var(--text-dim); }
+        .timer-display {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+        }
+        .timer-display .time { font-size: 2.6rem; font-weight: 700; letter-spacing: 0.02em; }
+        .timer-display .elapsed { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.2rem; }
+        .timer-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .timer-giveup {
+            margin-top: 0.6rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            background: transparent;
+        }
+
+        /* === ASSESSMENT / RESULTS === */
+        .assess-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+        }
+        .assess-btn {
+            padding: 1rem 0;
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .assess-btn:active { border-color: var(--gold); color: var(--gold); }
+
+        .result-card {
+            padding: 1.25rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .result-exp {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05));
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 12px;
+        }
+        .result-exp .num { font-size: 2.2rem; font-weight: 700; color: var(--gold); }
+        .result-exp .label { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.2rem; }
+        .result-formula { text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+
+        /* === HISTORY === */
+        .history-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 3rem 1rem;
+        }
+        .history-date {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin: 1.2rem 0 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        .history-date:first-child { margin-top: 0; }
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.75rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            margin-bottom: 0.4rem;
+        }
+        .history-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .history-info { flex: 1; min-width: 0; }
+        .history-name { font-size: 0.95rem; }
+        .history-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+        .history-exp { color: var(--gold); font-weight: 600; font-size: 0.9rem; }
+
+        /* === SETTINGS === */
+        .settings-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+        }
+        .settings-section h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .settings-input {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg2);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .settings-input:focus { outline: none; border-color: var(--gold); }
+        .settings-label { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.3rem; display: block; }
+
+        .custom-activity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem;
+            background: var(--bg2);
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+        }
+        .custom-activity-item .name { flex: 1; }
+        .custom-activity-item .del {
+            color: var(--danger);
+            padding: 0.3rem 0.5rem;
+            font-size: 0.85rem;
+        }
+        .custom-add-row { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+        .custom-add-row select, .custom-add-row input {
+            padding: 0.6rem;
+            background: var(--bg2);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .custom-add-row select { flex: 0 0 100px; }
+        .custom-add-row input { flex: 1; min-width: 0; }
+
+        .sync-toggle { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+        .sync-status {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            background: var(--bg2);
+            color: var(--text-dim);
+        }
+        .sync-status.success { color: var(--success); }
+        .sync-status.error { color: var(--danger); }
+        .sync-expandable { margin-top: 0.75rem; }
+        .sync-expandable summary {
+            cursor: pointer;
+            padding: 0.5rem 0;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            list-style: none;
+        }
+        .sync-expandable summary::before { content: '▶ '; transition: transform 0.2s; display: inline-block; }
+        .sync-expandable[open] summary::before { transform: rotate(90deg); }
+        .script-code {
+            position: relative;
+            margin-top: 0.5rem;
+        }
+        .script-code pre {
+            background: #000;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            color: #d0d0d0;
+            white-space: pre;
+            max-height: 240px;
+        }
+        .script-code .copy-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            color: var(--text);
+        }
+        .setup-steps {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            padding-left: 1.25rem;
+            margin-top: 0.4rem;
+        }
+        .setup-steps li { margin-bottom: 0.2rem; }
+
+        /* === LEVEL UP OVERLAY === */
+        .level-up {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+        .level-up.hidden { display: none; }
+        .level-up-inner { text-align: center; animation: levelUpPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .level-up-title {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            color: var(--gold);
+            text-shadow: 0 0 20px rgba(255,215,0,0.6), 0 0 40px rgba(255,140,0,0.4);
+            animation: goldGlow 1.5s ease-in-out infinite alternate;
+        }
+        .level-up-attr { font-size: 1.2rem; margin-top: 1rem; color: var(--text); }
+        .level-up-level {
+            font-size: 2rem;
+            color: var(--gold);
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        @keyframes levelUpPop {
+            0% { transform: scale(0.3); opacity: 0; }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes goldGlow {
+            from { text-shadow: 0 0 20px rgba(255,215,0,0.6), 0 0 40px rgba(255,140,0,0.4); }
+            to { text-shadow: 0 0 30px rgba(255,215,0,0.9), 0 0 60px rgba(255,140,0,0.6); }
+        }
+
+        /* === EMPTY STATE === */
+        .empty-hint {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Level Up Overlay -->
+    <div id="levelUpOverlay" class="level-up hidden">
+        <div class="level-up-inner">
+            <div class="level-up-title">LEVEL UP!</div>
+            <div class="level-up-attr" id="levelUpAttr"></div>
+            <div class="level-up-level" id="levelUpLevel"></div>
+        </div>
+    </div>
+
+    <!-- Tab Panels -->
+    <main>
+        <!-- DASHBOARD -->
+        <section id="tabDashboard" class="tab-panel active">
+            <div class="hero-header">
+                <div>
+                    <div class="hero-name" id="heroName">英雄</div>
+                    <div class="text-dim" style="font-size:0.8rem;margin-top:0.2rem;">Hero Growth</div>
+                </div>
+                <div class="hero-level">
+                    <span style="font-size:0.85rem;">Lv.</span>
+                    <span class="lv-num" id="heroTotalLv">0</span>
+                </div>
+            </div>
+            <div class="streak-bar">
+                <span class="flame">🔥</span>
+                連續挑戰 <strong id="streakDays">0</strong> 天
+                <span class="text-dim" style="font-size:0.8rem;">（最長 <span id="streakBest">0</span> 天）</span>
+            </div>
+            <div class="radar-wrap">
+                <canvas id="radarCanvas" width="320" height="320"></canvas>
+            </div>
+            <div class="section-title">六大屬性</div>
+            <div class="attr-grid" id="attrGrid"></div>
+        </section>
+
+        <!-- CHALLENGE -->
+        <section id="tabChallenge" class="tab-panel">
+            <!-- Step 1: Select Attribute + Activity -->
+            <div class="step active" id="step1">
+                <div class="wizard-head">
+                    <div class="wizard-title">選擇挑戰</div>
+                </div>
+                <div class="section-title">選一個屬性</div>
+                <div class="attr-select-grid" id="attrSelectGrid"></div>
+                <div id="activityListWrap" class="hidden">
+                    <div class="section-title">選一項活動</div>
+                    <div class="activity-list" id="activityList"></div>
+                </div>
+            </div>
+
+            <!-- Step 2: Set Parameters -->
+            <div class="step" id="step2">
+                <div class="wizard-head">
+                    <button type="button" class="wizard-back" data-back="1">← 返回</button>
+                    <div class="wizard-title" id="step2Title"></div>
+                </div>
+                <div class="section-title">難度</div>
+                <div class="diff-grid" id="diffGrid"></div>
+                <div class="section-title">目標時間</div>
+                <div class="time-presets" id="timePresets"></div>
+                <input type="number" class="time-input" id="timeInput" min="1" max="180" placeholder="自訂分鐘數">
+                <div style="height:1rem;"></div>
+                <button type="button" class="btn btn-primary btn-full" id="btnStartChallenge">⚔️ 開始挑戰</button>
+            </div>
+
+            <!-- Step 3: Timer -->
+            <div class="step" id="step3">
+                <div class="timer-wrap">
+                    <div class="timer-meta">
+                        <div class="activity" id="timerActivity">-</div>
+                        <div class="sub" id="timerSub">-</div>
+                    </div>
+                    <div class="timer-circle" id="timerCircle">
+                        <svg viewBox="0 0 240 240">
+                            <circle class="bg-ring" cx="120" cy="120" r="108"></circle>
+                            <circle class="fg-ring" id="timerRing" cx="120" cy="120" r="108"
+                                    stroke-dasharray="678.58" stroke-dashoffset="0"></circle>
+                        </svg>
+                        <div class="timer-display">
+                            <div class="time" id="timerTime">00:00</div>
+                            <div class="elapsed" id="timerElapsed">目標 0 分鐘</div>
+                        </div>
+                    </div>
+                    <div class="timer-controls">
+                        <button type="button" class="btn" id="btnPauseResume">⏸ 暫停</button>
+                        <button type="button" class="btn btn-primary" id="btnCompleteEarly">✅ 完成</button>
+                    </div>
+                    <button type="button" class="timer-giveup" id="btnGiveUp">放棄挑戰</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Assessment -->
+            <div class="step" id="step4">
+                <div class="wizard-head">
+                    <div class="wizard-title">完成度評估</div>
+                </div>
+                <div class="empty-hint" id="assessMeta"></div>
+                <div class="text-center text-dim" style="font-size:0.9rem;margin-bottom:0.5rem;">誠實評估自己實際完成的程度</div>
+                <div class="assess-grid" id="assessGrid"></div>
+            </div>
+
+            <!-- Step 5: Results -->
+            <div class="step" id="step5">
+                <div class="wizard-head">
+                    <div class="wizard-title">🎉 挑戰完成</div>
+                </div>
+                <div class="result-card" id="resultCard"></div>
+                <button type="button" class="btn btn-primary btn-full" id="btnBackToDash">返回總覽</button>
+            </div>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="tabHistory" class="tab-panel">
+            <div class="wizard-head"><div class="wizard-title">挑戰記錄</div></div>
+            <div id="historyList"></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="tabSettings" class="tab-panel">
+            <div class="wizard-head"><div class="wizard-title">設定</div></div>
+
+            <div class="settings-section">
+                <h3>👤 角色</h3>
+                <label class="settings-label">角色名稱</label>
+                <input type="text" class="settings-input" id="inputHeroName" placeholder="輸入角色名稱">
+            </div>
+
+            <div class="settings-section">
+                <h3>🎨 自訂活動</h3>
+                <div id="customActivityList"></div>
+                <div class="custom-add-row">
+                    <select id="customAttrSelect"></select>
+                    <input type="text" id="customNameInput" placeholder="新活動名稱">
+                </div>
+                <button type="button" class="btn btn-full" id="btnAddCustom" style="margin-top:0.5rem;">＋ 新增</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>☁️ Google Sheets 雲端同步</h3>
+                <p class="text-dim" style="font-size:0.85rem;line-height:1.5;">
+                    讓資料在不同裝置間同步。使用者自己部署 Google Apps Script，網址只存在此裝置的瀏覽器，不會上傳到網路。
+                </p>
+
+                <details class="sync-expandable">
+                    <summary>📖 設定步驟</summary>
+                    <ol class="setup-steps">
+                        <li>建立一份新的 <a href="https://sheets.new" target="_blank" style="color:var(--gold);">Google 試算表</a></li>
+                        <li>選單 → 擴充功能 → Apps Script</li>
+                        <li>貼上下方程式碼（取代原有全部內容）並儲存</li>
+                        <li>點右上角「部署」→「新增部署作業」</li>
+                        <li>類型：網頁應用程式，執行身分：我，存取權：所有人</li>
+                        <li>點「部署」後複製產生的網址</li>
+                        <li>貼到下方的「同步網址」欄位</li>
+                    </ol>
+                    <div class="script-code">
+                        <button type="button" class="copy-btn" id="btnCopyScript">複製</button>
+<pre id="scriptCode">function doGet(e) {
+  var sheet = _sheet();
+  var data = sheet.getRange('A1').getValue();
+  return ContentService.createTextOutput(data || '{}')
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function doPost(e) {
+  var body = JSON.parse(e.postData.contents);
+  var sheet = _sheet();
+  sheet.getRange('A1').setValue(JSON.stringify(body.data));
+  sheet.getRange('A2').setValue(new Date().toISOString());
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function _sheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var s = ss.getSheetByName('HeroGrowth');
+  if (!s) s = ss.insertSheet('HeroGrowth');
+  return s;
+}</pre>
+                    </div>
+                </details>
+
+                <label class="settings-label" style="margin-top:1rem;">同步網址（Apps Script Web App URL）</label>
+                <input type="text" class="settings-input" id="syncUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+                <div class="row" style="margin-top:0.5rem;">
+                    <button type="button" class="btn" id="btnTestSync">測試</button>
+                    <button type="button" class="btn" id="btnSyncDown">⬇️ 下載</button>
+                    <button type="button" class="btn btn-primary" id="btnSyncUp">⬆️ 上傳</button>
+                </div>
+                <label class="sync-toggle">
+                    <input type="checkbox" id="autoSyncToggle">
+                    <span style="font-size:0.9rem;">完成挑戰後自動上傳</span>
+                </label>
+                <div class="sync-status hidden" id="syncStatus"></div>
+            </div>
+
+            <div class="settings-section">
+                <h3>💾 本地備份</h3>
+                <div class="row">
+                    <button type="button" class="btn" id="btnExport">📥 匯出 JSON</button>
+                    <button type="button" class="btn" id="btnImport">📤 匯入 JSON</button>
+                </div>
+                <input type="file" id="importFile" accept="application/json" class="hidden">
+            </div>
+
+            <div class="settings-section">
+                <h3>⚠️ 危險操作</h3>
+                <button type="button" class="btn btn-danger btn-full" id="btnClearData">清除所有資料</button>
+            </div>
+
+            <div class="text-center text-dim" style="font-size:0.75rem;padding:1rem;">
+                <a href="../" style="color:var(--text-dim);">← 返回 Playground</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Tab Bar -->
+    <nav class="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="tabDashboard"><span class="tab-icon">⚔️</span><span>總覽</span></button>
+        <button type="button" class="tab-btn" data-tab="tabChallenge"><span class="tab-icon">🎯</span><span>挑戰</span></button>
+        <button type="button" class="tab-btn" data-tab="tabHistory"><span class="tab-icon">📜</span><span>記錄</span></button>
+        <button type="button" class="tab-btn" data-tab="tabSettings"><span class="tab-icon">⚙️</span><span>設定</span></button>
+    </nav>
+
+    <script>
+    (function() {
+        'use strict';
+        // ============== CONFIG ==============
+        const ATTRS = {
+            STR: { name: '力量', icon: '💪', color: '#e74c3c' },
+            CON: { name: '體質', icon: '❤️', color: '#2ecc71' },
+            AGI: { name: '敏捷', icon: '⚡', color: '#f1c40f' },
+            WIS: { name: '智慧', icon: '📘', color: '#3498db' },
+            WIL: { name: '意志', icon: '🔥', color: '#9b59b6' },
+            CHA: { name: '魅力', icon: '✨', color: '#e67e22' }
+        };
+        const ATTR_KEYS = Object.keys(ATTRS);
+        const DEFAULT_ACTIVITIES = {
+            STR: ['重訓', '衝刺', '引體向上', '伏地挺身'],
+            CON: ['慢跑', '游泳', '跳繩', '騎腳踏車'],
+            AGI: ['跳舞', '瑜伽', '拉筋', '武術'],
+            WIS: ['閱讀', '上課', '寫筆記', '程式練習'],
+            WIL: ['站樁', '冥想', '冷水澡', '斷食'],
+            CHA: ['社交活動', '演講', '助人', '寫作分享']
+        };
+        const DIFFICULTIES = [
+            { key: 'easy', name: '簡單', mult: 0.8 },
+            { key: 'normal', name: '普通', mult: 1.0 },
+            { key: 'hard', name: '困難', mult: 1.5 }
+        ];
+        const TIME_PRESETS = [5, 10, 15, 20, 30, 45, 60, 90];
+        const RATES = [0.2, 0.4, 0.6, 0.8, 1.0];
+        const STORAGE_KEY = 'heroGrowth';
+        const TIMER_KEY = 'heroGrowth_timer';
+        const SYNC_URL_KEY = 'heroGrowth_syncUrl';
+        const AUTO_SYNC_KEY = 'heroGrowth_autoSync';
+
+        // ============== STATE ==============
+        let state = null;
+        let challenge = null;  // { attribute, activity, difficulty, targetMinutes }
+        let timerHandle = null;
+
+        // ============== DOM HELPERS ==============
+        const $ = function(id) { return document.getElementById(id); };
+        const $$ = function(sel) { return document.querySelectorAll(sel); };
+
+        // ============== DATA ==============
+        function defaultState() {
+            const today = new Date().toISOString().slice(0, 10);
+            const attributes = {};
+            ATTR_KEYS.forEach(function(k) { attributes[k] = { totalExp: 0 }; });
+            return {
+                version: 1,
+                character: { name: '英雄', createdAt: today },
+                attributes: attributes,
+                customActivities: [],
+                log: [],
+                streaks: { currentStreak: 0, longestStreak: 0, lastActiveDate: null }
+            };
+        }
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return defaultState();
+                const parsed = JSON.parse(raw);
+                // sanity checks / migrations
+                if (!parsed.attributes) return defaultState();
+                ATTR_KEYS.forEach(function(k) {
+                    if (!parsed.attributes[k]) parsed.attributes[k] = { totalExp: 0 };
+                });
+                if (!parsed.customActivities) parsed.customActivities = [];
+                if (!parsed.log) parsed.log = [];
+                if (!parsed.streaks) parsed.streaks = { currentStreak: 0, longestStreak: 0, lastActiveDate: null };
+                return parsed;
+            } catch (e) {
+                console.error('loadState error', e);
+                return defaultState();
+            }
+        }
+        function saveState() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+            catch (e) { console.error('saveState error', e); }
+        }
+
+        // ============== LEVEL MATH ==============
+        // Level N requires cumulative N*(N+1)/2 * 100 EXP
+        function cumulativeForLevel(n) { return n * (n + 1) / 2 * 100; }
+        function levelFromExp(totalExp) {
+            let lv = 0;
+            while (cumulativeForLevel(lv + 1) <= totalExp) lv++;
+            const base = cumulativeForLevel(lv);
+            const next = cumulativeForLevel(lv + 1);
+            const into = totalExp - base;
+            const need = next - base;
+            return { level: lv, into: into, need: need, progress: need > 0 ? into / need : 0 };
+        }
+        function totalCharacterLevel() {
+            let sum = 0;
+            ATTR_KEYS.forEach(function(k) { sum += levelFromExp(state.attributes[k].totalExp).level; });
+            return Math.floor(sum / ATTR_KEYS.length);
+        }
+
+        // ============== DATE / STREAK ==============
+        function todayStr() { return new Date().toISOString().slice(0, 10); }
+        function dateAddDays(isoDate, days) {
+            const d = new Date(isoDate + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            return d.toISOString().slice(0, 10);
+        }
+        function updateStreakOnCompletion() {
+            const today = todayStr();
+            const last = state.streaks.lastActiveDate;
+            if (last === today) return;  // already counted today
+            if (last && dateAddDays(last, 1) === today) {
+                state.streaks.currentStreak += 1;
+            } else {
+                state.streaks.currentStreak = 1;
+            }
+            state.streaks.lastActiveDate = today;
+            if (state.streaks.currentStreak > state.streaks.longestStreak) {
+                state.streaks.longestStreak = state.streaks.currentStreak;
+            }
+        }
+        function refreshStreakOnLoad() {
+            // If last active was before yesterday, current streak breaks visually
+            const today = todayStr();
+            const last = state.streaks.lastActiveDate;
+            if (!last) return;
+            if (last !== today && dateAddDays(last, 1) !== today) {
+                state.streaks.currentStreak = 0;
+            }
+        }
+
+        // ============== TAB NAVIGATION ==============
+        function switchTab(tabId) {
+            $$('.tab-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tabId); });
+            $$('.tab-panel').forEach(function(p) { p.classList.toggle('active', p.id === tabId); });
+            if (tabId === 'tabDashboard') renderDashboard();
+            if (tabId === 'tabHistory') renderHistory();
+            if (tabId === 'tabSettings') renderSettings();
+        }
+        function bindTabBar() {
+            $$('.tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() { switchTab(btn.dataset.tab); });
+            });
+        }
+        // ============== DASHBOARD ==============
+        function renderDashboard() {
+            $('heroName').textContent = state.character.name || '英雄';
+            $('heroTotalLv').textContent = totalCharacterLevel();
+            $('streakDays').textContent = state.streaks.currentStreak;
+            $('streakBest').textContent = state.streaks.longestStreak;
+            const grid = $('attrGrid');
+            grid.innerHTML = '';
+            ATTR_KEYS.forEach(function(k) {
+                const a = ATTRS[k];
+                const info = levelFromExp(state.attributes[k].totalExp);
+                const card = document.createElement('div');
+                card.className = 'attr-card';
+                card.style.setProperty('--c', a.color);
+                card.innerHTML =
+                    '<div class="attr-card-head">' +
+                        '<span class="attr-card-icon">' + a.icon + '</span>' +
+                        '<span class="attr-card-name">' + a.name + '</span>' +
+                    '</div>' +
+                    '<div class="attr-card-lv">Lv.' + info.level + '</div>' +
+                    '<div class="exp-bar"><div class="exp-bar-fill" style="width:' + (info.progress * 100).toFixed(1) + '%"></div></div>' +
+                    '<div class="exp-text">' + info.into + ' / ' + info.need + ' EXP</div>';
+                grid.appendChild(card);
+            });
+            drawRadar();
+        }
+
+        function drawRadar() {
+            const canvas = $('radarCanvas');
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            const size = Math.min(container.clientWidth || 320, 320);
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = size + 'px';
+            canvas.style.height = size + 'px';
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, size, size);
+
+            const cx = size / 2;
+            const cy = size / 2;
+            const r = size / 2 - 36;
+
+            const levels = ATTR_KEYS.map(function(k) { return levelFromExp(state.attributes[k].totalExp).level; });
+            const maxLv = Math.max(5, Math.max.apply(null, levels) + 2);
+
+            // Grid rings
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            const rings = 5;
+            for (let i = 1; i <= rings; i++) {
+                const rr = r * i / rings;
+                ctx.beginPath();
+                for (let j = 0; j < 6; j++) {
+                    const angle = Math.PI * 2 * j / 6 - Math.PI / 2;
+                    const x = cx + rr * Math.cos(angle);
+                    const y = cy + rr * Math.sin(angle);
+                    if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+            // Axes
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI * 2 * i / 6 - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+                ctx.stroke();
+            }
+            // Data polygon
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI * 2 * i / 6 - Math.PI / 2;
+                const val = Math.min(levels[i] / maxLv, 1);
+                const rr = r * Math.max(val, 0.015);
+                const x = cx + rr * Math.cos(angle);
+                const y = cy + rr * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.18)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // Dots
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI * 2 * i / 6 - Math.PI / 2;
+                const val = Math.min(levels[i] / maxLv, 1);
+                const rr = r * Math.max(val, 0.015);
+                const x = cx + rr * Math.cos(angle);
+                const y = cy + rr * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = ATTRS[ATTR_KEYS[i]].color;
+                ctx.fill();
+            }
+            // Labels
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '600 12px -apple-system, sans-serif';
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI * 2 * i / 6 - Math.PI / 2;
+                const lr = r + 20;
+                const x = cx + lr * Math.cos(angle);
+                const y = cy + lr * Math.sin(angle);
+                ctx.fillStyle = ATTRS[ATTR_KEYS[i]].color;
+                ctx.fillText(ATTRS[ATTR_KEYS[i]].name + ' ' + levels[i], x, y);
+            }
+        }
+
+        // ============== CHALLENGE FLOW ==============
+        function renderAttrSelect() {
+            const grid = $('attrSelectGrid');
+            grid.innerHTML = '';
+            ATTR_KEYS.forEach(function(k) {
+                const a = ATTRS[k];
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'attr-select-btn';
+                btn.style.setProperty('--c', a.color);
+                btn.innerHTML = '<span class="icon">' + a.icon + '</span><span class="name">' + a.name + '</span>';
+                btn.addEventListener('click', function() { selectAttribute(k, btn); });
+                grid.appendChild(btn);
+            });
+        }
+        function selectAttribute(key, btnEl) {
+            $$('.attr-select-btn').forEach(function(b) { b.classList.toggle('selected', b === btnEl); });
+            challenge = challenge || {};
+            challenge.attribute = key;
+            $('activityListWrap').classList.remove('hidden');
+            const list = $('activityList');
+            list.innerHTML = '';
+            const defaults = DEFAULT_ACTIVITIES[key] || [];
+            const customs = state.customActivities.filter(function(c) { return c.attribute === key; }).map(function(c) { return c.name; });
+            defaults.concat(customs).forEach(function(name) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'activity-btn';
+                btn.innerHTML = '<span>' + name + '</span><span class="chevron">›</span>';
+                btn.addEventListener('click', function() { selectActivity(name); });
+                list.appendChild(btn);
+            });
+        }
+        function selectActivity(name) {
+            challenge.activity = name;
+            const a = ATTRS[challenge.attribute];
+            $('step2Title').textContent = a.icon + ' ' + name + ' · ' + a.name;
+            // Render difficulties
+            const dg = $('diffGrid');
+            dg.innerHTML = '';
+            DIFFICULTIES.forEach(function(d, i) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'diff-btn';
+                btn.innerHTML = d.name + '<span class="mult">×' + d.mult + '</span>';
+                btn.addEventListener('click', function() {
+                    challenge.difficulty = d;
+                    $$('.diff-btn').forEach(function(b) { b.classList.toggle('selected', b === btn); });
+                });
+                if (i === 1) { challenge.difficulty = d; btn.classList.add('selected'); }
+                dg.appendChild(btn);
+            });
+            // Render time presets
+            const tp = $('timePresets');
+            tp.innerHTML = '';
+            TIME_PRESETS.forEach(function(m) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'time-btn';
+                btn.textContent = m + ' 分';
+                btn.addEventListener('click', function() {
+                    challenge.targetMinutes = m;
+                    $('timeInput').value = m;
+                    $$('.time-btn').forEach(function(b) { b.classList.toggle('selected', b === btn); });
+                });
+                tp.appendChild(btn);
+            });
+            // Default 15 min
+            challenge.targetMinutes = 15;
+            $('timeInput').value = 15;
+            const defaultBtn = tp.querySelectorAll('.time-btn')[2];
+            if (defaultBtn) defaultBtn.classList.add('selected');
+            goStep(2);
+        }
+        function goStep(n) {
+            $$('#tabChallenge .step').forEach(function(s) { s.classList.remove('active'); });
+            const el = $('step' + n);
+            if (el) el.classList.add('active');
+        }
+        function resetChallenge() {
+            challenge = null;
+            $$('.attr-select-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('activityListWrap').classList.add('hidden');
+            goStep(1);
+        }
+
+        // ============== TIMER ==============
+        const RING_CIRC = 2 * Math.PI * 108; // 678.58
+        function saveTimerState(t) { localStorage.setItem(TIMER_KEY, JSON.stringify(t)); }
+        function clearTimerState() { localStorage.removeItem(TIMER_KEY); }
+        function readTimerState() {
+            try { const raw = localStorage.getItem(TIMER_KEY); return raw ? JSON.parse(raw) : null; }
+            catch (e) { return null; }
+        }
+        function startChallenge() {
+            const mins = parseInt($('timeInput').value, 10);
+            if (!mins || mins < 1 || mins > 300) { alert('請輸入有效的分鐘數 (1-300)'); return; }
+            challenge.targetMinutes = mins;
+            const timer = {
+                attribute: challenge.attribute,
+                activity: challenge.activity,
+                difficulty: challenge.difficulty,
+                targetMinutes: mins,
+                startTs: Date.now(),
+                pausedAt: null,
+                totalPaused: 0
+            };
+            saveTimerState(timer);
+            enterTimerUI(timer);
+        }
+        function enterTimerUI(timer) {
+            challenge = {
+                attribute: timer.attribute,
+                activity: timer.activity,
+                difficulty: timer.difficulty,
+                targetMinutes: timer.targetMinutes
+            };
+            const a = ATTRS[timer.attribute];
+            $('timerActivity').textContent = a.icon + ' ' + timer.activity;
+            $('timerSub').textContent = a.name + ' · ' + timer.difficulty.name + ' · 目標 ' + timer.targetMinutes + ' 分鐘';
+            $('timerRing').setAttribute('stroke', a.color);
+            $('timerCircle').classList.toggle('paused', !!timer.pausedAt);
+            $('btnPauseResume').textContent = timer.pausedAt ? '▶ 繼續' : '⏸ 暫停';
+            switchTab('tabChallenge');
+            goStep(3);
+            if (!timerHandle) timerHandle = setInterval(tickTimer, 250);
+            tickTimer();
+        }
+        function tickTimer() {
+            const t = readTimerState();
+            if (!t) { stopTimerLoop(); return; }
+            const now = Date.now();
+            const elapsedMs = (t.pausedAt ? t.pausedAt : now) - t.startTs - t.totalPaused;
+            const totalMs = t.targetMinutes * 60 * 1000;
+            const remainMs = Math.max(0, totalMs - elapsedMs);
+            const remainSec = Math.ceil(remainMs / 1000);
+            const elapsedSec = Math.floor(elapsedMs / 1000);
+            $('timerTime').textContent = fmtMSS(remainSec);
+            $('timerElapsed').textContent = '已用 ' + fmtMSS(elapsedSec) + ' / ' + t.targetMinutes + ' 分';
+            const progress = Math.min(1, elapsedMs / totalMs);
+            $('timerRing').setAttribute('stroke-dashoffset', (RING_CIRC * progress).toFixed(2));
+            if (remainMs === 0 && !t.pausedAt) {
+                stopTimerLoop();
+                playBeep();
+                vibrate();
+                finishTimer(t, t.targetMinutes * 60);
+            }
+        }
+        function stopTimerLoop() {
+            if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+        }
+        function pauseOrResume() {
+            const t = readTimerState();
+            if (!t) return;
+            if (t.pausedAt) {
+                t.totalPaused += Date.now() - t.pausedAt;
+                t.pausedAt = null;
+            } else {
+                t.pausedAt = Date.now();
+            }
+            saveTimerState(t);
+            $('timerCircle').classList.toggle('paused', !!t.pausedAt);
+            $('btnPauseResume').textContent = t.pausedAt ? '▶ 繼續' : '⏸ 暫停';
+            tickTimer();
+        }
+        function completeEarly() {
+            const t = readTimerState();
+            if (!t) return;
+            const now = t.pausedAt ? t.pausedAt : Date.now();
+            const elapsedMs = now - t.startTs - t.totalPaused;
+            stopTimerLoop();
+            finishTimer(t, Math.floor(elapsedMs / 1000));
+        }
+        function giveUpChallenge() {
+            if (!confirm('確定要放棄這次挑戰嗎？不會獲得 EXP。')) return;
+            stopTimerLoop();
+            clearTimerState();
+            resetChallenge();
+        }
+        function fmtMSS(totalSec) {
+            const m = Math.floor(Math.max(0, totalSec) / 60);
+            const s = Math.floor(Math.max(0, totalSec) % 60);
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        // ============== ASSESSMENT + RESULTS ==============
+        let pendingAssessment = null;
+        function finishTimer(timer, actualSeconds) {
+            pendingAssessment = { timer: timer, actualSeconds: actualSeconds };
+            const meta = '實際時間：' + fmtMSS(actualSeconds) + '（目標 ' + timer.targetMinutes + ' 分鐘）';
+            $('assessMeta').textContent = meta;
+            const grid = $('assessGrid');
+            grid.innerHTML = '';
+            RATES.forEach(function(r) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'assess-btn';
+                btn.textContent = Math.round(r * 100) + '%';
+                btn.addEventListener('click', function() { applyAssessment(r); });
+                grid.appendChild(btn);
+            });
+            goStep(4);
+        }
+        function applyAssessment(rate) {
+            const pa = pendingAssessment;
+            if (!pa) return;
+            const t = pa.timer;
+            const expEarned = Math.floor(t.targetMinutes * 2 * t.difficulty.mult * rate);
+            const attrKey = t.attribute;
+            const before = levelFromExp(state.attributes[attrKey].totalExp);
+            state.attributes[attrKey].totalExp += expEarned;
+            const after = levelFromExp(state.attributes[attrKey].totalExp);
+            // Log entry
+            state.log.unshift({
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                date: todayStr(),
+                timestamp: Date.now(),
+                activity: t.activity,
+                attribute: attrKey,
+                difficulty: t.difficulty.key,
+                difficultyName: t.difficulty.name,
+                difficultyMult: t.difficulty.mult,
+                targetMinutes: t.targetMinutes,
+                actualSeconds: pa.actualSeconds,
+                completionRate: rate,
+                expEarned: expEarned
+            });
+            updateStreakOnCompletion();
+            saveState();
+            clearTimerState();
+            pendingAssessment = null;
+            showResults({ t: t, rate: rate, exp: expEarned, before: before, after: after, attrKey: attrKey });
+            // Level up!
+            if (after.level > before.level) {
+                setTimeout(function() { showLevelUp(attrKey, after.level); }, 400);
+            }
+            // Auto sync
+            if (localStorage.getItem(AUTO_SYNC_KEY) === '1' && localStorage.getItem(SYNC_URL_KEY)) {
+                syncPush().catch(function(e) { console.warn('Auto sync failed', e); });
+            }
+        }
+        function showResults(r) {
+            const a = ATTRS[r.attrKey];
+            const card = $('resultCard');
+            card.innerHTML =
+                '<div class="text-center" style="margin-bottom:0.5rem;">' +
+                    '<span style="font-size:1.6rem;">' + a.icon + '</span> ' +
+                    '<strong>' + r.t.activity + '</strong> · ' + a.name +
+                '</div>' +
+                '<div class="result-formula">' +
+                    r.t.targetMinutes + ' 分 × 2 × ' + r.t.difficulty.mult + ' × ' + Math.round(r.rate * 100) + '%' +
+                '</div>' +
+                '<div class="result-exp"><div class="num">+' + r.exp + '</div><div class="label">EXP</div></div>' +
+                '<div style="margin-top:0.5rem;">' +
+                    '<div style="display:flex;justify-content:space-between;font-size:0.9rem;">' +
+                        '<span>' + a.name + ' Lv.' + r.after.level + (r.after.level > r.before.level ? ' <span style="color:var(--gold);">↑</span>' : '') + '</span>' +
+                        '<span class="text-dim">' + r.after.into + ' / ' + r.after.need + ' EXP</span>' +
+                    '</div>' +
+                    '<div class="exp-bar" style="margin-top:0.4rem;"><div class="exp-bar-fill" style="width:' + (r.after.progress * 100).toFixed(1) + '%;background:' + a.color + ';"></div></div>' +
+                '</div>';
+            goStep(5);
+        }
+
+        // ============== LEVEL UP ==============
+        function showLevelUp(attrKey, newLevel) {
+            const a = ATTRS[attrKey];
+            $('levelUpAttr').textContent = a.icon + ' ' + a.name;
+            $('levelUpAttr').style.color = a.color;
+            $('levelUpLevel').textContent = 'Lv. ' + newLevel;
+            $('levelUpOverlay').classList.remove('hidden');
+            setTimeout(hideLevelUp, 2500);
+        }
+        function hideLevelUp() { $('levelUpOverlay').classList.add('hidden'); }
+
+        // ============== AUDIO / HAPTIC ==============
+        let audioCtx = null;
+        function playBeep() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination);
+                o.frequency.value = 880;
+                o.type = 'sine';
+                g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+                o.start();
+                o.stop(audioCtx.currentTime + 0.6);
+            } catch (e) { /* ignore */ }
+        }
+        function vibrate() { if (navigator.vibrate) navigator.vibrate(200); }
+        // ============== HISTORY ==============
+        function renderHistory() {
+            const list = $('historyList');
+            list.innerHTML = '';
+            if (!state.log.length) {
+                list.innerHTML = '<div class="history-empty">尚無挑戰記錄<br><span style="font-size:0.85rem;">開始你的第一場挑戰吧 🎯</span></div>';
+                return;
+            }
+            const groups = {};
+            state.log.forEach(function(e) {
+                const d = e.date || new Date(e.timestamp).toISOString().slice(0, 10);
+                if (!groups[d]) groups[d] = [];
+                groups[d].push(e);
+            });
+            const dates = Object.keys(groups).sort().reverse();
+            dates.forEach(function(d) {
+                const h = document.createElement('div');
+                h.className = 'history-date';
+                h.textContent = formatDate(d);
+                list.appendChild(h);
+                groups[d].forEach(function(e) {
+                    const a = ATTRS[e.attribute] || { icon: '•', color: '#888', name: '?' };
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    const mins = Math.round(e.actualSeconds / 60 * 10) / 10;
+                    item.innerHTML =
+                        '<div class="history-dot" style="background:' + a.color + '"></div>' +
+                        '<div class="history-info">' +
+                            '<div class="history-name">' + a.icon + ' ' + e.activity + '</div>' +
+                            '<div class="history-sub">' + a.name + ' · ' + e.difficultyName + ' · ' + mins + ' 分 · ' + Math.round(e.completionRate * 100) + '%</div>' +
+                        '</div>' +
+                        '<div class="history-exp">+' + e.expEarned + '</div>';
+                    list.appendChild(item);
+                });
+            });
+        }
+        function formatDate(iso) {
+            const today = todayStr();
+            const yest = dateAddDays(today, -1);
+            if (iso === today) return '今天 · ' + iso;
+            if (iso === yest) return '昨天 · ' + iso;
+            return iso;
+        }
+
+        // ============== SETTINGS ==============
+        function renderSettings() {
+            $('inputHeroName').value = state.character.name || '';
+            $('syncUrlInput').value = localStorage.getItem(SYNC_URL_KEY) || '';
+            $('autoSyncToggle').checked = localStorage.getItem(AUTO_SYNC_KEY) === '1';
+            renderCustomActivities();
+            renderCustomAttrOptions();
+        }
+        function renderCustomActivities() {
+            const list = $('customActivityList');
+            list.innerHTML = '';
+            if (!state.customActivities.length) {
+                list.innerHTML = '<div class="text-dim" style="font-size:0.85rem;padding:0.5rem 0;">尚無自訂活動</div>';
+                return;
+            }
+            state.customActivities.forEach(function(c) {
+                const a = ATTRS[c.attribute] || { icon: '•', name: '?', color: '#888' };
+                const row = document.createElement('div');
+                row.className = 'custom-activity-item';
+                row.innerHTML =
+                    '<span style="color:' + a.color + ';">' + a.icon + '</span>' +
+                    '<span class="name">' + c.name + '</span>' +
+                    '<span class="text-dim" style="font-size:0.8rem;">' + a.name + '</span>' +
+                    '<button type="button" class="del" data-id="' + c.id + '">刪除</button>';
+                row.querySelector('.del').addEventListener('click', function() { removeCustomActivity(c.id); });
+                list.appendChild(row);
+            });
+        }
+        function renderCustomAttrOptions() {
+            const sel = $('customAttrSelect');
+            sel.innerHTML = '';
+            ATTR_KEYS.forEach(function(k) {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = ATTRS[k].icon + ' ' + ATTRS[k].name;
+                sel.appendChild(opt);
+            });
+        }
+        function addCustomActivity() {
+            const name = $('customNameInput').value.trim();
+            const attr = $('customAttrSelect').value;
+            if (!name) { alert('請輸入活動名稱'); return; }
+            if (!ATTRS[attr]) { alert('請選擇屬性'); return; }
+            state.customActivities.push({
+                id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                name: name,
+                attribute: attr
+            });
+            saveState();
+            $('customNameInput').value = '';
+            renderCustomActivities();
+        }
+        function removeCustomActivity(id) {
+            state.customActivities = state.customActivities.filter(function(c) { return c.id !== id; });
+            saveState();
+            renderCustomActivities();
+        }
+
+        function exportJSON() {
+            const data = JSON.stringify(state, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hero-growth-' + todayStr() + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        function importJSON(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed.attributes || !parsed.character) throw new Error('Invalid file');
+                    if (!confirm('確定要匯入並覆蓋目前資料嗎？')) return;
+                    state = parsed;
+                    ATTR_KEYS.forEach(function(k) { if (!state.attributes[k]) state.attributes[k] = { totalExp: 0 }; });
+                    if (!state.customActivities) state.customActivities = [];
+                    if (!state.log) state.log = [];
+                    if (!state.streaks) state.streaks = { currentStreak: 0, longestStreak: 0, lastActiveDate: null };
+                    saveState();
+                    renderSettings();
+                    renderDashboard();
+                    alert('匯入成功！');
+                } catch (err) {
+                    alert('匯入失敗：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        function clearAllData() {
+            if (!confirm('這會清除所有資料（不可復原），確定嗎？')) return;
+            if (!confirm('最後確認：真的要清除嗎？')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(TIMER_KEY);
+            state = defaultState();
+            saveState();
+            renderSettings();
+            renderDashboard();
+            alert('已清除。');
+        }
+
+        // ============== GOOGLE SHEETS SYNC ==============
+        function showSyncStatus(msg, type) {
+            const el = $('syncStatus');
+            el.textContent = msg;
+            el.classList.remove('hidden', 'success', 'error');
+            if (type) el.classList.add(type);
+        }
+        function saveSyncConfig() {
+            const url = $('syncUrlInput').value.trim();
+            if (url) localStorage.setItem(SYNC_URL_KEY, url);
+            else localStorage.removeItem(SYNC_URL_KEY);
+            localStorage.setItem(AUTO_SYNC_KEY, $('autoSyncToggle').checked ? '1' : '0');
+        }
+        async function syncPush() {
+            saveSyncConfig();
+            const url = localStorage.getItem(SYNC_URL_KEY);
+            if (!url) { showSyncStatus('請先填入同步網址', 'error'); return; }
+            showSyncStatus('上傳中⋯');
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ data: state })
+                });
+                const json = await res.json();
+                if (json && json.ok) {
+                    showSyncStatus('✅ 上傳成功（' + new Date().toLocaleTimeString() + '）', 'success');
+                } else {
+                    showSyncStatus('上傳失敗：' + JSON.stringify(json), 'error');
+                }
+            } catch (e) {
+                showSyncStatus('上傳失敗：' + e.message, 'error');
+            }
+        }
+        async function syncPull() {
+            saveSyncConfig();
+            const url = localStorage.getItem(SYNC_URL_KEY);
+            if (!url) { showSyncStatus('請先填入同步網址', 'error'); return; }
+            if (!confirm('從雲端下載會覆蓋本地資料，確定嗎？')) return;
+            showSyncStatus('下載中⋯');
+            try {
+                const res = await fetch(url, { method: 'GET' });
+                const text = await res.text();
+                let parsed;
+                try { parsed = JSON.parse(text); } catch (e) { throw new Error('回傳不是有效 JSON'); }
+                // If response is the stored state directly
+                if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                if (!parsed || !parsed.attributes || !parsed.character) {
+                    showSyncStatus('雲端尚無資料', 'error'); return;
+                }
+                state = parsed;
+                ATTR_KEYS.forEach(function(k) { if (!state.attributes[k]) state.attributes[k] = { totalExp: 0 }; });
+                if (!state.customActivities) state.customActivities = [];
+                if (!state.log) state.log = [];
+                if (!state.streaks) state.streaks = { currentStreak: 0, longestStreak: 0, lastActiveDate: null };
+                saveState();
+                renderDashboard();
+                renderSettings();
+                showSyncStatus('✅ 下載成功，資料已更新', 'success');
+            } catch (e) {
+                showSyncStatus('下載失敗：' + e.message, 'error');
+            }
+        }
+        async function testSyncConnection() {
+            saveSyncConfig();
+            const url = localStorage.getItem(SYNC_URL_KEY);
+            if (!url) { showSyncStatus('請先填入同步網址', 'error'); return; }
+            showSyncStatus('測試中⋯');
+            try {
+                const res = await fetch(url, { method: 'GET' });
+                if (res.ok) showSyncStatus('✅ 連線成功（HTTP ' + res.status + '）', 'success');
+                else showSyncStatus('連線失敗（HTTP ' + res.status + '）', 'error');
+            } catch (e) {
+                showSyncStatus('連線失敗：' + e.message, 'error');
+            }
+        }
+
+        // ============== EVENT BINDING ==============
+        function bindEvents() {
+            bindTabBar();
+
+            // Challenge wizard
+            $('btnStartChallenge').addEventListener('click', startChallenge);
+            $$('[data-back]').forEach(function(b) {
+                b.addEventListener('click', function() { goStep(parseInt(b.dataset.back, 10)); });
+            });
+            $('btnPauseResume').addEventListener('click', pauseOrResume);
+            $('btnCompleteEarly').addEventListener('click', completeEarly);
+            $('btnGiveUp').addEventListener('click', giveUpChallenge);
+            $('btnBackToDash').addEventListener('click', function() {
+                resetChallenge();
+                switchTab('tabDashboard');
+            });
+
+            // Settings
+            $('inputHeroName').addEventListener('change', function(e) {
+                state.character.name = e.target.value.trim() || '英雄';
+                saveState();
+                renderDashboard();
+            });
+            $('btnAddCustom').addEventListener('click', addCustomActivity);
+            $('btnExport').addEventListener('click', exportJSON);
+            $('btnImport').addEventListener('click', function() { $('importFile').click(); });
+            $('importFile').addEventListener('change', function(e) {
+                if (e.target.files[0]) importJSON(e.target.files[0]);
+                e.target.value = '';
+            });
+            $('btnClearData').addEventListener('click', clearAllData);
+
+            // Sync
+            $('syncUrlInput').addEventListener('change', saveSyncConfig);
+            $('autoSyncToggle').addEventListener('change', saveSyncConfig);
+            $('btnTestSync').addEventListener('click', testSyncConnection);
+            $('btnSyncUp').addEventListener('click', syncPush);
+            $('btnSyncDown').addEventListener('click', syncPull);
+            $('btnCopyScript').addEventListener('click', function() {
+                const code = $('scriptCode').textContent;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(code).then(function() {
+                        $('btnCopyScript').textContent = '已複製！';
+                        setTimeout(function() { $('btnCopyScript').textContent = '複製'; }, 1500);
+                    });
+                } else {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = code; document.body.appendChild(ta); ta.select();
+                    try { document.execCommand('copy'); } catch (e) {}
+                    document.body.removeChild(ta);
+                    $('btnCopyScript').textContent = '已複製！';
+                    setTimeout(function() { $('btnCopyScript').textContent = '複製'; }, 1500);
+                }
+            });
+
+            // Level up tap to dismiss
+            $('levelUpOverlay').addEventListener('click', hideLevelUp);
+
+            // Visibility change (refresh timer display when coming back)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && readTimerState()) tickTimer();
+            });
+            // Window resize (redraw radar)
+            window.addEventListener('resize', function() {
+                if ($('tabDashboard').classList.contains('active')) drawRadar();
+            });
+        }
+
+        // ============== INIT ==============
+        function init() {
+            state = loadState();
+            refreshStreakOnLoad();
+            saveState();
+            renderAttrSelect();
+            bindEvents();
+            renderDashboard();
+            // Restore timer if active
+            const t = readTimerState();
+            if (t && t.startTs) {
+                enterTimerUI(t);
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
+</body>
+</html>
