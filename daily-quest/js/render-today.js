@@ -75,6 +75,8 @@ window.DQ = window.DQ || {};
             `;
             if (!isDone && !isPending) {
                 li.addEventListener('click', () => DQ.actions.completeTask(t));
+            } else if (isDone) {
+                attachLongPress(li, () => DQ.actions.uncompleteTask(t, logs[0]));
             }
             list.appendChild(li);
         }
@@ -89,6 +91,33 @@ window.DQ = window.DQ || {};
             badge.textContent = `${done} / ${total}`;
             badge.classList.toggle('full', total > 0 && done === total);
         }
+    }
+
+    function attachLongPress(el, handler) {
+        let timer = null;
+        let startX = 0, startY = 0;
+        const start = (x, y) => {
+            startX = x; startY = y;
+            timer = setTimeout(() => { timer = null; handler(); }, 550);
+            el.classList.add('pressing');
+        };
+        const cancel = () => {
+            if (timer) clearTimeout(timer);
+            timer = null;
+            el.classList.remove('pressing');
+        };
+        el.addEventListener('pointerdown', (e) => {
+            if (e.button && e.button !== 0) return;
+            start(e.clientX, e.clientY);
+        });
+        el.addEventListener('pointermove', (e) => {
+            if (!timer) return;
+            if (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8) cancel();
+        });
+        el.addEventListener('pointerup', cancel);
+        el.addEventListener('pointercancel', cancel);
+        el.addEventListener('pointerleave', cancel);
+        el.addEventListener('contextmenu', (e) => { e.preventDefault(); handler(); });
     }
 
     DQ.renderTodayTab = function () {

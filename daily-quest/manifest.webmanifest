@@ -1,0 +1,20 @@
+{
+  "name": "Daily Quest",
+  "short_name": "Daily Quest",
+  "description": "以 75 Hard 為靈感的每日任務打卡系統",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f0f",
+  "theme_color": "#5fcf88",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

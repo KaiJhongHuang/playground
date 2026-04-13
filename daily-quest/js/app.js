@@ -118,6 +118,18 @@ window.DQ = window.DQ || {};
         setTimeout(() => { el.classList.add('hidden'); el.innerHTML = ''; }, 2500);
     }
 
+    async function uncompleteTask(task, log) {
+        if (!log || !log.id) return;
+        if (!confirm(`取消「${task.name}」今天的打卡？`)) return;
+        try {
+            await DQ.api('uncomplete', { log_id: log.id });
+            state.logs = state.logs.filter(l => l.id !== log.id);
+            render();
+        } catch (err) {
+            alert('取消失敗：' + (err.message || err));
+        }
+    }
+
     async function startChallenge(hardcore) {
         try {
             await DQ.api('update_meta', {
@@ -147,7 +159,7 @@ window.DQ = window.DQ || {};
 
     function changeUrl() { showSetup(); }
 
-    DQ.actions = { completeTask, startChallenge, restartChallenge, stopChallenge, changeUrl };
+    DQ.actions = { completeTask, uncompleteTask, startChallenge, restartChallenge, stopChallenge, changeUrl };
 
     /* ---------- setup URL handlers ---------- */
 
