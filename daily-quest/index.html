@@ -13,7 +13,6 @@
     </header>
 
     <main>
-        <!-- 設定頁：首次使用或尚未設定 Apps Script URL 時顯示 -->
         <section id="setup" class="card setup hidden">
             <h2>初次設定</h2>
             <p>請貼上你的 Google Apps Script Web App URL。</p>
@@ -24,45 +23,138 @@
             <p><a class="demo-link" href="./demo.html">或先用假資料試用 demo →</a></p>
         </section>
 
-        <!-- 載入中 -->
         <section id="loading" class="card loading hidden">
             <p>載入中…</p>
         </section>
 
-        <!-- 主畫面 -->
-        <section id="today-section" class="card hidden">
-            <div class="card-header">
-                <h2>今日任務</h2>
-                <span id="today-progress" class="progress-badge">0 / 0</span>
-            </div>
-            <ul id="task-list" class="task-list"></ul>
-        </section>
+        <div id="main-view" class="hidden">
+            <nav class="tabs" role="tablist">
+                <button class="tab active" data-tab="today" role="tab">今日</button>
+                <button class="tab" data-tab="history" role="tab">歷史</button>
+                <button class="tab" data-tab="stats" role="tab">成就</button>
+            </nav>
 
-        <section id="history-section" class="card hidden">
-            <div class="card-header">
-                <h2>過往紀錄</h2>
-                <span class="muted" id="history-range"></span>
+            <div id="tab-today" class="tab-panel">
+                <section id="status-bar" class="status-bar"></section>
+                <section id="today-section" class="card">
+                    <div class="card-header">
+                        <h2>今日任務</h2>
+                        <span id="today-progress" class="progress-badge">0 / 0</span>
+                    </div>
+                    <ul id="task-list" class="task-list"></ul>
+                </section>
             </div>
-            <div id="history-table" class="history-table"></div>
-        </section>
+
+            <div id="tab-history" class="tab-panel hidden">
+                <section class="card">
+                    <div class="card-header">
+                        <h2>近期統計</h2>
+                    </div>
+                    <div id="stats-grid" class="stats-grid"></div>
+                </section>
+
+                <section class="card">
+                    <div class="card-header">
+                        <h2>熱力圖</h2>
+                        <span class="muted">近 26 週</span>
+                    </div>
+                    <div id="heatmap-wrap">
+                        <div id="heatmap" class="heatmap-grid"></div>
+                        <div class="heatmap-legend">
+                            <span class="muted">少</span>
+                            <span class="heatmap-cell lvl-0"></span>
+                            <span class="heatmap-cell lvl-1"></span>
+                            <span class="heatmap-cell lvl-2"></span>
+                            <span class="heatmap-cell lvl-3"></span>
+                            <span class="heatmap-cell lvl-4"></span>
+                            <span class="muted">多</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-header">
+                        <h2>單任務歷史</h2>
+                        <select id="task-select" class="task-select"></select>
+                    </div>
+                    <div id="task-history-chart" class="task-history-chart"></div>
+                </section>
+
+                <section class="card">
+                    <div class="card-header">
+                        <h2>過往紀錄</h2>
+                        <span class="muted" id="history-range"></span>
+                    </div>
+                    <div id="history-table" class="history-table"></div>
+                </section>
+            </div>
+
+            <div id="tab-stats" class="tab-panel hidden">
+                <section class="card">
+                    <div class="card-header">
+                        <h2>我的角色</h2>
+                    </div>
+                    <div id="character-card" class="character-card"></div>
+                </section>
+
+                <section id="challenge-card" class="card hidden">
+                    <div class="card-header">
+                        <h2 id="challenge-title">75 Hard 挑戰</h2>
+                        <span id="challenge-badge" class="progress-badge"></span>
+                    </div>
+                    <div id="challenge-body"></div>
+                </section>
+
+                <section class="card">
+                    <div class="card-header">
+                        <h2>成就</h2>
+                        <span id="achievements-count" class="muted"></span>
+                    </div>
+                    <div id="achievements-grid" class="achievements-grid"></div>
+                </section>
+            </div>
+        </div>
 
         <section id="footer-actions" class="footer-actions hidden">
             <button id="change-url" class="ghost">更換 Apps Script URL</button>
             <button id="refresh" class="ghost">重新整理</button>
+            <button id="open-settings" class="ghost">設定</button>
         </section>
 
-        <!-- 錯誤提示 -->
         <section id="error-box" class="card error-box hidden">
             <h2>發生錯誤</h2>
             <p id="error-msg"></p>
             <button id="error-retry" class="primary">重試</button>
         </section>
+
+        <!-- Settings modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-dialog card">
+                <div class="card-header">
+                    <h2>設定</h2>
+                    <button class="icon-btn" id="close-settings">✕</button>
+                </div>
+                <div id="settings-body"></div>
+            </div>
+        </div>
+
+        <!-- 完成全部任務的慶祝動畫 -->
+        <div id="celebrate" class="celebrate hidden" aria-hidden="true"></div>
     </main>
 
     <footer>
-        <p>Phase 1 MVP · <a href="../">← 回首頁</a></p>
+        <p><a href="../">← 回 Playground</a></p>
     </footer>
 
-    <script src="./app.js"></script>
+    <script src="./js/util.js"></script>
+    <script src="./js/state.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/game.js"></script>
+    <script src="./js/render-today.js"></script>
+    <script src="./js/render-history.js"></script>
+    <script src="./js/render-stats.js"></script>
+    <script src="./js/settings.js"></script>
+    <script src="./js/app.js"></script>
 </body>
 </html>

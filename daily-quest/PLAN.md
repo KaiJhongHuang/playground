@@ -172,10 +172,10 @@ playground/
 
 - [x] Phase 0 — 規劃（本文件）
 - [x] Phase 1 — MVP
-- [ ] Phase 2 — 歷史視覺化
-- [ ] Phase 3 — 遊戲化基礎
-- [ ] Phase 4 — 75 Hard 挑戰 + 成就
-- [ ] Phase 5 — 設定頁 + 體驗打磨
+- [x] Phase 2 — 歷史視覺化
+- [x] Phase 3 — 遊戲化基礎
+- [x] Phase 4 — 75 Hard 挑戰 + 成就
+- [x] Phase 5 — 設定頁 + 體驗打磨
 
 # 預設值
 

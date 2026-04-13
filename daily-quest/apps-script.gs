@@ -42,6 +42,22 @@ function doGet(e) {
     if (action === 'logs') {
       return json_({ logs: logsBetween_(e.parameter.from, e.parameter.to) });
     }
+    if (action === 'uncomplete') {
+      return json_(uncomplete_(e.parameter.log_id));
+    }
+    if (action === 'update_task') {
+      return json_(updateTask_({
+        id: e.parameter.id,
+        name: e.parameter.name,
+        icon: e.parameter.icon,
+        xp: Number(e.parameter.xp) || 0,
+        active: String(e.parameter.active).toLowerCase() !== 'false',
+        order: Number(e.parameter.order) || 0,
+      }));
+    }
+    if (action === 'update_meta') {
+      return json_(updateMeta_(e.parameter));
+    }
     return json_({ error: 'unknown action: ' + action });
   } catch (err) {
     return json_({ error: String((err && err.message) || err) });
@@ -158,6 +174,59 @@ function logsBetween_(from, to) {
   const f = from || '0000-00-00';
   const t = to || '9999-99-99';
   return readSheet_(SHEETS.LOGS).map(normalizeLogRow_).filter(l => l.date >= f && l.date <= t);
+}
+
+function uncomplete_(logId) {
+  if (!logId) throw new Error('log_id required');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEETS.LOGS);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(logId)) {
+      sh.deleteRow(i + 1);
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: 'not found' };
+}
+
+function updateTask_(task) {
+  if (!task.id) throw new Error('id required');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEETS.TASKS);
+  const data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(task.id)) {
+      sh.getRange(i + 1, 1, 1, TASKS_HEADER.length).setValues([[
+        task.id, task.name || '', task.icon || '', task.xp || 0, !!task.active, task.order || 0,
+      ]]);
+      return { ok: true, task };
+    }
+  }
+  sh.appendRow([task.id, task.name || '', task.icon || '', task.xp || 0, !!task.active, task.order || 0]);
+  return { ok: true, task, created: true };
+}
+
+function updateMeta_(params) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEETS.META);
+  const data = sh.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < data.length; i++) map[String(data[i][0])] = i + 1;
+
+  const writable = ['challenge_start', 'challenge_length', 'hardcore'];
+  for (const key of writable) {
+    if (params[key] === undefined) continue;
+    let value = params[key];
+    if (key === 'challenge_length') value = Number(value) || 75;
+    if (key === 'hardcore') value = String(value).toLowerCase() === 'true';
+    if (map[key]) {
+      sh.getRange(map[key], 2).setValue(value);
+    } else {
+      sh.appendRow([key, value]);
+    }
+  }
+  return { ok: true };
 }
 
 /* ---------- util ---------- */

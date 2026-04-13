@@ -117,6 +117,37 @@
             const to = params.to || '9999-99-99';
             return { logs: s.logs.filter(l => l.date >= from && l.date <= to) };
         }
+        if (action === 'uncomplete') {
+            s.logs = s.logs.filter(l => l.id !== params.log_id);
+            saveState(s);
+            return { ok: true };
+        }
+        if (action === 'update_task') {
+            const t = {
+                id: params.id,
+                name: params.name || '',
+                icon: params.icon || '',
+                xp: Number(params.xp) || 0,
+                active: String(params.active).toLowerCase() !== 'false',
+                order: Number(params.order) || 0,
+            };
+            const i = s.tasks.findIndex(x => x.id === t.id);
+            if (i >= 0) s.tasks[i] = t; else s.tasks.push(t);
+            saveState(s);
+            return { ok: true, task: t };
+        }
+        if (action === 'update_meta') {
+            const writable = ['challenge_start', 'challenge_length', 'hardcore'];
+            for (const k of writable) {
+                if (params[k] === undefined) continue;
+                let v = params[k];
+                if (k === 'challenge_length') v = Number(v) || 75;
+                if (k === 'hardcore') v = String(v).toLowerCase() === 'true';
+                s.meta[k] = v;
+            }
+            saveState(s);
+            return { ok: true };
+        }
         throw new Error('demo: unknown action ' + action);
     };
 })();
