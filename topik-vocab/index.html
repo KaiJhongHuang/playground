@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPIK 초급 단어장</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=Gaegu:wght@400;700&display=swap');
+
+:root{
+  --paper:#fbfbf6;
+  --grid:#e2e9f2;
+  --ink:#22344f;
+  --ink-soft:#5b6b85;
+  --red:#c0392b;
+  --red-soft:#e9c6c1;
+  --green:#3f7a54;
+  --highlight:#f2d57e;
+  --card-bg:#ffffff;
+  --radius:12px;
+  --shadow:0 4px 16px rgba(34,52,79,0.10);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  color:var(--ink);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 31px, var(--grid) 31px 32px),
+    var(--paper);
+  min-height:100vh;
+}
+button{font-family:inherit;cursor:pointer;}
+.app{display:flex;min-height:100vh;max-width:1160px;margin:0 auto;}
+
+/* ---------- sidebar tabs ---------- */
+.tabs{
+  width:150px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  gap:10px;
+  padding:28px 0 28px 18px;
+}
+.tab-btn{
+  position:relative;
+  background:#eef1f6;
+  color:var(--ink-soft);
+  border:1px solid #dbe1ea;
+  border-right:none;
+  border-radius:10px 0 0 10px;
+  padding:14px 10px 14px 16px;
+  font-size:14px;
+  font-weight:700;
+  text-align:left;
+  letter-spacing:.02em;
+  transition:transform .15s ease, background .15s ease, color .15s ease;
+}
+.tab-btn .sub{display:block;font-weight:400;font-size:11px;color:var(--ink-soft);margin-top:2px;font-family:'Noto Sans KR';}
+.tab-btn.active{
+  background:var(--card-bg);
+  color:var(--ink);
+  border-color:#e4e4e0;
+  transform:translateX(10px);
+  box-shadow:var(--shadow);
+}
+.tab-btn.active .sub{color:var(--ink-soft);}
+.tab-btn:not(.active):hover{background:#e5e9f0;transform:translateX(3px);}
+.tab-badge{
+  display:inline-block;margin-left:6px;
+  background:var(--red);color:#fff;font-size:10px;font-weight:700;
+  border-radius:8px;padding:1px 6px;vertical-align:middle;
+}
+
+/* ---------- page ---------- */
+.page{
+  flex:1;
+  background:var(--card-bg);
+  border-radius:0 10px 10px 10px;
+  box-shadow:var(--shadow);
+  margin:28px 24px 28px 0;
+  position:relative;
+  padding:34px 40px 40px 54px;
+  min-height:80vh;
+  overflow:hidden;
+}
+.page::before{
+  content:"";position:absolute;left:34px;top:0;bottom:0;width:2px;background:var(--red-soft);
+}
+.page::after{
+  content:"";position:absolute;left:22px;top:0;bottom:0;width:14px;
+  background-image:radial-gradient(circle at 7px 0, transparent 5px, var(--card-bg) 5.5px);
+  background-size:14px 32px; background-repeat:repeat-y;
+}
+
+.masthead{display:flex;align-items:center;gap:18px;margin-bottom:22px;flex-wrap:wrap;}
+.stamp{
+  width:66px;height:66px;border-radius:50%;
+  border:3px solid var(--red);
+  color:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Gaegu',cursive;font-weight:700;font-size:13px;line-height:1.15;
+  text-align:center;transform:rotate(-9deg);
+  flex-shrink:0;
+  box-shadow:inset 0 0 0 3px rgba(192,57,43,0.15);
+}
+h1{
+  font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:26px;margin:0 0 4px;color:var(--ink);
+}
+.subtitle{font-size:13px;color:var(--ink-soft);margin:0;}
+.stats-bar{margin-left:auto;display:flex;gap:14px;flex-wrap:wrap;}
+.stat-pill{
+  background:#f4f6fa;border:1px solid #e2e7ef;border-radius:20px;
+  padding:6px 14px;font-size:12px;color:var(--ink-soft);font-weight:500;
+}
+.stat-pill b{color:var(--ink);font-size:14px;}
+
+.view-section{display:none;}
+.view-section.active{display:block;}
+
+/* ---------- chips ---------- */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.chip{
+  background:#f4f6fa;border:1px solid #e2e7ef;color:var(--ink-soft);
+  border-radius:16px;padding:6px 14px;font-size:13px;font-weight:500;
+}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+/* ---------- search ---------- */
+.search-input{
+  width:100%;max-width:320px;padding:9px 14px;border-radius:8px;border:1px solid #dbe1ea;
+  font-size:14px;margin-bottom:16px;font-family:inherit;background:#fafbfc;
+}
+
+/* ---------- word cards (study) ---------- */
+.word-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.word-card{
+  background:#fdfdfb;border:1px solid #ececE6;border-radius:var(--radius);
+  padding:16px 16px 14px;position:relative;
+}
+.pos-tag{
+  display:inline-block;background:var(--highlight);color:#5a4a12;
+  font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;margin-bottom:8px;
+}
+.kr-word{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:22px;margin:0 0 2px;display:inline-flex;align-items:center;gap:6px;}
+.spk-btn{
+  border:none;background:#eef1f6;color:var(--ink);border-radius:50%;
+  width:22px;height:22px;font-size:11px;line-height:1;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  vertical-align:middle;transition:background .15s ease, transform .1s ease;
+}
+.spk-btn:hover{background:var(--highlight);}
+.spk-btn:active{transform:scale(0.9);}
+.spk-btn.big{width:32px;height:32px;font-size:15px;}
+.spk-btn.inline-sm{width:18px;height:18px;font-size:9px;margin-left:4px;}
+.ex-kr{font-size:13px;color:var(--ink);display:flex;align-items:flex-start;gap:5px;}
+.zh-word{font-size:14px;color:var(--ink-soft);font-weight:700;margin:0 0 10px;}
+.ex-block{border-top:1px dashed #e2e2da;padding-top:8px;margin-top:6px;}
+.ex-zh{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+.star-btn{
+  position:absolute;top:12px;right:12px;border:none;background:none;font-size:17px;
+  color:#d8dbe2;
+}
+.star-btn.on{color:var(--red);}
+
+/* ---------- flashcards ---------- */
+.flash-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.select-basic{padding:8px 10px;border-radius:8px;border:1px solid #dbe1ea;font-family:inherit;font-size:13px;background:#fafbfc;}
+.ghost-btn{background:#f4f6fa;border:1px solid #e2e7ef;border-radius:8px;padding:8px 14px;font-size:13px;color:var(--ink-soft);font-weight:600;}
+.ghost-btn.active-on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.flash-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding:10px 0 20px;}
+.flash-counter{font-size:12px;color:var(--ink-soft);}
+.resume-tag{color:var(--red);font-family:'Gaegu';font-size:13px;}
+.review-flag{color:#c98a1d;font-size:0.7em;margin:0 2px;vertical-align:super;}
+.flash-card{
+  width:100%;max-width:420px;min-height:230px;border-radius:16px;
+  background:linear-gradient(180deg,#ffffff, #fbfbf8);
+  border:1px solid #e7e7e0;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px;text-align:center;cursor:pointer;user-select:none;
+}
+.flash-card .fc-pos{position:absolute;}
+.flash-front .fc-kr{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:36px;display:inline-flex;align-items:center;gap:8px;}
+.ex-line{display:inline-flex;align-items:center;gap:5px;}
+.flash-hint{font-size:11px;color:#b7bdc9;margin-top:14px;}
+.flash-back .fc-zh{font-size:22px;font-weight:700;}
+.flash-back .fc-ex{margin-top:16px;border-top:1px dashed #e2e2da;padding-top:12px;font-size:14px;color:var(--ink);}
+.flash-back .fc-exzh{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.flash-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.nav-btn{background:#eef1f6;border:1px solid #dbe1ea;border-radius:8px;padding:10px 16px;font-weight:600;font-size:13px;color:var(--ink);}
+.know-btn{background:#eaf3ec;border:1px solid #bfe0c8;color:var(--green);border-radius:8px;padding:10px 18px;font-weight:700;font-size:13px;}
+.dontknow-btn{background:#faeceb;border:1px solid #edc3bd;color:var(--red);border-radius:8px;padding:10px 18px;font-weight:700;font-size:13px;}
+.empty-msg{color:var(--ink-soft);font-size:14px;padding:30px 0;text-align:center;font-family:'Gaegu';font-size:16px;}
+
+/* ---------- quiz ---------- */
+.quiz-setup{max-width:460px;}
+.field-row{margin-bottom:16px;}
+.field-row label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
+.radio-row{display:flex;gap:16px;font-size:13px;}
+.primary-btn{
+  background:var(--ink);color:#fff;border:none;border-radius:8px;padding:12px 22px;font-weight:700;font-size:14px;
+}
+.primary-btn:hover{background:#2c4266;}
+.quiz-progress{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+.progress-track{height:6px;background:#eef1f6;border-radius:4px;overflow:hidden;margin-bottom:22px;}
+.progress-fill{height:100%;background:var(--ink);transition:width .25s ease;}
+.quiz-question{
+  font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:28px;text-align:center;
+  padding:26px 10px;margin-bottom:6px;
+}
+.quiz-question.zh-mode{font-family:'Noto Sans KR';font-size:22px;}
+.quiz-question{display:flex;align-items:center;justify-content:center;gap:10px;}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px;margin:0 auto;}
+.opt-btn{
+  background:#fdfdfb;border:2px solid #ececE6;border-radius:10px;padding:14px 10px;font-size:15px;font-weight:600;
+  color:var(--ink);text-align:center;
+}
+.opt-btn:disabled{cursor:default;}
+.opt-btn.correct{background:#eaf3ec;border-color:var(--green);color:var(--green);}
+.opt-btn.wrong{background:#faeceb;border-color:var(--red);color:var(--red);}
+.quiz-footer{display:flex;justify-content:center;margin-top:26px;}
+.result-wrap{text-align:center;padding:10px 0;}
+.result-score{font-family:'Nanum Myeongjo',serif;font-size:42px;font-weight:800;}
+.result-note{font-family:'Gaegu';font-size:16px;color:var(--red);margin-top:4px;}
+.result-wrongs{margin:22px auto 8px;max-width:440px;text-align:left;}
+.result-wrongs .rw-item{
+  display:flex;justify-content:space-between;border-bottom:1px dashed #e2e2da;padding:8px 4px;font-size:14px;
+}
+.result-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+
+/* ---------- wrong notebook ---------- */
+.wb-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.wb-list{display:flex;flex-direction:column;gap:12px;}
+.wb-item{
+  display:flex;align-items:center;gap:16px;background:#fdfdfb;border:1px solid #ececE6;border-radius:10px;padding:14px 16px;
+}
+.wb-kr{font-family:'Nanum Myeongjo',serif;font-weight:800;font-size:20px;width:110px;flex-shrink:0;}
+.wb-zh-wrap{position:relative;display:inline-flex;align-items:center;padding:2px 10px;}
+.wb-zh-wrap::before{
+  content:"";position:absolute;inset:-2px -6px;border:2px solid var(--red);border-radius:50%;
+  transform:rotate(-3deg);
+}
+.wb-zh{font-size:14px;font-weight:700;color:var(--ink);position:relative;}
+.wb-count{font-family:'Gaegu';color:var(--red);font-size:13px;margin-left:auto;flex-shrink:0;}
+.wb-remove{background:none;border:1px solid #dbe1ea;border-radius:6px;padding:6px 10px;font-size:12px;color:var(--ink-soft);flex-shrink:0;}
+.wb-note{font-family:'Gaegu';color:var(--red);font-size:15px;transform:rotate(-2deg);}
+
+@media (max-width:760px){
+  .app{flex-direction:column;}
+  .tabs{flex-direction:row;overflow-x:auto;width:100%;padding:16px 14px;gap:8px;}
+  .tab-btn{border-radius:10px;border-right:1px solid #dbe1ea;flex-shrink:0;}
+  .tab-btn.active{transform:translateY(-3px);}
+  .page{margin:0 14px 20px;padding:26px 20px 30px 34px;}
+  .quiz-options{grid-template-columns:1fr;}
+  .stats-bar{margin-left:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="study" onclick="setView('study')">📖 단어 학습<span class="sub">學習</span></button>
+    <button class="tab-btn" data-view="flashcards" onclick="setView('flashcards')">🗂️ 단어 카드<span class="sub">單字卡複習</span></button>
+    <button class="tab-btn" data-view="quiz" onclick="setView('quiz')">✏️ 실력 테스트<span class="sub">測驗</span></button>
+    <button class="tab-btn" data-view="wrongbook" onclick="setView('wrongbook')">📕 오답노트<span class="sub" id="wb-tab-sub">錯題本</span></button>
+  </nav>
+
+  <main class="page">
+    <div class="masthead">
+      <div class="stamp">TOPIK<br>초급</div>
+      <div>
+        <h1>초급 단어장</h1>
+        <p class="subtitle">TOPIK 初級核心單字．韓中對照．例句．測驗與錯題複習</p>
+      </div>
+      <div class="stats-bar" id="stats-bar"></div>
+    </div>
+
+    <!-- STUDY -->
+    <section class="view-section active" id="view-study">
+      <input class="search-input" id="study-search" placeholder="단어 검색 (한국어 또는 중국어)　搜尋單字" oninput="setStudyQuery(this.value)">
+      <div class="chip-row" id="study-chips"></div>
+      <div class="word-grid" id="study-cards"></div>
+    </section>
+
+    <!-- FLASHCARDS -->
+    <section class="view-section" id="view-flashcards">
+      <div class="flash-toolbar">
+        <select class="select-basic" id="flash-cat-select" onchange="startFlash(this.value)"></select>
+        <button class="ghost-btn" id="flash-shuffle-btn" onclick="toggleFlashShuffle()">🔀 무작위 섞기</button>
+        <button class="ghost-btn" onclick="resetFlash()">↺ 처음부터 다시 · 重新開始</button>
+      </div>
+      <div id="flash-area"></div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="view-section" id="view-quiz">
+      <div id="quiz-area"></div>
+    </section>
+
+    <!-- WRONG BOOK -->
+    <section class="view-section" id="view-wrongbook">
+      <div id="wrongbook-area"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* 靜態網站用的 storage 墊片：原本依賴 Claude artifact 的 window.storage，
+   這裡改用 localStorage，讓學習進度可以存在瀏覽器裡。 */
+if(!window.storage){
+  window.storage = {
+    async get(key){
+      try{ const v = localStorage.getItem(key); return v===null ? null : {value:v}; }
+      catch(e){ return null; }
+    },
+    async set(key, value){
+      try{ localStorage.setItem(key, value); }catch(e){ console.error('save failed', e); }
+    }
+  };
+}
+</script>
+<script>
+/* ================= DATA ================= */
+const WORDS = [{"id":1,"cat":"greet","pos":"표현","kr":"안녕하세요","zh":"你好","ex":"안녕하세요, 처음 뵙겠습니다.","exZh":"你好,初次見面。","tpl":null},{"id":2,"cat":"greet","pos":"표현","kr":"감사합니다","zh":"謝謝","ex":"도와주셔서 감사합니다.","exZh":"謝謝你的幫忙。","tpl":null},{"id":3,"cat":"greet","pos":"표현","kr":"죄송합니다","zh":"抱歉","ex":"늦어서 죄송합니다.","exZh":"抱歉我遲到了。","tpl":null},{"id":4,"cat":"greet","pos":"감탄사","kr":"네","zh":"是、對","ex":"네, 맞습니다.","exZh":"對,沒錯。","tpl":null},{"id":5,"cat":"greet","pos":"감탄사","kr":"아니요","zh":"不是","ex":"아니요, 그건 제 것이 아니에요.","exZh":"不,那不是我的。","tpl":null},{"id":6,"cat":"greet","pos":"표현","kr":"안녕히 가세요","zh":"慢走、再見","ex":"안녕히 가세요, 다음에 또 봐요.","exZh":"慢走,下次見。","tpl":null},{"id":7,"cat":"greet","pos":"표현","kr":"반갑습니다","zh":"很高興(見面)","ex":"만나서 반갑습니다.","exZh":"很高興認識你。","tpl":null},{"id":8,"cat":"greet","pos":"감탄사","kr":"여기요","zh":"(叫人時)這裡","ex":"여기요, 물 좀 주세요.","exZh":"這裡,請給我水。","tpl":null},{"id":9,"cat":"greet","pos":"형용사","kr":"괜찮아요","zh":"沒關係、還好","ex":"괜찮아요, 걱정하지 마세요.","exZh":"沒關係,別擔心。","tpl":null},{"id":10,"cat":"greet","pos":"부사","kr":"잠깐만요","zh":"等一下","ex":"잠깐만요, 금방 갈게요.","exZh":"等一下,我馬上到。","tpl":null},{"id":11,"cat":"family","pos":"명사","kr":"가족","zh":"家人","ex":"우리 가족은 네 명입니다.","exZh":"我們家有四個人。","tpl":null},{"id":12,"cat":"family","pos":"명사","kr":"아버지","zh":"爸爸","ex":"아버지는 회사원입니다.","exZh":"爸爸是上班族。","tpl":null},{"id":13,"cat":"family","pos":"명사","kr":"어머니","zh":"媽媽","ex":"어머니는 요리를 잘하십니다.","exZh":"媽媽很會做菜。","tpl":null},{"id":14,"cat":"family","pos":"명사","kr":"형","zh":"哥哥(男生用)","ex":"저는 형이 한 명 있습니다.","exZh":"我有一個哥哥。","tpl":null},{"id":15,"cat":"family","pos":"명사","kr":"오빠","zh":"哥哥(女生用)","ex":"오빠는 대학생입니다.","exZh":"哥哥是大學生。","tpl":null},{"id":16,"cat":"family","pos":"명사","kr":"언니","zh":"姐姐(女生用)","ex":"언니는 저보다 세 살 많습니다.","exZh":"姐姐比我大三歲。","tpl":null},{"id":17,"cat":"family","pos":"명사","kr":"누나","zh":"姐姐(男生用)","ex":"누나는 병원에서 일합니다.","exZh":"姐姐在醫院工作。","tpl":null},{"id":18,"cat":"family","pos":"명사","kr":"동생","zh":"弟弟/妹妹","ex":"제 동생은 초등학생입니다.","exZh":"我弟妹是小學生。","tpl":null},{"id":19,"cat":"family","pos":"명사","kr":"아들","zh":"兒子","ex":"아들이 벌써 스무 살이에요.","exZh":"兒子已經二十歲了。","tpl":null},{"id":20,"cat":"family","pos":"명사","kr":"딸","zh":"女兒","ex":"딸이 그림을 잘 그립니다.","exZh":"女兒很會畫畫。","tpl":null},{"id":21,"cat":"family","pos":"명사","kr":"할아버지","zh":"爺爺","ex":"할아버지는 매일 산책하십니다.","exZh":"爺爺每天都散步。","tpl":null},{"id":22,"cat":"family","pos":"명사","kr":"할머니","zh":"奶奶","ex":"할머니 댁은 부산에 있습니다.","exZh":"奶奶家在釜山。","tpl":null},{"id":23,"cat":"food","pos":"명사","kr":"밥","zh":"飯","ex":"아침에 밥을 먹었어요.","exZh":"早上吃了飯。","tpl":null},{"id":24,"cat":"food","pos":"명사","kr":"김치","zh":"泡菜","ex":"김치는 조금 맵습니다.","exZh":"泡菜有點辣。","tpl":null},{"id":25,"cat":"food","pos":"명사","kr":"물","zh":"水","ex":"물 좀 주세요.","exZh":"請給我水。","tpl":null},{"id":26,"cat":"food","pos":"명사","kr":"과일","zh":"水果","ex":"저는 과일을 좋아합니다.","exZh":"我喜歡水果。","tpl":null},{"id":27,"cat":"food","pos":"명사","kr":"사과","zh":"蘋果","ex":"사과 두 개를 샀어요.","exZh":"我買了兩顆蘋果。","tpl":null},{"id":28,"cat":"food","pos":"명사","kr":"고기","zh":"肉","ex":"저녁에 고기를 먹었어요.","exZh":"晚上吃了肉。","tpl":null},{"id":29,"cat":"food","pos":"명사","kr":"야채","zh":"蔬菜","ex":"야채를 많이 드세요.","exZh":"請多吃蔬菜。","tpl":null},{"id":30,"cat":"food","pos":"명사","kr":"빵","zh":"麵包","ex":"아침에 빵을 먹습니다.","exZh":"早上吃麵包。","tpl":null},{"id":31,"cat":"food","pos":"명사","kr":"우유","zh":"牛奶","ex":"우유 한 잔 주세요.","exZh":"請給我一杯牛奶。","tpl":null},{"id":32,"cat":"food","pos":"명사","kr":"커피","zh":"咖啡","ex":"저는 매일 커피를 마셔요.","exZh":"我每天喝咖啡。","tpl":null},{"id":33,"cat":"food","pos":"명사","kr":"라면","zh":"泡麵","ex":"라면이 정말 맛있어요.","exZh":"泡麵真的很好吃。","tpl":null},{"id":34,"cat":"food","pos":"명사","kr":"계란","zh":"雞蛋","ex":"계란을 두 개 삶았어요.","exZh":"我煮了兩顆雞蛋。","tpl":null},{"id":35,"cat":"place","pos":"명사","kr":"학교","zh":"學校","ex":"저는 매일 학교에 갑니다.","exZh":"我每天去學校。","tpl":null},{"id":36,"cat":"place","pos":"명사","kr":"회사","zh":"公司","ex":"아버지는 회사에서 일합니다.","exZh":"爸爸在公司上班。","tpl":null},{"id":37,"cat":"place","pos":"명사","kr":"집","zh":"家","ex":"저는 집에서 쉬었어요.","exZh":"我在家休息了。","tpl":null},{"id":38,"cat":"place","pos":"명사","kr":"병원","zh":"醫院","ex":"병원에 가서 진료를 받았어요.","exZh":"去醫院看了病。","tpl":null},{"id":39,"cat":"place","pos":"명사","kr":"은행","zh":"銀行","ex":"은행에서 돈을 찾았어요.","exZh":"在銀行領了錢。","tpl":null},{"id":40,"cat":"place","pos":"명사","kr":"시장","zh":"市場","ex":"시장에서 과일을 샀어요.","exZh":"在市場買了水果。","tpl":null},{"id":41,"cat":"place","pos":"명사","kr":"편의점","zh":"便利商店","ex":"편의점에서 물을 샀어요.","exZh":"在便利商店買了水。","tpl":null},{"id":42,"cat":"place","pos":"명사","kr":"공항","zh":"機場","ex":"공항에서 친구를 만났어요.","exZh":"在機場見了朋友。","tpl":null},{"id":43,"cat":"place","pos":"명사","kr":"지하철역","zh":"地鐵站","ex":"지하철역이 아주 가까워요.","exZh":"地鐵站很近。","tpl":null},{"id":44,"cat":"place","pos":"명사","kr":"식당","zh":"餐廳","ex":"식당에서 점심을 먹었어요.","exZh":"在餐廳吃了午餐。","tpl":null},{"id":45,"cat":"time","pos":"명사","kr":"오늘","zh":"今天","ex":"오늘은 날씨가 좋아요.","exZh":"今天天氣很好。","tpl":null},{"id":46,"cat":"time","pos":"명사","kr":"내일","zh":"明天","ex":"내일 다시 만나요.","exZh":"明天再見面吧。","tpl":null},{"id":47,"cat":"time","pos":"명사","kr":"어제","zh":"昨天","ex":"어제는 바빴어요.","exZh":"昨天很忙。","tpl":null},{"id":48,"cat":"time","pos":"명사","kr":"지금","zh":"現在","ex":"지금 몇 시예요?","exZh":"現在幾點?","tpl":null},{"id":49,"cat":"time","pos":"명사","kr":"아침","zh":"早上","ex":"아침에 운동을 해요.","exZh":"早上運動。","tpl":null},{"id":50,"cat":"time","pos":"명사","kr":"점심","zh":"中午","ex":"점심에 뭐 먹을까요?","exZh":"中午要吃什麼呢?","tpl":null},{"id":51,"cat":"time","pos":"명사","kr":"저녁","zh":"晚上","ex":"저녁에 텔레비전을 봐요.","exZh":"晚上看電視。","tpl":null},{"id":52,"cat":"time","pos":"명사","kr":"시간","zh":"時間","ex":"시간이 없어요.","exZh":"沒有時間。","tpl":null},{"id":53,"cat":"time","pos":"명사","kr":"주말","zh":"週末","ex":"주말에 뭐 하세요?","exZh":"週末要做什麼?","tpl":null},{"id":54,"cat":"time","pos":"명사","kr":"요일","zh":"星期","ex":"오늘은 무슨 요일이에요?","exZh":"今天星期幾?","tpl":null},{"id":55,"cat":"verb","pos":"동사","kr":"가다","zh":"去","ex":"학교에 가요.","exZh":"去學校。","tpl":null},{"id":56,"cat":"verb","pos":"동사","kr":"오다","zh":"來","ex":"친구가 집에 와요.","exZh":"朋友來家裡。","tpl":null},{"id":57,"cat":"verb","pos":"동사","kr":"먹다","zh":"吃","ex":"밥을 먹어요.","exZh":"吃飯。","tpl":null},{"id":58,"cat":"verb","pos":"동사","kr":"마시다","zh":"喝","ex":"물을 마셔요.","exZh":"喝水。","tpl":null},{"id":59,"cat":"verb","pos":"동사","kr":"자다","zh":"睡覺","ex":"일찍 자요.","exZh":"早點睡。","tpl":null},{"id":60,"cat":"verb","pos":"동사","kr":"일어나다","zh":"起床","ex":"아침 일곱 시에 일어나요.","exZh":"早上七點起床。","tpl":null},{"id":61,"cat":"verb","pos":"동사","kr":"공부하다","zh":"學習","ex":"한국어를 공부해요.","exZh":"學習韓語。","tpl":null},{"id":62,"cat":"verb","pos":"동사","kr":"일하다","zh":"工作","ex":"저는 회사에서 일해요.","exZh":"我在公司工作。","tpl":null},{"id":63,"cat":"verb","pos":"동사","kr":"사다","zh":"買","ex":"옷을 샀어요.","exZh":"買了衣服。","tpl":null},{"id":64,"cat":"verb","pos":"동사","kr":"팔다","zh":"賣","ex":"시장에서 과일을 팔아요.","exZh":"在市場賣水果。","tpl":null},{"id":65,"cat":"verb","pos":"동사","kr":"읽다","zh":"讀","ex":"책을 읽어요.","exZh":"讀書。","tpl":null},{"id":66,"cat":"verb","pos":"동사","kr":"쓰다","zh":"寫","ex":"편지를 써요.","exZh":"寫信。","tpl":null},{"id":67,"cat":"verb","pos":"동사","kr":"듣다","zh":"聽","ex":"음악을 들어요.","exZh":"聽音樂。","tpl":null},{"id":68,"cat":"verb","pos":"동사","kr":"말하다","zh":"說","ex":"천천히 말해 주세요.","exZh":"請慢慢說。","tpl":null},{"id":69,"cat":"verb","pos":"동사","kr":"보다","zh":"看","ex":"영화를 봐요.","exZh":"看電影。","tpl":null},{"id":70,"cat":"verb","pos":"동사","kr":"만나다","zh":"見面","ex":"친구를 만나요.","exZh":"和朋友見面。","tpl":null},{"id":71,"cat":"verb","pos":"동사","kr":"살다","zh":"住、生活","ex":"저는 서울에 살아요.","exZh":"我住在首爾。","tpl":null},{"id":72,"cat":"verb","pos":"동사","kr":"좋아하다","zh":"喜歡","ex":"저는 커피를 좋아해요.","exZh":"我喜歡咖啡。","tpl":null},{"id":73,"cat":"adj","pos":"형용사","kr":"크다","zh":"大","ex":"이 가방은 커요.","exZh":"這個包包很大。","tpl":null},{"id":74,"cat":"adj","pos":"형용사","kr":"작다","zh":"小","ex":"신발이 작아요.","exZh":"鞋子很小。","tpl":null},{"id":75,"cat":"adj","pos":"형용사","kr":"많다","zh":"多","ex":"사람이 많아요.","exZh":"人很多。","tpl":null},{"id":76,"cat":"adj","pos":"형용사","kr":"적다","zh":"少","ex":"시간이 적어요.","exZh":"時間很少。","tpl":null},{"id":77,"cat":"adj","pos":"형용사","kr":"좋다","zh":"好","ex":"날씨가 좋아요.","exZh":"天氣很好。","tpl":null},{"id":78,"cat":"adj","pos":"형용사","kr":"나쁘다","zh":"不好、壞","ex":"기분이 나빠요.","exZh":"心情不好。","tpl":null},{"id":79,"cat":"adj","pos":"형용사","kr":"예쁘다","zh":"漂亮","ex":"꽃이 예뻐요.","exZh":"花很漂亮。","tpl":null},{"id":80,"cat":"adj","pos":"형용사","kr":"맛있다","zh":"好吃","ex":"음식이 맛있어요.","exZh":"食物很好吃。","tpl":null},{"id":81,"cat":"adj","pos":"형용사","kr":"맛없다","zh":"不好吃","ex":"이 라면은 맛없어요.","exZh":"這個泡麵不好吃。","tpl":null},{"id":82,"cat":"adj","pos":"형용사","kr":"비싸다","zh":"貴","ex":"이 옷은 비싸요.","exZh":"這件衣服很貴。","tpl":null},{"id":83,"cat":"adj","pos":"형용사","kr":"싸다","zh":"便宜","ex":"과일이 싸요.","exZh":"水果很便宜。","tpl":null},{"id":84,"cat":"adj","pos":"형용사","kr":"재미있다","zh":"有趣","ex":"이 영화는 재미있어요.","exZh":"這部電影很有趣。","tpl":null},{"id":85,"cat":"daily","pos":"명사","kr":"돈","zh":"錢","ex":"돈이 조금 있어요.","exZh":"我有一點錢。","tpl":null},{"id":86,"cat":"daily","pos":"명사","kr":"옷","zh":"衣服","ex":"새 옷을 샀어요.","exZh":"買了新衣服。","tpl":null},{"id":87,"cat":"daily","pos":"명사","kr":"신발","zh":"鞋子","ex":"신발이 예뻐요.","exZh":"鞋子很漂亮。","tpl":null},{"id":88,"cat":"daily","pos":"명사","kr":"가방","zh":"包包","ex":"가방이 무거워요.","exZh":"包包很重。","tpl":null},{"id":89,"cat":"daily","pos":"명사","kr":"시계","zh":"手錶、時鐘","ex":"시계를 봤어요.","exZh":"看了時鐘。","tpl":null},{"id":90,"cat":"daily","pos":"명사","kr":"핸드폰","zh":"手機","ex":"핸드폰이 없어요.","exZh":"沒有手機。","tpl":null},{"id":91,"cat":"daily","pos":"명사","kr":"책","zh":"書","ex":"책을 읽고 있어요.","exZh":"正在讀書。","tpl":null},{"id":92,"cat":"daily","pos":"명사","kr":"컴퓨터","zh":"電腦","ex":"컴퓨터로 일해요.","exZh":"用電腦工作。","tpl":null},{"id":93,"cat":"daily","pos":"명사","kr":"우산","zh":"雨傘","ex":"비가 와서 우산을 썼어요.","exZh":"因為下雨所以撐了傘。","tpl":null},{"id":94,"cat":"daily","pos":"명사","kr":"표","zh":"票","ex":"영화표를 샀어요.","exZh":"買了電影票。","tpl":null},{"id":95,"cat":"daily","pos":"명사","kr":"선물","zh":"禮物","ex":"생일 선물을 받았어요.","exZh":"收到了生日禮物。","tpl":null},{"id":96,"cat":"daily","pos":"명사","kr":"여행","zh":"旅行","ex":"다음 달에 여행을 가요.","exZh":"下個月要去旅行。","tpl":null},{"id":97,"cat":"verb","pos":"동사","kr":"주다","zh":"給","ex":"친구에게 선물을 줘요.","exZh":"給朋友禮物。","tpl":null},{"id":98,"cat":"verb","pos":"동사","kr":"받다","zh":"收到、接受","ex":"생일 선물을 받았어요.","exZh":"收到了生日禮物。","tpl":null},{"id":99,"cat":"verb","pos":"동사","kr":"만들다","zh":"製作、做","ex":"저는 케이크를 만들어요.","exZh":"我做蛋糕。","tpl":null},{"id":100,"cat":"verb","pos":"동사","kr":"열다","zh":"打開","ex":"창문을 열어요.","exZh":"打開窗戶。","tpl":null},{"id":101,"cat":"verb","pos":"동사","kr":"닫다","zh":"關閉","ex":"문을 닫아요.","exZh":"關門。","tpl":null},{"id":102,"cat":"verb","pos":"동사","kr":"시작하다","zh":"開始","ex":"수업이 시작해요.","exZh":"課開始了。","tpl":null},{"id":103,"cat":"verb","pos":"동사","kr":"끝나다","zh":"結束","ex":"회의가 끝났어요.","exZh":"會議結束了。","tpl":null},{"id":104,"cat":"verb","pos":"동사","kr":"생각하다","zh":"想、思考","ex":"저는 매일 그 일을 생각해요.","exZh":"我每天都在想那件事。","tpl":null},{"id":105,"cat":"verb","pos":"동사","kr":"알다","zh":"知道","ex":"저는 그 사람을 알아요.","exZh":"我認識那個人。","tpl":null},{"id":106,"cat":"verb","pos":"동사","kr":"모르다","zh":"不知道","ex":"저는 답을 몰라요.","exZh":"我不知道答案。","tpl":null},{"id":107,"cat":"verb","pos":"동사","kr":"기다리다","zh":"等待","ex":"친구를 기다려요.","exZh":"等朋友。","tpl":null},{"id":108,"cat":"verb","pos":"동사","kr":"찾다","zh":"尋找","ex":"열쇠를 찾아요.","exZh":"找鑰匙。","tpl":null},{"id":109,"cat":"verb","pos":"동사","kr":"도와주다","zh":"幫助","ex":"친구를 도와줘요.","exZh":"幫助朋友。","tpl":null},{"id":110,"cat":"verb","pos":"동사","kr":"가르치다","zh":"教","ex":"한국어를 가르쳐요.","exZh":"教韓語。","tpl":null},{"id":111,"cat":"verb","pos":"동사","kr":"배우다","zh":"學","ex":"태권도를 배워요.","exZh":"學跆拳道。","tpl":null},{"id":112,"cat":"verb","pos":"동사","kr":"웃다","zh":"笑","ex":"아기가 웃어요.","exZh":"嬰兒在笑。","tpl":null},{"id":113,"cat":"verb","pos":"동사","kr":"울다","zh":"哭","ex":"아이가 울어요.","exZh":"孩子在哭。","tpl":null},{"id":114,"cat":"verb","pos":"동사","kr":"걷다","zh":"走路","ex":"공원에서 걸어요.","exZh":"在公園走路。","tpl":null},{"id":115,"cat":"verb","pos":"동사","kr":"뛰다","zh":"跑","ex":"운동장에서 뛰어요.","exZh":"在操場上跑步。","tpl":null},{"id":116,"cat":"verb","pos":"동사","kr":"타다","zh":"搭乘","ex":"버스를 타요.","exZh":"搭公車。","tpl":null},{"id":117,"cat":"verb","pos":"동사","kr":"내리다","zh":"下車","ex":"다음 역에서 내려요.","exZh":"在下一站下車。","tpl":null},{"id":118,"cat":"verb","pos":"동사","kr":"켜다","zh":"打開(電源)","ex":"불을 켜요.","exZh":"開燈。","tpl":null},{"id":119,"cat":"verb","pos":"동사","kr":"끄다","zh":"關閉(電源)","ex":"텔레비전을 꺼요.","exZh":"關電視。","tpl":null},{"id":120,"cat":"verb","pos":"동사","kr":"씻다","zh":"洗","ex":"손을 씻어요.","exZh":"洗手。","tpl":null},{"id":121,"cat":"verb","pos":"동사","kr":"입다","zh":"穿(衣服)","ex":"겨울에는 코트를 입어요.","exZh":"冬天穿大衣。","tpl":null},{"id":122,"cat":"verb","pos":"동사","kr":"벗다","zh":"脫","ex":"신발을 벗어요.","exZh":"脫鞋子。","tpl":null},{"id":123,"cat":"verb","pos":"동사","kr":"신다","zh":"穿(鞋、襪)","ex":"양말을 신어요.","exZh":"穿襪子。","tpl":null},{"id":124,"cat":"verb","pos":"동사","kr":"놀다","zh":"玩","ex":"친구와 놀아요.","exZh":"和朋友玩。","tpl":null},{"id":125,"cat":"verb","pos":"동사","kr":"쉬다","zh":"休息","ex":"주말에는 집에서 쉬어요.","exZh":"週末在家休息。","tpl":null},{"id":126,"cat":"verb","pos":"동사","kr":"앉다","zh":"坐下","ex":"의자에 앉아요.","exZh":"坐在椅子上。","tpl":null},{"id":127,"cat":"verb","pos":"동사","kr":"눕다","zh":"躺下","ex":"침대에 누워요.","exZh":"躺在床上。","tpl":null},{"id":128,"cat":"verb","pos":"동사","kr":"바꾸다","zh":"換、改變","ex":"자리를 바꿔요.","exZh":"換座位。","tpl":null},{"id":129,"cat":"verb","pos":"동사","kr":"고치다","zh":"修理","ex":"자동차를 고쳐요.","exZh":"修車。","tpl":null},{"id":130,"cat":"verb","pos":"동사","kr":"닦다","zh":"擦拭","ex":"창문을 닦아요.","exZh":"擦窗戶。","tpl":null},{"id":131,"cat":"verb","pos":"동사","kr":"잡다","zh":"抓住","ex":"손을 잡아요.","exZh":"牽手。","tpl":null},{"id":132,"cat":"verb","pos":"동사","kr":"놓다","zh":"放置","ex":"책을 책상에 놓아요.","exZh":"把書放在桌上。","tpl":null},{"id":133,"cat":"verb","pos":"동사","kr":"넣다","zh":"放入","ex":"가방에 책을 넣어요.","exZh":"把書放進包包。","tpl":null},{"id":134,"cat":"verb","pos":"동사","kr":"전화하다","zh":"打電話","ex":"어머니께 전화해요.","exZh":"打電話給媽媽。","tpl":null},{"id":135,"cat":"verb","pos":"동사","kr":"노래하다","zh":"唱歌","ex":"무대에서 노래해요.","exZh":"在舞台上唱歌。","tpl":null},{"id":136,"cat":"verb","pos":"동사","kr":"춤추다","zh":"跳舞","ex":"친구들과 춤춰요.","exZh":"和朋友們跳舞。","tpl":null},{"id":137,"cat":"verb","pos":"동사","kr":"요리하다","zh":"做菜","ex":"저녁을 요리해요.","exZh":"做晚餐。","tpl":null},{"id":138,"cat":"verb","pos":"동사","kr":"청소하다","zh":"打掃","ex":"방을 청소해요.","exZh":"打掃房間。","tpl":null},{"id":139,"cat":"verb","pos":"동사","kr":"운동하다","zh":"運動","ex":"매일 아침 운동해요.","exZh":"每天早上運動。","tpl":null},{"id":140,"cat":"verb","pos":"동사","kr":"여행하다","zh":"旅行","ex":"가족과 여행해요.","exZh":"和家人一起旅行。","tpl":null},{"id":141,"cat":"verb","pos":"동사","kr":"졸업하다","zh":"畢業","ex":"내년에 졸업해요.","exZh":"明年畢業。","tpl":null},{"id":142,"cat":"verb","pos":"동사","kr":"결혼하다","zh":"結婚","ex":"내년에 결혼해요.","exZh":"明年結婚。","tpl":null},{"id":143,"cat":"verb","pos":"동사","kr":"이사하다","zh":"搬家","ex":"다음 달에 이사해요.","exZh":"下個月搬家。","tpl":null},{"id":144,"cat":"verb","pos":"동사","kr":"걱정하다","zh":"擔心","ex":"너무 걱정하지 마세요.","exZh":"請不要太擔心。","tpl":null},{"id":145,"cat":"verb","pos":"동사","kr":"사랑하다","zh":"愛","ex":"가족을 사랑해요.","exZh":"愛家人。","tpl":null},{"id":146,"cat":"verb","pos":"동사","kr":"싸우다","zh":"吵架、打架","ex":"친구와 싸웠어요.","exZh":"和朋友吵架了。","tpl":null},{"id":147,"cat":"verb","pos":"동사","kr":"화내다","zh":"生氣","ex":"그는 자주 화내요.","exZh":"他常常生氣。","tpl":null},{"id":148,"cat":"verb","pos":"동사","kr":"도착하다","zh":"到達","ex":"기차가 곧 도착해요.","exZh":"火車快到了。","tpl":null},{"id":149,"cat":"verb","pos":"동사","kr":"출발하다","zh":"出發","ex":"아침 일찍 출발해요.","exZh":"一大早出發。","tpl":null},{"id":150,"cat":"adj","pos":"형용사","kr":"무섭다","zh":"害怕、可怕","ex":"밤길이 무서워요.","exZh":"夜路很可怕。","tpl":null},{"id":151,"cat":"adj","pos":"형용사","kr":"슬프다","zh":"難過","ex":"그 영화는 슬퍼요.","exZh":"那部電影很悲傷。","tpl":null},{"id":152,"cat":"adj","pos":"형용사","kr":"기쁘다","zh":"高興","ex":"합격해서 기뻐요.","exZh":"考上了很高興。","tpl":null},{"id":153,"cat":"adj","pos":"형용사","kr":"행복하다","zh":"幸福","ex":"우리 가족은 행복해요.","exZh":"我們家很幸福。","tpl":null},{"id":154,"cat":"adj","pos":"형용사","kr":"피곤하다","zh":"累","ex":"오늘 좀 피곤해요.","exZh":"今天有點累。","tpl":null},{"id":155,"cat":"adj","pos":"형용사","kr":"아프다","zh":"痛、不舒服","ex":"머리가 아파요.","exZh":"頭很痛。","tpl":null},{"id":156,"cat":"adj","pos":"형용사","kr":"배고프다","zh":"餓","ex":"저는 지금 배고파요.","exZh":"我現在很餓。","tpl":null},{"id":157,"cat":"adj","pos":"형용사","kr":"배부르다","zh":"飽","ex":"너무 많이 먹어서 배불러요.","exZh":"吃太多了很飽。","tpl":null},{"id":158,"cat":"adj","pos":"형용사","kr":"춥다","zh":"冷","ex":"겨울에는 추워요.","exZh":"冬天很冷。","tpl":null},{"id":159,"cat":"adj","pos":"형용사","kr":"덥다","zh":"熱","ex":"여름에는 더워요.","exZh":"夏天很熱。","tpl":null},{"id":160,"cat":"adj","pos":"형용사","kr":"따뜻하다","zh":"溫暖","ex":"오늘은 날씨가 따뜻해요.","exZh":"今天天氣很溫暖。","tpl":null},{"id":161,"cat":"adj","pos":"형용사","kr":"시원하다","zh":"涼爽","ex":"가을 바람이 시원해요.","exZh":"秋天的風很涼爽。","tpl":null},{"id":162,"cat":"adj","pos":"형용사","kr":"쉽다","zh":"簡單","ex":"이 문제는 쉬워요.","exZh":"這個問題很簡單。","tpl":null},{"id":163,"cat":"adj","pos":"형용사","kr":"어렵다","zh":"難","ex":"한국어 문법이 어려워요.","exZh":"韓語文法很難。","tpl":null},{"id":164,"cat":"adj","pos":"형용사","kr":"빠르다","zh":"快","ex":"기차가 빨라요.","exZh":"火車很快。","tpl":null},{"id":165,"cat":"adj","pos":"형용사","kr":"느리다","zh":"慢","ex":"거북이는 느려요.","exZh":"烏龜很慢。","tpl":null},{"id":166,"cat":"adj","pos":"형용사","kr":"조용하다","zh":"安靜","ex":"도서관은 조용해요.","exZh":"圖書館很安靜。","tpl":null},{"id":167,"cat":"adj","pos":"형용사","kr":"시끄럽다","zh":"吵","ex":"길이 시끄러워요.","exZh":"街道很吵。","tpl":null},{"id":168,"cat":"adj","pos":"형용사","kr":"깨끗하다","zh":"乾淨","ex":"방이 깨끗해요.","exZh":"房間很乾淨。","tpl":null},{"id":169,"cat":"adj","pos":"형용사","kr":"더럽다","zh":"髒","ex":"신발이 더러워요.","exZh":"鞋子很髒。","tpl":null},{"id":170,"cat":"adj","pos":"형용사","kr":"편하다","zh":"舒適、方便","ex":"이 의자는 편해요.","exZh":"這張椅子很舒服。","tpl":null},{"id":171,"cat":"adj","pos":"형용사","kr":"불편하다","zh":"不方便","ex":"이 신발은 불편해요.","exZh":"這雙鞋不舒服。","tpl":null},{"id":172,"cat":"adj","pos":"형용사","kr":"필요하다","zh":"需要","ex":"시간이 필요해요.","exZh":"需要時間。","tpl":null},{"id":173,"cat":"adj","pos":"형용사","kr":"유명하다","zh":"有名","ex":"이 식당은 유명해요.","exZh":"這家餐廳很有名。","tpl":null},{"id":174,"cat":"adj","pos":"형용사","kr":"친절하다","zh":"親切","ex":"선생님이 친절해요.","exZh":"老師很親切。","tpl":null},{"id":175,"cat":"adj","pos":"형용사","kr":"위험하다","zh":"危險","ex":"그 길은 위험해요.","exZh":"那條路很危險。","tpl":null},{"id":176,"cat":"adj","pos":"형용사","kr":"안전하다","zh":"安全","ex":"이 놀이터는 안전해요.","exZh":"這個遊樂場很安全。","tpl":null},{"id":177,"cat":"adj","pos":"형용사","kr":"중요하다","zh":"重要","ex":"건강이 제일 중요해요.","exZh":"健康最重要。","tpl":null},{"id":178,"cat":"adj","pos":"형용사","kr":"힘들다","zh":"辛苦、累","ex":"요즘 일이 힘들어요.","exZh":"最近工作很累。","tpl":null},{"id":179,"cat":"adj","pos":"형용사","kr":"새롭다","zh":"新的","ex":"새로운 친구를 사귀었어요.","exZh":"交了新朋友。","tpl":null},{"id":180,"cat":"adverb","pos":"부사","kr":"매우","zh":"非常","ex":"오늘은 매우 춥습니다.","exZh":"今天非常冷。","tpl":null},{"id":181,"cat":"adverb","pos":"부사","kr":"아주","zh":"很、非常","ex":"이 영화는 아주 재미있어요.","exZh":"這部電影非常有趣。","tpl":null},{"id":182,"cat":"adverb","pos":"부사","kr":"정말","zh":"真的","ex":"정말 고마워요.","exZh":"真的很謝謝。","tpl":null},{"id":183,"cat":"adverb","pos":"부사","kr":"너무","zh":"太、非常","ex":"오늘 너무 더워요.","exZh":"今天太熱了。","tpl":null},{"id":184,"cat":"adverb","pos":"부사","kr":"조금","zh":"一點點","ex":"조금만 기다려 주세요.","exZh":"請稍等一下。","tpl":null},{"id":185,"cat":"adverb","pos":"부사","kr":"많이","zh":"很多地","ex":"오늘 많이 먹었어요.","exZh":"今天吃了很多。","tpl":null},{"id":186,"cat":"adverb","pos":"부사","kr":"항상","zh":"總是","ex":"저는 항상 아침을 먹어요.","exZh":"我總是吃早餐。","tpl":null},{"id":187,"cat":"adverb","pos":"부사","kr":"가끔","zh":"偶爾","ex":"가끔 영화를 봐요.","exZh":"偶爾看電影。","tpl":null},{"id":188,"cat":"adverb","pos":"부사","kr":"자주","zh":"常常","ex":"친구를 자주 만나요.","exZh":"常常和朋友見面。","tpl":null},{"id":189,"cat":"adverb","pos":"부사","kr":"보통","zh":"通常","ex":"저는 보통 일곱 시에 일어나요.","exZh":"我通常七點起床。","tpl":null},{"id":190,"cat":"adverb","pos":"부사","kr":"다시","zh":"再次","ex":"다시 한번 말해 주세요.","exZh":"請再說一次。","tpl":null},{"id":191,"cat":"adverb","pos":"부사","kr":"아직","zh":"還、尚未","ex":"숙제를 아직 안 했어요.","exZh":"作業還沒做。","tpl":null},{"id":192,"cat":"adverb","pos":"부사","kr":"벌써","zh":"已經","ex":"벌써 열두 시예요.","exZh":"已經十二點了。","tpl":null},{"id":193,"cat":"adverb","pos":"부사","kr":"같이","zh":"一起","ex":"같이 밥 먹어요.","exZh":"一起吃飯吧。","tpl":null},{"id":194,"cat":"adverb","pos":"부사","kr":"빨리","zh":"快點","ex":"빨리 오세요.","exZh":"請快點來。","tpl":null},{"id":195,"cat":"adverb","pos":"부사","kr":"천천히","zh":"慢慢地","ex":"천천히 걸어요.","exZh":"慢慢走。","tpl":null},{"id":196,"cat":"adverb","pos":"부사","kr":"잠깐","zh":"暫時、一下","ex":"잠깐 여기서 기다려요.","exZh":"在這裡等一下。","tpl":null},{"id":197,"cat":"adverb","pos":"부사","kr":"갑자기","zh":"突然","ex":"갑자기 비가 왔어요.","exZh":"突然下雨了。","tpl":null},{"id":198,"cat":"adverb","pos":"부사","kr":"열심히","zh":"認真地","ex":"열심히 공부해요.","exZh":"認真讀書。","tpl":null},{"id":199,"cat":"adverb","pos":"부사","kr":"거의","zh":"幾乎","ex":"숙제를 거의 다 했어요.","exZh":"作業幾乎做完了。","tpl":null},{"id":200,"cat":"conj","pos":"접속사","kr":"그리고","zh":"而且、然後","ex":"저는 사과와 그리고 바나나를 샀어요.","exZh":"我買了蘋果,還有香蕉。","tpl":null},{"id":201,"cat":"conj","pos":"접속사","kr":"그러나","zh":"然而、但是","ex":"비가 왔어요. 그러나 우산이 없었어요.","exZh":"下雨了,但是沒有傘。","tpl":null},{"id":202,"cat":"conj","pos":"접속사","kr":"하지만","zh":"但是","ex":"열심히 공부했어요. 하지만 시험에 떨어졌어요.","exZh":"認真讀書了,但考試沒過。","tpl":null},{"id":203,"cat":"conj","pos":"접속사","kr":"그래서","zh":"所以","ex":"배가 고팠어요. 그래서 밥을 먹었어요.","exZh":"肚子餓了,所以吃了飯。","tpl":null},{"id":204,"cat":"conj","pos":"접속사","kr":"그런데","zh":"不過、可是","ex":"오늘 날씨가 좋아요. 그런데 좀 추워요.","exZh":"今天天氣很好,不過有點冷。","tpl":null},{"id":205,"cat":"conj","pos":"접속사","kr":"또는","zh":"或者","ex":"커피 또는 차를 드세요.","exZh":"請喝咖啡或茶。","tpl":null},{"id":206,"cat":"conj","pos":"접속사","kr":"그러면","zh":"那麼","ex":"그러면 내일 만나요.","exZh":"那麼明天見。","tpl":null},{"id":207,"cat":"conj","pos":"접속사","kr":"왜냐하면","zh":"因為","ex":"저는 행복해요. 왜냐하면 가족이 있어요.","exZh":"我很幸福,因為有家人。","tpl":null},{"id":208,"cat":"conj","pos":"접속사","kr":"그러니까","zh":"所以","ex":"늦었어요. 그러니까 빨리 가요.","exZh":"遲到了,所以快走吧。","tpl":null},{"id":209,"cat":"pronoun","pos":"대명사","kr":"저","zh":"我(敬語)","ex":"저는 학생입니다.","exZh":"我是學生。","tpl":null},{"id":210,"cat":"pronoun","pos":"대명사","kr":"나","zh":"我","ex":"나는 커피를 좋아해.","exZh":"我喜歡咖啡。","tpl":null},{"id":211,"cat":"pronoun","pos":"대명사","kr":"너","zh":"你","ex":"너는 이름이 뭐야?","exZh":"你叫什麼名字?","tpl":null},{"id":212,"cat":"pronoun","pos":"대명사","kr":"당신","zh":"您、你","ex":"당신을 사랑해요.","exZh":"我愛你。","tpl":null},{"id":213,"cat":"pronoun","pos":"대명사","kr":"우리","zh":"我們","ex":"우리는 친구예요.","exZh":"我們是朋友。","tpl":null},{"id":214,"cat":"pronoun","pos":"대명사","kr":"이것","zh":"這個","ex":"이것은 제 가방이에요.","exZh":"這是我的包包。","tpl":null},{"id":215,"cat":"pronoun","pos":"대명사","kr":"그것","zh":"那個","ex":"그것은 무엇입니까?","exZh":"那是什麼?","tpl":null},{"id":216,"cat":"pronoun","pos":"대명사","kr":"저것","zh":"那個(遠稱)","ex":"저것은 산입니다.","exZh":"那是山。","tpl":null},{"id":217,"cat":"pronoun","pos":"대명사","kr":"여기","zh":"這裡","ex":"여기 앉으세요.","exZh":"請坐這裡。","tpl":null},{"id":218,"cat":"pronoun","pos":"대명사","kr":"거기","zh":"那裡","ex":"거기에서 기다리세요.","exZh":"請在那裡等。","tpl":null},{"id":219,"cat":"pronoun","pos":"대명사","kr":"저기","zh":"那裡(遠稱)","ex":"저기가 우리 학교예요.","exZh":"那裡是我們學校。","tpl":null},{"id":220,"cat":"question","pos":"의문사","kr":"뭐","zh":"什麼","ex":"이름이 뭐예요?","exZh":"你叫什麼名字?","tpl":null},{"id":221,"cat":"question","pos":"의문사","kr":"누구","zh":"誰","ex":"저 사람은 누구예요?","exZh":"那個人是誰?","tpl":null},{"id":222,"cat":"question","pos":"의문사","kr":"어디","zh":"哪裡","ex":"화장실이 어디예요?","exZh":"洗手間在哪裡?","tpl":null},{"id":223,"cat":"question","pos":"의문사","kr":"언제","zh":"什麼時候","ex":"생일이 언제예요?","exZh":"生日是什麼時候?","tpl":null},{"id":224,"cat":"question","pos":"의문사","kr":"왜","zh":"為什麼","ex":"왜 늦었어요?","exZh":"為什麼遲到了?","tpl":null},{"id":225,"cat":"question","pos":"의문사","kr":"어떻게","zh":"怎麼樣","ex":"이 단어는 어떻게 읽어요?","exZh":"這個單字怎麼讀?","tpl":null},{"id":226,"cat":"question","pos":"의문사","kr":"얼마","zh":"多少錢","ex":"이거 얼마예요?","exZh":"這個多少錢?","tpl":null},{"id":227,"cat":"question","pos":"의문사","kr":"몇","zh":"幾、多少","ex":"몇 살이에요?","exZh":"你幾歲?","tpl":null},{"id":228,"cat":"adverb","pos":"부사","kr":"점점","zh":"漸漸地","ex":"날씨가 점점 추워져요.","exZh":"天氣漸漸變冷。","tpl":null},{"id":229,"cat":"adverb","pos":"부사","kr":"계속","zh":"繼續、一直","ex":"비가 계속 와요.","exZh":"雨一直下。","tpl":null},{"id":230,"cat":"adverb","pos":"부사","kr":"결국","zh":"結果、最終","ex":"결국 시험에 합격했어요.","exZh":"最終考試合格了。","tpl":null},{"id":231,"cat":"adverb","pos":"부사","kr":"드디어","zh":"終於","ex":"드디어 방학이에요.","exZh":"終於放假了。","tpl":null},{"id":232,"cat":"adverb","pos":"부사","kr":"특히","zh":"特別是","ex":"저는 특히 여름을 좋아해요.","exZh":"我特別喜歡夏天。","tpl":null},{"id":233,"cat":"adverb","pos":"부사","kr":"전혀","zh":"完全(不)","ex":"저는 전혀 몰랐어요.","exZh":"我完全不知道。","tpl":null},{"id":234,"cat":"adverb","pos":"부사","kr":"혹시","zh":"或許、萬一","ex":"혹시 시간 있어요?","exZh":"你有時間嗎?","tpl":null},{"id":235,"cat":"adverb","pos":"부사","kr":"일부러","zh":"故意","ex":"일부러 늦게 왔어요.","exZh":"故意遲到來的。","tpl":null},{"id":236,"cat":"verb","pos":"동사","kr":"들어가다","zh":"進去","ex":"방에 들어가요.","exZh":"進房間。","tpl":null},{"id":237,"cat":"verb","pos":"동사","kr":"나가다","zh":"出去","ex":"밖에 나가요.","exZh":"出去外面。","tpl":null},{"id":238,"cat":"verb","pos":"동사","kr":"올라가다","zh":"上去","ex":"산에 올라가요.","exZh":"爬上山。","tpl":null},{"id":239,"cat":"verb","pos":"동사","kr":"내려가다","zh":"下去","ex":"아래층에 내려가요.","exZh":"下去樓下。","tpl":null},{"id":240,"cat":"verb","pos":"동사","kr":"건너다","zh":"過(馬路、橋)","ex":"길을 건너요.","exZh":"過馬路。","tpl":null},{"id":241,"cat":"verb","pos":"동사","kr":"지나가다","zh":"經過","ex":"공원을 지나가요.","exZh":"經過公園。","tpl":null},{"id":242,"cat":"verb","pos":"동사","kr":"돌아가다","zh":"回去","ex":"집에 돌아가요.","exZh":"回家。","tpl":null},{"id":243,"cat":"verb","pos":"동사","kr":"돌아오다","zh":"回來","ex":"일곱 시에 돌아와요.","exZh":"七點回來。","tpl":null},{"id":244,"cat":"verb","pos":"동사","kr":"떠나다","zh":"離開","ex":"내일 서울을 떠나요.","exZh":"明天離開首爾。","tpl":null},{"id":245,"cat":"verb","pos":"동사","kr":"나타나다","zh":"出現","ex":"갑자기 친구가 나타났어요.","exZh":"朋友突然出現了。","tpl":null},{"id":246,"cat":"verb","pos":"동사","kr":"사라지다","zh":"消失","ex":"고양이가 사라졌어요.","exZh":"貓消失了。","tpl":null},{"id":247,"cat":"verb","pos":"동사","kr":"느끼다","zh":"感覺","ex":"저는 행복을 느껴요.","exZh":"我感到幸福。","tpl":null},{"id":248,"cat":"verb","pos":"동사","kr":"믿다","zh":"相信","ex":"저는 당신을 믿어요.","exZh":"我相信你。","tpl":null},{"id":249,"cat":"verb","pos":"동사","kr":"잊다","zh":"忘記","ex":"약속을 잊지 마세요.","exZh":"請不要忘記約定。","tpl":null},{"id":250,"cat":"verb","pos":"동사","kr":"기억하다","zh":"記得","ex":"저는 그날을 기억해요.","exZh":"我記得那一天。","tpl":null},{"id":251,"cat":"verb","pos":"동사","kr":"약속하다","zh":"約定","ex":"내일 만나기로 약속했어요.","exZh":"約好明天見面。","tpl":null},{"id":252,"cat":"verb","pos":"동사","kr":"초대하다","zh":"邀請","ex":"생일 파티에 초대해요.","exZh":"邀請參加生日派對。","tpl":null},{"id":253,"cat":"verb","pos":"동사","kr":"소개하다","zh":"介紹","ex":"제 친구를 소개할게요.","exZh":"我來介紹我的朋友。","tpl":null},{"id":254,"cat":"verb","pos":"동사","kr":"질문하다","zh":"提問","ex":"선생님께 질문해요.","exZh":"向老師提問。","tpl":null},{"id":255,"cat":"verb","pos":"동사","kr":"대답하다","zh":"回答","ex":"질문에 대답해요.","exZh":"回答問題。","tpl":null},{"id":256,"cat":"verb","pos":"동사","kr":"연습하다","zh":"練習","ex":"매일 한국어를 연습해요.","exZh":"每天練習韓語。","tpl":null},{"id":257,"cat":"verb","pos":"동사","kr":"준비하다","zh":"準備","ex":"시험을 준비해요.","exZh":"準備考試。","tpl":null},{"id":258,"cat":"verb","pos":"동사","kr":"계획하다","zh":"計劃","ex":"여행을 계획해요.","exZh":"計劃旅行。","tpl":null},{"id":259,"cat":"verb","pos":"동사","kr":"신청하다","zh":"申請","ex":"수업을 신청해요.","exZh":"申請課程。","tpl":null},{"id":260,"cat":"verb","pos":"동사","kr":"예약하다","zh":"預約","ex":"식당을 예약해요.","exZh":"預約餐廳。","tpl":null},{"id":261,"cat":"verb","pos":"동사","kr":"취소하다","zh":"取消","ex":"약속을 취소했어요.","exZh":"取消了約定。","tpl":null},{"id":262,"cat":"verb","pos":"동사","kr":"참석하다","zh":"參加","ex":"회의에 참석해요.","exZh":"參加會議。","tpl":null},{"id":263,"cat":"verb","pos":"동사","kr":"모으다","zh":"收集、聚集","ex":"우표를 모아요.","exZh":"收集郵票。","tpl":null},{"id":264,"cat":"verb","pos":"동사","kr":"나누다","zh":"分享、分","ex":"음식을 나눠요.","exZh":"分享食物。","tpl":null},{"id":265,"cat":"verb","pos":"동사","kr":"갚다","zh":"還(錢)","ex":"돈을 갚아요.","exZh":"還錢。","tpl":null},{"id":266,"cat":"adj","pos":"형용사","kr":"심심하다","zh":"無聊","ex":"오늘은 심심해요.","exZh":"今天很無聊。","tpl":null},{"id":267,"cat":"adj","pos":"형용사","kr":"바쁘다","zh":"忙","ex":"요즘 많이 바빠요.","exZh":"最近很忙。","tpl":null},{"id":268,"cat":"adj","pos":"형용사","kr":"가볍다","zh":"輕","ex":"이 가방은 가벼워요.","exZh":"這個包包很輕。","tpl":null},{"id":269,"cat":"adj","pos":"형용사","kr":"무겁다","zh":"重","ex":"짐이 무거워요.","exZh":"行李很重。","tpl":null},{"id":270,"cat":"adj","pos":"형용사","kr":"길다","zh":"長","ex":"머리가 길어요.","exZh":"頭髮很長。","tpl":null},{"id":271,"cat":"adj","pos":"형용사","kr":"짧다","zh":"短","ex":"다리가 짧아요.","exZh":"時間很短。","tpl":null},{"id":272,"cat":"adj","pos":"형용사","kr":"높다","zh":"高","ex":"산이 높아요.","exZh":"山很高。","tpl":null},{"id":273,"cat":"adj","pos":"형용사","kr":"낮다","zh":"低","ex":"의자가 낮아요.","exZh":"椅子很低。","tpl":null},{"id":274,"cat":"adj","pos":"형용사","kr":"넓다","zh":"寬","ex":"방이 넓어요.","exZh":"房間很寬敞。","tpl":null},{"id":275,"cat":"adj","pos":"형용사","kr":"좁다","zh":"窄","ex":"길이 좁아요.","exZh":"路很窄。","tpl":null},{"id":276,"cat":"family","pos":"명사","kr":"사촌","zh":"表親、堂兄弟姊妹","ex":null,"exZh":null,"tpl":null},{"id":277,"cat":"family","pos":"명사","kr":"삼촌","zh":"叔叔、伯伯","ex":null,"exZh":null,"tpl":null},{"id":278,"cat":"family","pos":"명사","kr":"이모","zh":"阿姨(媽媽的姊妹)","ex":null,"exZh":null,"tpl":null},{"id":279,"cat":"family","pos":"명사","kr":"고모","zh":"姑姑(爸爸的姊妹)","ex":null,"exZh":null,"tpl":null},{"id":280,"cat":"family","pos":"명사","kr":"조카","zh":"姪子、外甥","ex":null,"exZh":null,"tpl":null},{"id":281,"cat":"family","pos":"명사","kr":"부모님","zh":"父母","ex":null,"exZh":null,"tpl":null},{"id":282,"cat":"family","pos":"명사","kr":"남편","zh":"丈夫","ex":null,"exZh":null,"tpl":null},{"id":283,"cat":"family","pos":"명사","kr":"아내","zh":"妻子","ex":null,"exZh":null,"tpl":null},{"id":284,"cat":"family","pos":"명사","kr":"아기","zh":"嬰兒","ex":null,"exZh":null,"tpl":null},{"id":285,"cat":"family","pos":"명사","kr":"어른","zh":"大人","ex":null,"exZh":null,"tpl":null},{"id":286,"cat":"food","pos":"명사","kr":"비빔밥","zh":"拌飯","ex":null,"exZh":null,"tpl":null},{"id":287,"cat":"food","pos":"명사","kr":"불고기","zh":"烤肉","ex":null,"exZh":null,"tpl":null},{"id":288,"cat":"food","pos":"명사","kr":"김밥","zh":"紫菜飯捲","ex":null,"exZh":null,"tpl":null},{"id":289,"cat":"food","pos":"명사","kr":"떡볶이","zh":"辣炒年糕","ex":null,"exZh":null,"tpl":null},{"id":290,"cat":"food","pos":"명사","kr":"순두부찌개","zh":"嫩豆腐鍋","ex":null,"exZh":null,"tpl":null},{"id":291,"cat":"food","pos":"명사","kr":"된장찌개","zh":"大醬湯","ex":null,"exZh":null,"tpl":null},{"id":292,"cat":"food","pos":"명사","kr":"김치찌개","zh":"泡菜鍋","ex":null,"exZh":null,"tpl":null},{"id":293,"cat":"food","pos":"명사","kr":"삼겹살","zh":"五花肉","ex":null,"exZh":null,"tpl":null},{"id":294,"cat":"food","pos":"명사","kr":"갈비","zh":"排骨","ex":null,"exZh":null,"tpl":null},{"id":295,"cat":"food","pos":"명사","kr":"잡채","zh":"雜菜冬粉","ex":null,"exZh":null,"tpl":null},{"id":296,"cat":"food","pos":"명사","kr":"전","zh":"煎餅","ex":null,"exZh":null,"tpl":null},{"id":297,"cat":"food","pos":"명사","kr":"떡","zh":"年糕","ex":null,"exZh":null,"tpl":null},{"id":298,"cat":"food","pos":"명사","kr":"과자","zh":"餅乾、零食","ex":null,"exZh":null,"tpl":null},{"id":299,"cat":"food","pos":"명사","kr":"사탕","zh":"糖果","ex":null,"exZh":null,"tpl":null},{"id":300,"cat":"food","pos":"명사","kr":"초콜릿","zh":"巧克力","ex":null,"exZh":null,"tpl":null},{"id":301,"cat":"food","pos":"명사","kr":"아이스크림","zh":"冰淇淋","ex":null,"exZh":null,"tpl":null},{"id":302,"cat":"food","pos":"명사","kr":"케이크","zh":"蛋糕","ex":null,"exZh":null,"tpl":null},{"id":303,"cat":"food","pos":"명사","kr":"피자","zh":"披薩","ex":null,"exZh":null,"tpl":null},{"id":304,"cat":"food","pos":"명사","kr":"햄버거","zh":"漢堡","ex":null,"exZh":null,"tpl":null},{"id":305,"cat":"food","pos":"명사","kr":"샌드위치","zh":"三明治","ex":null,"exZh":null,"tpl":null},{"id":306,"cat":"food","pos":"명사","kr":"스파게티","zh":"義大利麵","ex":null,"exZh":null,"tpl":null},{"id":307,"cat":"food","pos":"명사","kr":"카레","zh":"咖哩","ex":null,"exZh":null,"tpl":null},{"id":308,"cat":"food","pos":"명사","kr":"수프","zh":"湯","ex":null,"exZh":null,"tpl":null},{"id":309,"cat":"food","pos":"명사","kr":"샐러드","zh":"沙拉","ex":null,"exZh":null,"tpl":null},{"id":310,"cat":"food","pos":"명사","kr":"요구르트","zh":"優格","ex":null,"exZh":null,"tpl":null},{"id":311,"cat":"food","pos":"명사","kr":"치즈","zh":"起司","ex":null,"exZh":null,"tpl":null},{"id":312,"cat":"food","pos":"명사","kr":"버터","zh":"奶油","ex":null,"exZh":null,"tpl":null},{"id":313,"cat":"food","pos":"명사","kr":"잼","zh":"果醬","ex":null,"exZh":null,"tpl":null},{"id":314,"cat":"food","pos":"명사","kr":"꿀","zh":"蜂蜜","ex":null,"exZh":null,"tpl":null},{"id":315,"cat":"food","pos":"명사","kr":"설탕","zh":"糖","ex":null,"exZh":null,"tpl":null},{"id":316,"cat":"food","pos":"명사","kr":"소금","zh":"鹽","ex":null,"exZh":null,"tpl":null},{"id":317,"cat":"food","pos":"명사","kr":"후추","zh":"胡椒","ex":null,"exZh":null,"tpl":null},{"id":318,"cat":"food","pos":"명사","kr":"간장","zh":"醬油","ex":null,"exZh":null,"tpl":null},{"id":319,"cat":"food","pos":"명사","kr":"고추장","zh":"辣椒醬","ex":null,"exZh":null,"tpl":null},{"id":320,"cat":"food","pos":"명사","kr":"된장","zh":"大醬","ex":null,"exZh":null,"tpl":null},{"id":321,"cat":"food","pos":"명사","kr":"식초","zh":"醋","ex":null,"exZh":null,"tpl":null},{"id":322,"cat":"food","pos":"명사","kr":"기름","zh":"油","ex":null,"exZh":null,"tpl":null},{"id":323,"cat":"food","pos":"명사","kr":"밀가루","zh":"麵粉","ex":null,"exZh":null,"tpl":null},{"id":324,"cat":"food","pos":"명사","kr":"쌀","zh":"米","ex":null,"exZh":null,"tpl":null},{"id":325,"cat":"food","pos":"명사","kr":"보리","zh":"大麥","ex":null,"exZh":null,"tpl":null},{"id":326,"cat":"food","pos":"명사","kr":"콩","zh":"豆子","ex":null,"exZh":null,"tpl":null},{"id":327,"cat":"food","pos":"명사","kr":"두부","zh":"豆腐","ex":null,"exZh":null,"tpl":null},{"id":328,"cat":"food","pos":"명사","kr":"미역","zh":"海帶","ex":null,"exZh":null,"tpl":null},{"id":329,"cat":"food","pos":"명사","kr":"김","zh":"海苔","ex":null,"exZh":null,"tpl":null},{"id":330,"cat":"food","pos":"명사","kr":"멸치","zh":"小魚乾","ex":null,"exZh":null,"tpl":null},{"id":331,"cat":"food","pos":"명사","kr":"고등어","zh":"鯖魚","ex":null,"exZh":null,"tpl":null},{"id":332,"cat":"food","pos":"명사","kr":"참치","zh":"鮪魚","ex":null,"exZh":null,"tpl":null},{"id":333,"cat":"food","pos":"명사","kr":"새우","zh":"蝦","ex":null,"exZh":null,"tpl":null},{"id":334,"cat":"food","pos":"명사","kr":"오징어","zh":"魷魚","ex":null,"exZh":null,"tpl":null},{"id":335,"cat":"food","pos":"명사","kr":"조개","zh":"貝類","ex":null,"exZh":null,"tpl":null},{"id":336,"cat":"food","pos":"명사","kr":"닭갈비","zh":"辣炒雞排","ex":null,"exZh":null,"tpl":null},{"id":337,"cat":"food","pos":"명사","kr":"순대","zh":"血腸","ex":null,"exZh":null,"tpl":null},{"id":338,"cat":"food","pos":"명사","kr":"호떡","zh":"糖餅","ex":null,"exZh":null,"tpl":null},{"id":339,"cat":"food","pos":"명사","kr":"팥빙수","zh":"紅豆冰","ex":null,"exZh":null,"tpl":null},{"id":340,"cat":"food","pos":"명사","kr":"식혜","zh":"甜米露","ex":null,"exZh":null,"tpl":null},{"id":341,"cat":"food","pos":"명사","kr":"막걸리","zh":"馬格利酒","ex":null,"exZh":null,"tpl":null},{"id":342,"cat":"food","pos":"명사","kr":"와인","zh":"紅酒","ex":null,"exZh":null,"tpl":null},{"id":343,"cat":"food","pos":"명사","kr":"맥주","zh":"啤酒","ex":null,"exZh":null,"tpl":null},{"id":344,"cat":"food","pos":"명사","kr":"소주","zh":"燒酒","ex":null,"exZh":null,"tpl":null},{"id":345,"cat":"food","pos":"명사","kr":"녹차","zh":"綠茶","ex":null,"exZh":null,"tpl":null},{"id":346,"cat":"food","pos":"명사","kr":"홍차","zh":"紅茶","ex":null,"exZh":null,"tpl":null},{"id":347,"cat":"food","pos":"명사","kr":"보리차","zh":"大麥茶","ex":null,"exZh":null,"tpl":null},{"id":348,"cat":"food","pos":"명사","kr":"사이다","zh":"汽水","ex":null,"exZh":null,"tpl":null},{"id":349,"cat":"food","pos":"명사","kr":"콜라","zh":"可樂","ex":null,"exZh":null,"tpl":null},{"id":350,"cat":"food","pos":"명사","kr":"주스","zh":"果汁","ex":null,"exZh":null,"tpl":null},{"id":351,"cat":"food","pos":"명사","kr":"숟가락","zh":"湯匙","ex":null,"exZh":null,"tpl":null},{"id":352,"cat":"food","pos":"명사","kr":"젓가락","zh":"筷子","ex":null,"exZh":null,"tpl":null},{"id":353,"cat":"food","pos":"명사","kr":"그릇","zh":"碗","ex":null,"exZh":null,"tpl":null},{"id":354,"cat":"food","pos":"명사","kr":"접시","zh":"盤子","ex":null,"exZh":null,"tpl":null},{"id":355,"cat":"food","pos":"명사","kr":"컵","zh":"杯子","ex":null,"exZh":null,"tpl":null},{"id":356,"cat":"food","pos":"명사","kr":"포크","zh":"叉子","ex":null,"exZh":null,"tpl":null},{"id":357,"cat":"food","pos":"명사","kr":"나이프","zh":"刀子","ex":null,"exZh":null,"tpl":null},{"id":358,"cat":"food","pos":"명사","kr":"딸기","zh":"草莓","ex":null,"exZh":null,"tpl":null},{"id":359,"cat":"food","pos":"명사","kr":"포도","zh":"葡萄","ex":null,"exZh":null,"tpl":null},{"id":360,"cat":"food","pos":"명사","kr":"수박","zh":"西瓜","ex":null,"exZh":null,"tpl":null},{"id":361,"cat":"food","pos":"명사","kr":"바나나","zh":"香蕉","ex":null,"exZh":null,"tpl":null},{"id":362,"cat":"food","pos":"명사","kr":"오렌지","zh":"柳橙","ex":null,"exZh":null,"tpl":null},{"id":363,"cat":"food","pos":"명사","kr":"배","zh":"梨子","ex":null,"exZh":null,"tpl":null},{"id":364,"cat":"food","pos":"명사","kr":"복숭아","zh":"桃子","ex":null,"exZh":null,"tpl":null},{"id":365,"cat":"food","pos":"명사","kr":"토마토","zh":"番茄","ex":null,"exZh":null,"tpl":null},{"id":366,"cat":"food","pos":"명사","kr":"양파","zh":"洋蔥","ex":null,"exZh":null,"tpl":null},{"id":367,"cat":"food","pos":"명사","kr":"감자","zh":"馬鈴薯","ex":null,"exZh":null,"tpl":null},{"id":368,"cat":"food","pos":"명사","kr":"당근","zh":"紅蘿蔔","ex":null,"exZh":null,"tpl":null},{"id":369,"cat":"food","pos":"명사","kr":"오이","zh":"小黃瓜","ex":null,"exZh":null,"tpl":null},{"id":370,"cat":"food","pos":"명사","kr":"버섯","zh":"香菇","ex":null,"exZh":null,"tpl":null},{"id":371,"cat":"food","pos":"명사","kr":"돼지고기","zh":"豬肉","ex":null,"exZh":null,"tpl":null},{"id":372,"cat":"food","pos":"명사","kr":"소고기","zh":"牛肉","ex":null,"exZh":null,"tpl":null},{"id":373,"cat":"food","pos":"명사","kr":"닭고기","zh":"雞肉","ex":null,"exZh":null,"tpl":null},{"id":374,"cat":"food","pos":"명사","kr":"생선","zh":"魚","ex":null,"exZh":null,"tpl":null},{"id":375,"cat":"place","pos":"명사","kr":"도서관","zh":"圖書館","ex":null,"exZh":null,"tpl":null},{"id":376,"cat":"place","pos":"명사","kr":"영화관","zh":"電影院","ex":null,"exZh":null,"tpl":null},{"id":377,"cat":"place","pos":"명사","kr":"카페","zh":"咖啡廳","ex":null,"exZh":null,"tpl":null},{"id":378,"cat":"place","pos":"명사","kr":"백화점","zh":"百貨公司","ex":null,"exZh":null,"tpl":null},{"id":379,"cat":"place","pos":"명사","kr":"슈퍼마켓","zh":"超市","ex":null,"exZh":null,"tpl":null},{"id":380,"cat":"place","pos":"명사","kr":"우체국","zh":"郵局","ex":null,"exZh":null,"tpl":null},{"id":381,"cat":"place","pos":"명사","kr":"경찰서","zh":"警察局","ex":null,"exZh":null,"tpl":null},{"id":382,"cat":"place","pos":"명사","kr":"소방서","zh":"消防局","ex":null,"exZh":null,"tpl":null},{"id":383,"cat":"place","pos":"명사","kr":"미술관","zh":"美術館","ex":null,"exZh":null,"tpl":null},{"id":384,"cat":"place","pos":"명사","kr":"박물관","zh":"博物館","ex":null,"exZh":null,"tpl":null},{"id":385,"cat":"place","pos":"명사","kr":"공원","zh":"公園","ex":null,"exZh":null,"tpl":null},{"id":386,"cat":"place","pos":"명사","kr":"버스 정류장","zh":"公車站","ex":null,"exZh":null,"tpl":null},{"id":387,"cat":"place","pos":"명사","kr":"터미널","zh":"客運站","ex":null,"exZh":null,"tpl":null},{"id":388,"cat":"place","pos":"명사","kr":"호텔","zh":"飯店","ex":null,"exZh":null,"tpl":null},{"id":389,"cat":"place","pos":"명사","kr":"교회","zh":"教會","ex":null,"exZh":null,"tpl":null},{"id":390,"cat":"place","pos":"명사","kr":"절","zh":"寺廟","ex":null,"exZh":null,"tpl":null},{"id":391,"cat":"place","pos":"명사","kr":"성당","zh":"天主教堂","ex":null,"exZh":null,"tpl":null},{"id":392,"cat":"place","pos":"명사","kr":"대학교","zh":"大學","ex":null,"exZh":null,"tpl":null},{"id":393,"cat":"place","pos":"명사","kr":"유치원","zh":"幼稚園","ex":null,"exZh":null,"tpl":null},{"id":394,"cat":"place","pos":"명사","kr":"주차장","zh":"停車場","ex":null,"exZh":null,"tpl":null},{"id":395,"cat":"place","pos":"명사","kr":"화장실","zh":"洗手間","ex":null,"exZh":null,"tpl":null},{"id":396,"cat":"place","pos":"명사","kr":"미용실","zh":"美髮院","ex":null,"exZh":null,"tpl":null},{"id":397,"cat":"place","pos":"명사","kr":"빵집","zh":"麵包店","ex":null,"exZh":null,"tpl":null},{"id":398,"cat":"place","pos":"명사","kr":"꽃집","zh":"花店","ex":null,"exZh":null,"tpl":null},{"id":399,"cat":"place","pos":"명사","kr":"서점","zh":"書店","ex":null,"exZh":null,"tpl":null},{"id":400,"cat":"place","pos":"명사","kr":"문구점","zh":"文具店","ex":null,"exZh":null,"tpl":null},{"id":401,"cat":"place","pos":"명사","kr":"세탁소","zh":"洗衣店","ex":null,"exZh":null,"tpl":null},{"id":402,"cat":"place","pos":"명사","kr":"노래방","zh":"KTV","ex":null,"exZh":null,"tpl":null},{"id":403,"cat":"place","pos":"명사","kr":"찜질방","zh":"汗蒸幕","ex":null,"exZh":null,"tpl":null},{"id":404,"cat":"place","pos":"명사","kr":"헬스장","zh":"健身房","ex":null,"exZh":null,"tpl":null},{"id":405,"cat":"place","pos":"명사","kr":"수영장","zh":"游泳池","ex":null,"exZh":null,"tpl":null},{"id":406,"cat":"place","pos":"명사","kr":"놀이터","zh":"遊樂場","ex":null,"exZh":null,"tpl":null},{"id":407,"cat":"place","pos":"명사","kr":"운동장","zh":"運動場","ex":null,"exZh":null,"tpl":null},{"id":408,"cat":"place","pos":"명사","kr":"광장","zh":"廣場","ex":null,"exZh":null,"tpl":null},{"id":409,"cat":"place","pos":"명사","kr":"마트","zh":"超市(賣場)","ex":null,"exZh":null,"tpl":null},{"id":410,"cat":"daily","pos":"명사","kr":"지갑","zh":"錢包","ex":null,"exZh":null,"tpl":null},{"id":411,"cat":"daily","pos":"명사","kr":"열쇠","zh":"鑰匙","ex":null,"exZh":null,"tpl":null},{"id":412,"cat":"daily","pos":"명사","kr":"사전","zh":"字典","ex":null,"exZh":null,"tpl":null},{"id":413,"cat":"daily","pos":"명사","kr":"지도","zh":"地圖","ex":null,"exZh":null,"tpl":null},{"id":414,"cat":"calendar","pos":"명사","kr":"월요일","zh":"星期一","ex":null,"exZh":null,"tpl":"day"},{"id":415,"cat":"calendar","pos":"명사","kr":"화요일","zh":"星期二","ex":null,"exZh":null,"tpl":"day"},{"id":416,"cat":"calendar","pos":"명사","kr":"수요일","zh":"星期三","ex":null,"exZh":null,"tpl":"day"},{"id":417,"cat":"calendar","pos":"명사","kr":"목요일","zh":"星期四","ex":null,"exZh":null,"tpl":"day"},{"id":418,"cat":"calendar","pos":"명사","kr":"금요일","zh":"星期五","ex":null,"exZh":null,"tpl":"day"},{"id":419,"cat":"calendar","pos":"명사","kr":"토요일","zh":"星期六","ex":null,"exZh":null,"tpl":"day"},{"id":420,"cat":"calendar","pos":"명사","kr":"일요일","zh":"星期日","ex":null,"exZh":null,"tpl":"day"},{"id":421,"cat":"calendar","pos":"명사","kr":"일월","zh":"1月","ex":null,"exZh":null,"tpl":"month"},{"id":422,"cat":"calendar","pos":"명사","kr":"이월","zh":"2月","ex":null,"exZh":null,"tpl":"month"},{"id":423,"cat":"calendar","pos":"명사","kr":"삼월","zh":"3月","ex":null,"exZh":null,"tpl":"month"},{"id":424,"cat":"calendar","pos":"명사","kr":"사월","zh":"4月","ex":null,"exZh":null,"tpl":"month"},{"id":425,"cat":"calendar","pos":"명사","kr":"오월","zh":"5月","ex":null,"exZh":null,"tpl":"month"},{"id":426,"cat":"calendar","pos":"명사","kr":"유월","zh":"6月","ex":null,"exZh":null,"tpl":"month"},{"id":427,"cat":"calendar","pos":"명사","kr":"칠월","zh":"7月","ex":null,"exZh":null,"tpl":"month"},{"id":428,"cat":"calendar","pos":"명사","kr":"팔월","zh":"8月","ex":null,"exZh":null,"tpl":"month"},{"id":429,"cat":"calendar","pos":"명사","kr":"구월","zh":"9月","ex":null,"exZh":null,"tpl":"month"},{"id":430,"cat":"calendar","pos":"명사","kr":"시월","zh":"10月","ex":null,"exZh":null,"tpl":"month"},{"id":431,"cat":"calendar","pos":"명사","kr":"십일월","zh":"11月","ex":null,"exZh":null,"tpl":"month"},{"id":432,"cat":"calendar","pos":"명사","kr":"십이월","zh":"12月","ex":null,"exZh":null,"tpl":"month"},{"id":433,"cat":"calendar","pos":"명사","kr":"봄","zh":"春天","ex":null,"exZh":null,"tpl":"season"},{"id":434,"cat":"calendar","pos":"명사","kr":"여름","zh":"夏天","ex":null,"exZh":null,"tpl":"season"},{"id":435,"cat":"calendar","pos":"명사","kr":"가을","zh":"秋天","ex":null,"exZh":null,"tpl":"season"},{"id":436,"cat":"calendar","pos":"명사","kr":"겨울","zh":"冬天","ex":null,"exZh":null,"tpl":"season"},{"id":437,"cat":"number","pos":"명사","kr":"하나","zh":"一(個)","ex":null,"exZh":null,"tpl":"number"},{"id":438,"cat":"number","pos":"명사","kr":"둘","zh":"二(個)","ex":null,"exZh":null,"tpl":"number"},{"id":439,"cat":"number","pos":"명사","kr":"셋","zh":"三(個)","ex":null,"exZh":null,"tpl":"number"},{"id":440,"cat":"number","pos":"명사","kr":"넷","zh":"四(個)","ex":null,"exZh":null,"tpl":"number"},{"id":441,"cat":"number","pos":"명사","kr":"다섯","zh":"五(個)","ex":null,"exZh":null,"tpl":"number"},{"id":442,"cat":"number","pos":"명사","kr":"여섯","zh":"六(個)","ex":null,"exZh":null,"tpl":"number"},{"id":443,"cat":"number","pos":"명사","kr":"일곱","zh":"七(個)","ex":null,"exZh":null,"tpl":"number"},{"id":444,"cat":"number","pos":"명사","kr":"여덟","zh":"八(個)","ex":null,"exZh":null,"tpl":"number"},{"id":445,"cat":"number","pos":"명사","kr":"아홉","zh":"九(個)","ex":null,"exZh":null,"tpl":"number"},{"id":446,"cat":"number","pos":"명사","kr":"열","zh":"十(個)","ex":null,"exZh":null,"tpl":"number"},{"id":447,"cat":"number","pos":"명사","kr":"일","zh":"一","ex":null,"exZh":null,"tpl":"number"},{"id":448,"cat":"number","pos":"명사","kr":"이","zh":"二","ex":null,"exZh":null,"tpl":"number"},{"id":449,"cat":"number","pos":"명사","kr":"삼","zh":"三","ex":null,"exZh":null,"tpl":"number"},{"id":450,"cat":"number","pos":"명사","kr":"사","zh":"四","ex":null,"exZh":null,"tpl":"number"},{"id":451,"cat":"number","pos":"명사","kr":"오","zh":"五","ex":null,"exZh":null,"tpl":"number"},{"id":452,"cat":"number","pos":"명사","kr":"육","zh":"六","ex":null,"exZh":null,"tpl":"number"},{"id":453,"cat":"number","pos":"명사","kr":"칠","zh":"七","ex":null,"exZh":null,"tpl":"number"},{"id":454,"cat":"number","pos":"명사","kr":"팔","zh":"八","ex":null,"exZh":null,"tpl":"number"},{"id":455,"cat":"number","pos":"명사","kr":"구","zh":"九","ex":null,"exZh":null,"tpl":"number"},{"id":456,"cat":"number","pos":"명사","kr":"십","zh":"十","ex":null,"exZh":null,"tpl":"number"},{"id":457,"cat":"number","pos":"명사","kr":"십일","zh":"十一","ex":null,"exZh":null,"tpl":"number"},{"id":458,"cat":"number","pos":"명사","kr":"이십","zh":"二十","ex":null,"exZh":null,"tpl":"number"},{"id":459,"cat":"number","pos":"명사","kr":"삼십","zh":"三十","ex":null,"exZh":null,"tpl":"number"},{"id":460,"cat":"number","pos":"명사","kr":"사십","zh":"四十","ex":null,"exZh":null,"tpl":"number"},{"id":461,"cat":"number","pos":"명사","kr":"오십","zh":"五十","ex":null,"exZh":null,"tpl":"number"},{"id":462,"cat":"number","pos":"명사","kr":"백","zh":"一百","ex":null,"exZh":null,"tpl":"number"},{"id":463,"cat":"number","pos":"명사","kr":"천","zh":"一千","ex":null,"exZh":null,"tpl":"number"},{"id":464,"cat":"number","pos":"명사","kr":"만","zh":"一萬","ex":null,"exZh":null,"tpl":"number"},{"id":465,"cat":"number","pos":"명사","kr":"첫째","zh":"第一","ex":null,"exZh":null,"tpl":"number"},{"id":466,"cat":"number","pos":"명사","kr":"둘째","zh":"第二","ex":null,"exZh":null,"tpl":"number"},{"id":467,"cat":"number","pos":"명사","kr":"셋째","zh":"第三","ex":null,"exZh":null,"tpl":"number"},{"id":468,"cat":"number","pos":"명사","kr":"넷째","zh":"第四","ex":null,"exZh":null,"tpl":"number"},{"id":469,"cat":"number","pos":"명사","kr":"다섯째","zh":"第五","ex":null,"exZh":null,"tpl":"number"},{"id":470,"cat":"number","pos":"명사","kr":"여섯째","zh":"第六","ex":null,"exZh":null,"tpl":"number"},{"id":471,"cat":"number","pos":"명사","kr":"일곱째","zh":"第七","ex":null,"exZh":null,"tpl":"number"},{"id":472,"cat":"number","pos":"명사","kr":"여덟째","zh":"第八","ex":null,"exZh":null,"tpl":"number"},{"id":473,"cat":"counter","pos":"명사","kr":"개","zh":"個(量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":474,"cat":"counter","pos":"명사","kr":"명","zh":"位、名(人的量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":475,"cat":"counter","pos":"명사","kr":"마리","zh":"隻(動物量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":476,"cat":"counter","pos":"명사","kr":"권","zh":"本(書的量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":477,"cat":"counter","pos":"명사","kr":"잔","zh":"杯(量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":478,"cat":"counter","pos":"명사","kr":"병","zh":"瓶(量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":479,"cat":"counter","pos":"명사","kr":"장","zh":"張(量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":480,"cat":"counter","pos":"명사","kr":"대","zh":"台(機器的量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":481,"cat":"counter","pos":"명사","kr":"켤레","zh":"雙(鞋、襪的量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":482,"cat":"counter","pos":"명사","kr":"살","zh":"歲(量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":483,"cat":"counter","pos":"명사","kr":"번","zh":"次(量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":484,"cat":"counter","pos":"명사","kr":"층","zh":"樓層","ex":null,"exZh":null,"tpl":"counter"},{"id":485,"cat":"counter","pos":"명사","kr":"벌","zh":"套(衣服的量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":486,"cat":"counter","pos":"명사","kr":"송이","zh":"朵(花的量詞)","ex":null,"exZh":null,"tpl":"counter"},{"id":487,"cat":"position","pos":"명사","kr":"위","zh":"上面","ex":null,"exZh":null,"tpl":"position"},{"id":488,"cat":"position","pos":"명사","kr":"아래","zh":"下面","ex":null,"exZh":null,"tpl":"position"},{"id":489,"cat":"position","pos":"명사","kr":"앞","zh":"前面","ex":null,"exZh":null,"tpl":"position"},{"id":490,"cat":"position","pos":"명사","kr":"뒤","zh":"後面","ex":null,"exZh":null,"tpl":"position"},{"id":491,"cat":"position","pos":"명사","kr":"옆","zh":"旁邊","ex":null,"exZh":null,"tpl":"position"},{"id":492,"cat":"position","pos":"명사","kr":"안","zh":"裡面","ex":null,"exZh":null,"tpl":"position"},{"id":493,"cat":"position","pos":"명사","kr":"밖","zh":"外面","ex":null,"exZh":null,"tpl":"position"},{"id":494,"cat":"position","pos":"명사","kr":"오른쪽","zh":"右邊","ex":null,"exZh":null,"tpl":"position"},{"id":495,"cat":"position","pos":"명사","kr":"왼쪽","zh":"左邊","ex":null,"exZh":null,"tpl":"position"},{"id":496,"cat":"position","pos":"명사","kr":"사이","zh":"中間、之間","ex":null,"exZh":null,"tpl":"position"},{"id":497,"cat":"position","pos":"명사","kr":"근처","zh":"附近","ex":null,"exZh":null,"tpl":"position"},{"id":498,"cat":"body","pos":"명사","kr":"머리","zh":"頭","ex":null,"exZh":null,"tpl":"body"},{"id":499,"cat":"body","pos":"명사","kr":"얼굴","zh":"臉","ex":null,"exZh":null,"tpl":"body"},{"id":500,"cat":"body","pos":"명사","kr":"눈","zh":"眼睛","ex":null,"exZh":null,"tpl":"body"},{"id":501,"cat":"body","pos":"명사","kr":"코","zh":"鼻子","ex":null,"exZh":null,"tpl":"body"},{"id":502,"cat":"body","pos":"명사","kr":"입","zh":"嘴巴","ex":null,"exZh":null,"tpl":"body"},{"id":503,"cat":"body","pos":"명사","kr":"귀","zh":"耳朵","ex":null,"exZh":null,"tpl":"body"},{"id":504,"cat":"body","pos":"명사","kr":"손","zh":"手","ex":null,"exZh":null,"tpl":"body"},{"id":505,"cat":"body","pos":"명사","kr":"발","zh":"腳","ex":null,"exZh":null,"tpl":"body"},{"id":506,"cat":"body","pos":"명사","kr":"다리","zh":"腿","ex":null,"exZh":null,"tpl":"body"},{"id":507,"cat":"body","pos":"명사","kr":"팔","zh":"手臂","ex":null,"exZh":null,"tpl":"body"},{"id":508,"cat":"body","pos":"명사","kr":"배","zh":"肚子","ex":null,"exZh":null,"tpl":"body"},{"id":509,"cat":"body","pos":"명사","kr":"등","zh":"背","ex":null,"exZh":null,"tpl":"body"},{"id":510,"cat":"body","pos":"명사","kr":"어깨","zh":"肩膀","ex":null,"exZh":null,"tpl":"body"},{"id":511,"cat":"body","pos":"명사","kr":"목","zh":"脖子、喉嚨","ex":null,"exZh":null,"tpl":"body"},{"id":512,"cat":"body","pos":"명사","kr":"이","zh":"牙齒","ex":null,"exZh":null,"tpl":"body"},{"id":513,"cat":"body","pos":"명사","kr":"피부","zh":"皮膚","ex":null,"exZh":null,"tpl":"body"},{"id":514,"cat":"body","pos":"명사","kr":"머리카락","zh":"頭髮","ex":null,"exZh":null,"tpl":"body"},{"id":515,"cat":"body","pos":"명사","kr":"손가락","zh":"手指","ex":null,"exZh":null,"tpl":"body"},{"id":516,"cat":"body","pos":"명사","kr":"발가락","zh":"腳趾","ex":null,"exZh":null,"tpl":"body"},{"id":517,"cat":"body","pos":"명사","kr":"무릎","zh":"膝蓋","ex":null,"exZh":null,"tpl":"body"},{"id":518,"cat":"body","pos":"명사","kr":"허리","zh":"腰","ex":null,"exZh":null,"tpl":"body"},{"id":519,"cat":"body","pos":"명사","kr":"가슴","zh":"胸","ex":null,"exZh":null,"tpl":"body"},{"id":520,"cat":"body","pos":"명사","kr":"손목","zh":"手腕","ex":null,"exZh":null,"tpl":"body"},{"id":521,"cat":"body","pos":"명사","kr":"발목","zh":"腳踝","ex":null,"exZh":null,"tpl":"body"},{"id":522,"cat":"body","pos":"명사","kr":"손톱","zh":"指甲","ex":null,"exZh":null,"tpl":"body"},{"id":523,"cat":"body","pos":"명사","kr":"눈썹","zh":"眉毛","ex":null,"exZh":null,"tpl":"body"},{"id":524,"cat":"body","pos":"명사","kr":"이마","zh":"額頭","ex":null,"exZh":null,"tpl":"body"},{"id":525,"cat":"health","pos":"명사","kr":"감기","zh":"感冒","ex":null,"exZh":null,"tpl":"health"},{"id":526,"cat":"health","pos":"명사","kr":"열","zh":"發燒","ex":null,"exZh":null,"tpl":"health"},{"id":527,"cat":"health","pos":"명사","kr":"두통","zh":"頭痛","ex":null,"exZh":null,"tpl":"health"},{"id":528,"cat":"health","pos":"명사","kr":"기침","zh":"咳嗽","ex":null,"exZh":null,"tpl":"health"},{"id":529,"cat":"health","pos":"명사","kr":"콧물","zh":"鼻涕","ex":null,"exZh":null,"tpl":"health"},{"id":530,"cat":"health","pos":"명사","kr":"약","zh":"藥","ex":null,"exZh":null,"tpl":"health"},{"id":531,"cat":"health","pos":"명사","kr":"주사","zh":"打針","ex":null,"exZh":null,"tpl":"health"},{"id":532,"cat":"health","pos":"명사","kr":"수술","zh":"手術","ex":null,"exZh":null,"tpl":"health"},{"id":533,"cat":"health","pos":"명사","kr":"건강","zh":"健康","ex":null,"exZh":null,"tpl":"health"},{"id":534,"cat":"health","pos":"명사","kr":"알레르기","zh":"過敏","ex":null,"exZh":null,"tpl":"health"},{"id":535,"cat":"health","pos":"명사","kr":"체온","zh":"體溫","ex":null,"exZh":null,"tpl":"health"},{"id":536,"cat":"health","pos":"명사","kr":"비타민","zh":"維他命","ex":null,"exZh":null,"tpl":"health"},{"id":537,"cat":"health","pos":"명사","kr":"마스크","zh":"口罩","ex":null,"exZh":null,"tpl":"health"},{"id":538,"cat":"clothes","pos":"명사","kr":"모자","zh":"帽子","ex":null,"exZh":null,"tpl":"clothes"},{"id":539,"cat":"clothes","pos":"명사","kr":"장갑","zh":"手套","ex":null,"exZh":null,"tpl":"clothes"},{"id":540,"cat":"clothes","pos":"명사","kr":"양말","zh":"襪子","ex":null,"exZh":null,"tpl":"clothes"},{"id":541,"cat":"clothes","pos":"명사","kr":"안경","zh":"眼鏡","ex":null,"exZh":null,"tpl":"clothes"},{"id":542,"cat":"clothes","pos":"명사","kr":"벨트","zh":"皮帶","ex":null,"exZh":null,"tpl":"clothes"},{"id":543,"cat":"clothes","pos":"명사","kr":"넥타이","zh":"領帶","ex":null,"exZh":null,"tpl":"clothes"},{"id":544,"cat":"clothes","pos":"명사","kr":"치마","zh":"裙子","ex":null,"exZh":null,"tpl":"clothes"},{"id":545,"cat":"clothes","pos":"명사","kr":"바지","zh":"褲子","ex":null,"exZh":null,"tpl":"clothes"},{"id":546,"cat":"clothes","pos":"명사","kr":"셔츠","zh":"襯衫","ex":null,"exZh":null,"tpl":"clothes"},{"id":547,"cat":"clothes","pos":"명사","kr":"코트","zh":"大衣","ex":null,"exZh":null,"tpl":"clothes"},{"id":548,"cat":"clothes","pos":"명사","kr":"스웨터","zh":"毛衣","ex":null,"exZh":null,"tpl":"clothes"},{"id":549,"cat":"clothes","pos":"명사","kr":"목도리","zh":"圍巾","ex":null,"exZh":null,"tpl":"clothes"},{"id":550,"cat":"clothes","pos":"명사","kr":"티셔츠","zh":"T恤","ex":null,"exZh":null,"tpl":"clothes"},{"id":551,"cat":"clothes","pos":"명사","kr":"청바지","zh":"牛仔褲","ex":null,"exZh":null,"tpl":"clothes"},{"id":552,"cat":"clothes","pos":"명사","kr":"잠옷","zh":"睡衣","ex":null,"exZh":null,"tpl":"clothes"},{"id":553,"cat":"clothes","pos":"명사","kr":"운동화","zh":"運動鞋","ex":null,"exZh":null,"tpl":"clothes"},{"id":554,"cat":"clothes","pos":"명사","kr":"구두","zh":"皮鞋","ex":null,"exZh":null,"tpl":"clothes"},{"id":555,"cat":"clothes","pos":"명사","kr":"부츠","zh":"靴子","ex":null,"exZh":null,"tpl":"clothes"},{"id":556,"cat":"clothes","pos":"명사","kr":"원피스","zh":"連身裙","ex":null,"exZh":null,"tpl":"clothes"},{"id":557,"cat":"clothes","pos":"명사","kr":"반바지","zh":"短褲","ex":null,"exZh":null,"tpl":"clothes"},{"id":558,"cat":"color","pos":"명사","kr":"빨간색","zh":"紅色","ex":null,"exZh":null,"tpl":"color"},{"id":559,"cat":"color","pos":"명사","kr":"파란색","zh":"藍色","ex":null,"exZh":null,"tpl":"color"},{"id":560,"cat":"color","pos":"명사","kr":"노란색","zh":"黃色","ex":null,"exZh":null,"tpl":"color"},{"id":561,"cat":"color","pos":"명사","kr":"초록색","zh":"綠色","ex":null,"exZh":null,"tpl":"color"},{"id":562,"cat":"color","pos":"명사","kr":"검은색","zh":"黑色","ex":null,"exZh":null,"tpl":"color"},{"id":563,"cat":"color","pos":"명사","kr":"흰색","zh":"白色","ex":null,"exZh":null,"tpl":"color"},{"id":564,"cat":"color","pos":"명사","kr":"분홍색","zh":"粉紅色","ex":null,"exZh":null,"tpl":"color"},{"id":565,"cat":"color","pos":"명사","kr":"보라색","zh":"紫色","ex":null,"exZh":null,"tpl":"color"},{"id":566,"cat":"color","pos":"명사","kr":"갈색","zh":"棕色","ex":null,"exZh":null,"tpl":"color"},{"id":567,"cat":"color","pos":"명사","kr":"회색","zh":"灰色","ex":null,"exZh":null,"tpl":"color"},{"id":568,"cat":"color","pos":"명사","kr":"주황색","zh":"橘色","ex":null,"exZh":null,"tpl":"color"},{"id":569,"cat":"weather","pos":"명사","kr":"날씨","zh":"天氣","ex":null,"exZh":null,"tpl":"nature"},{"id":570,"cat":"weather","pos":"명사","kr":"비","zh":"雨","ex":null,"exZh":null,"tpl":"nature"},{"id":571,"cat":"weather","pos":"명사","kr":"눈","zh":"雪","ex":null,"exZh":null,"tpl":"nature"},{"id":572,"cat":"weather","pos":"명사","kr":"바람","zh":"風","ex":null,"exZh":null,"tpl":"nature"},{"id":573,"cat":"weather","pos":"명사","kr":"구름","zh":"雲","ex":null,"exZh":null,"tpl":"nature"},{"id":574,"cat":"weather","pos":"명사","kr":"하늘","zh":"天空","ex":null,"exZh":null,"tpl":"nature"},{"id":575,"cat":"weather","pos":"명사","kr":"태양","zh":"太陽","ex":null,"exZh":null,"tpl":"nature"},{"id":576,"cat":"weather","pos":"명사","kr":"달","zh":"月亮","ex":null,"exZh":null,"tpl":"nature"},{"id":577,"cat":"weather","pos":"명사","kr":"별","zh":"星星","ex":null,"exZh":null,"tpl":"nature"},{"id":578,"cat":"weather","pos":"명사","kr":"산","zh":"山","ex":null,"exZh":null,"tpl":"nature"},{"id":579,"cat":"weather","pos":"명사","kr":"바다","zh":"海","ex":null,"exZh":null,"tpl":"nature"},{"id":580,"cat":"weather","pos":"명사","kr":"강","zh":"河","ex":null,"exZh":null,"tpl":"nature"},{"id":581,"cat":"weather","pos":"명사","kr":"나무","zh":"樹","ex":null,"exZh":null,"tpl":"nature"},{"id":582,"cat":"weather","pos":"명사","kr":"꽃","zh":"花","ex":null,"exZh":null,"tpl":"nature"},{"id":583,"cat":"weather","pos":"명사","kr":"돌","zh":"石頭","ex":null,"exZh":null,"tpl":"nature"},{"id":584,"cat":"weather","pos":"명사","kr":"불","zh":"火","ex":null,"exZh":null,"tpl":"nature"},{"id":585,"cat":"weather","pos":"명사","kr":"흙","zh":"泥土","ex":null,"exZh":null,"tpl":"nature"},{"id":586,"cat":"weather","pos":"명사","kr":"모래","zh":"沙子","ex":null,"exZh":null,"tpl":"nature"},{"id":587,"cat":"weather","pos":"명사","kr":"섬","zh":"島嶼","ex":null,"exZh":null,"tpl":"nature"},{"id":588,"cat":"weather","pos":"명사","kr":"호수","zh":"湖","ex":null,"exZh":null,"tpl":"nature"},{"id":589,"cat":"weather","pos":"명사","kr":"무지개","zh":"彩虹","ex":null,"exZh":null,"tpl":"nature"},{"id":590,"cat":"weather","pos":"명사","kr":"안개","zh":"霧","ex":null,"exZh":null,"tpl":"nature"},{"id":591,"cat":"weather","pos":"명사","kr":"천둥","zh":"雷","ex":null,"exZh":null,"tpl":"nature"},{"id":592,"cat":"weather","pos":"명사","kr":"번개","zh":"閃電","ex":null,"exZh":null,"tpl":"nature"},{"id":593,"cat":"weather","pos":"명사","kr":"태풍","zh":"颱風","ex":null,"exZh":null,"tpl":"nature"},{"id":594,"cat":"weather","pos":"명사","kr":"장마","zh":"梅雨","ex":null,"exZh":null,"tpl":"nature"},{"id":595,"cat":"weather","pos":"명사","kr":"얼음","zh":"冰","ex":null,"exZh":null,"tpl":"nature"},{"id":596,"cat":"weather","pos":"명사","kr":"지진","zh":"地震","ex":null,"exZh":null,"tpl":"nature"},{"id":597,"cat":"weather","pos":"명사","kr":"폭포","zh":"瀑布","ex":null,"exZh":null,"tpl":"nature"},{"id":598,"cat":"weather","pos":"명사","kr":"계곡","zh":"溪谷","ex":null,"exZh":null,"tpl":"nature"},{"id":599,"cat":"weather","pos":"명사","kr":"들판","zh":"田野","ex":null,"exZh":null,"tpl":"nature"},{"id":600,"cat":"weather","pos":"명사","kr":"사막","zh":"沙漠","ex":null,"exZh":null,"tpl":"nature"},{"id":601,"cat":"weather","pos":"명사","kr":"우주","zh":"宇宙","ex":null,"exZh":null,"tpl":"nature"},{"id":602,"cat":"weather","pos":"명사","kr":"지구","zh":"地球","ex":null,"exZh":null,"tpl":"nature"},{"id":603,"cat":"weather","pos":"명사","kr":"공기","zh":"空氣","ex":null,"exZh":null,"tpl":"nature"},{"id":604,"cat":"weather","pos":"명사","kr":"숲","zh":"森林","ex":null,"exZh":null,"tpl":"nature"},{"id":605,"cat":"animal","pos":"명사","kr":"개","zh":"狗","ex":null,"exZh":null,"tpl":"animal"},{"id":606,"cat":"animal","pos":"명사","kr":"고양이","zh":"貓","ex":null,"exZh":null,"tpl":"animal"},{"id":607,"cat":"animal","pos":"명사","kr":"새","zh":"鳥","ex":null,"exZh":null,"tpl":"animal"},{"id":608,"cat":"animal","pos":"명사","kr":"물고기","zh":"魚","ex":null,"exZh":null,"tpl":"animal"},{"id":609,"cat":"animal","pos":"명사","kr":"토끼","zh":"兔子","ex":null,"exZh":null,"tpl":"animal"},{"id":610,"cat":"animal","pos":"명사","kr":"호랑이","zh":"老虎","ex":null,"exZh":null,"tpl":"animal"},{"id":611,"cat":"animal","pos":"명사","kr":"사자","zh":"獅子","ex":null,"exZh":null,"tpl":"animal"},{"id":612,"cat":"animal","pos":"명사","kr":"코끼리","zh":"大象","ex":null,"exZh":null,"tpl":"animal"},{"id":613,"cat":"animal","pos":"명사","kr":"곰","zh":"熊","ex":null,"exZh":null,"tpl":"animal"},{"id":614,"cat":"animal","pos":"명사","kr":"말","zh":"馬","ex":null,"exZh":null,"tpl":"animal"},{"id":615,"cat":"animal","pos":"명사","kr":"소","zh":"牛","ex":null,"exZh":null,"tpl":"animal"},{"id":616,"cat":"animal","pos":"명사","kr":"돼지","zh":"豬","ex":null,"exZh":null,"tpl":"animal"},{"id":617,"cat":"animal","pos":"명사","kr":"닭","zh":"雞","ex":null,"exZh":null,"tpl":"animal"},{"id":618,"cat":"animal","pos":"명사","kr":"오리","zh":"鴨子","ex":null,"exZh":null,"tpl":"animal"},{"id":619,"cat":"animal","pos":"명사","kr":"쥐","zh":"老鼠","ex":null,"exZh":null,"tpl":"animal"},{"id":620,"cat":"animal","pos":"명사","kr":"여우","zh":"狐狸","ex":null,"exZh":null,"tpl":"animal"},{"id":621,"cat":"animal","pos":"명사","kr":"사슴","zh":"鹿","ex":null,"exZh":null,"tpl":"animal"},{"id":622,"cat":"animal","pos":"명사","kr":"양","zh":"羊","ex":null,"exZh":null,"tpl":"animal"},{"id":623,"cat":"animal","pos":"명사","kr":"원숭이","zh":"猴子","ex":null,"exZh":null,"tpl":"animal"},{"id":624,"cat":"animal","pos":"명사","kr":"뱀","zh":"蛇","ex":null,"exZh":null,"tpl":"animal"},{"id":625,"cat":"animal","pos":"명사","kr":"나비","zh":"蝴蝶","ex":null,"exZh":null,"tpl":"animal"},{"id":626,"cat":"animal","pos":"명사","kr":"벌","zh":"蜜蜂","ex":null,"exZh":null,"tpl":"animal"},{"id":627,"cat":"animal","pos":"명사","kr":"개미","zh":"螞蟻","ex":null,"exZh":null,"tpl":"animal"},{"id":628,"cat":"animal","pos":"명사","kr":"모기","zh":"蚊子","ex":null,"exZh":null,"tpl":"animal"},{"id":629,"cat":"animal","pos":"명사","kr":"거미","zh":"蜘蛛","ex":null,"exZh":null,"tpl":"animal"},{"id":630,"cat":"animal","pos":"명사","kr":"달팽이","zh":"蝸牛","ex":null,"exZh":null,"tpl":"animal"},{"id":631,"cat":"animal","pos":"명사","kr":"펭귄","zh":"企鵝","ex":null,"exZh":null,"tpl":"animal"},{"id":632,"cat":"animal","pos":"명사","kr":"돌고래","zh":"海豚","ex":null,"exZh":null,"tpl":"animal"},{"id":633,"cat":"animal","pos":"명사","kr":"상어","zh":"鯊魚","ex":null,"exZh":null,"tpl":"animal"},{"id":634,"cat":"animal","pos":"명사","kr":"거북이","zh":"烏龜","ex":null,"exZh":null,"tpl":"animal"},{"id":635,"cat":"animal","pos":"명사","kr":"다람쥐","zh":"松鼠","ex":null,"exZh":null,"tpl":"animal"},{"id":636,"cat":"animal","pos":"명사","kr":"공룡","zh":"恐龍","ex":null,"exZh":null,"tpl":"animal"},{"id":637,"cat":"animal","pos":"명사","kr":"파리","zh":"蒼蠅","ex":null,"exZh":null,"tpl":"animal"},{"id":638,"cat":"animal","pos":"명사","kr":"참새","zh":"麻雀","ex":null,"exZh":null,"tpl":"animal"},{"id":639,"cat":"animal","pos":"명사","kr":"까치","zh":"喜鵲","ex":null,"exZh":null,"tpl":"animal"},{"id":640,"cat":"job","pos":"명사","kr":"의사","zh":"醫生","ex":null,"exZh":null,"tpl":"job"},{"id":641,"cat":"job","pos":"명사","kr":"간호사","zh":"護士","ex":null,"exZh":null,"tpl":"job"},{"id":642,"cat":"job","pos":"명사","kr":"회사원","zh":"上班族","ex":null,"exZh":null,"tpl":"job"},{"id":643,"cat":"job","pos":"명사","kr":"경찰","zh":"警察","ex":null,"exZh":null,"tpl":"job"},{"id":644,"cat":"job","pos":"명사","kr":"소방관","zh":"消防員","ex":null,"exZh":null,"tpl":"job"},{"id":645,"cat":"job","pos":"명사","kr":"요리사","zh":"廚師","ex":null,"exZh":null,"tpl":"job"},{"id":646,"cat":"job","pos":"명사","kr":"가수","zh":"歌手","ex":null,"exZh":null,"tpl":"job"},{"id":647,"cat":"job","pos":"명사","kr":"배우","zh":"演員","ex":null,"exZh":null,"tpl":"job"},{"id":648,"cat":"job","pos":"명사","kr":"운전기사","zh":"司機","ex":null,"exZh":null,"tpl":"job"},{"id":649,"cat":"job","pos":"명사","kr":"농부","zh":"農夫","ex":null,"exZh":null,"tpl":"job"},{"id":650,"cat":"job","pos":"명사","kr":"화가","zh":"畫家","ex":null,"exZh":null,"tpl":"job"},{"id":651,"cat":"job","pos":"명사","kr":"작가","zh":"作家","ex":null,"exZh":null,"tpl":"job"},{"id":652,"cat":"job","pos":"명사","kr":"변호사","zh":"律師","ex":null,"exZh":null,"tpl":"job"},{"id":653,"cat":"job","pos":"명사","kr":"기자","zh":"記者","ex":null,"exZh":null,"tpl":"job"},{"id":654,"cat":"job","pos":"명사","kr":"선생님","zh":"老師","ex":null,"exZh":null,"tpl":"job"},{"id":655,"cat":"job","pos":"명사","kr":"군인","zh":"軍人","ex":null,"exZh":null,"tpl":"job"},{"id":656,"cat":"job","pos":"명사","kr":"과학자","zh":"科學家","ex":null,"exZh":null,"tpl":"job"},{"id":657,"cat":"job","pos":"명사","kr":"디자이너","zh":"設計師","ex":null,"exZh":null,"tpl":"job"},{"id":658,"cat":"job","pos":"명사","kr":"엔지니어","zh":"工程師","ex":null,"exZh":null,"tpl":"job"},{"id":659,"cat":"job","pos":"명사","kr":"사장님","zh":"老闆","ex":null,"exZh":null,"tpl":"job"},{"id":660,"cat":"job","pos":"명사","kr":"미용사","zh":"美髮師","ex":null,"exZh":null,"tpl":"job"},{"id":661,"cat":"job","pos":"명사","kr":"교수","zh":"教授","ex":null,"exZh":null,"tpl":"job"},{"id":662,"cat":"job","pos":"명사","kr":"공무원","zh":"公務員","ex":null,"exZh":null,"tpl":"job"},{"id":663,"cat":"job","pos":"명사","kr":"비서","zh":"秘書","ex":null,"exZh":null,"tpl":"job"},{"id":664,"cat":"job","pos":"명사","kr":"점원","zh":"店員","ex":null,"exZh":null,"tpl":"job"},{"id":665,"cat":"job","pos":"명사","kr":"통역사","zh":"口譯員","ex":null,"exZh":null,"tpl":"job"},{"id":666,"cat":"job","pos":"명사","kr":"운동선수","zh":"運動員","ex":null,"exZh":null,"tpl":"job"},{"id":667,"cat":"job","pos":"명사","kr":"사진작가","zh":"攝影師","ex":null,"exZh":null,"tpl":"job"},{"id":668,"cat":"job","pos":"명사","kr":"배달원","zh":"外送員","ex":null,"exZh":null,"tpl":"job"},{"id":669,"cat":"job","pos":"명사","kr":"약사","zh":"藥劑師","ex":null,"exZh":null,"tpl":"job"},{"id":670,"cat":"school","pos":"명사","kr":"교실","zh":"教室","ex":null,"exZh":null,"tpl":"school"},{"id":671,"cat":"school","pos":"명사","kr":"칠판","zh":"黑板","ex":null,"exZh":null,"tpl":"school"},{"id":672,"cat":"school","pos":"명사","kr":"연필","zh":"鉛筆","ex":null,"exZh":null,"tpl":"school"},{"id":673,"cat":"school","pos":"명사","kr":"볼펜","zh":"原子筆","ex":null,"exZh":null,"tpl":"school"},{"id":674,"cat":"school","pos":"명사","kr":"지우개","zh":"橡皮擦","ex":null,"exZh":null,"tpl":"school"},{"id":675,"cat":"school","pos":"명사","kr":"공책","zh":"筆記本","ex":null,"exZh":null,"tpl":"school"},{"id":676,"cat":"school","pos":"명사","kr":"시험","zh":"考試","ex":null,"exZh":null,"tpl":"school"},{"id":677,"cat":"school","pos":"명사","kr":"숙제","zh":"作業","ex":null,"exZh":null,"tpl":"school"},{"id":678,"cat":"school","pos":"명사","kr":"수업","zh":"課","ex":null,"exZh":null,"tpl":"school"},{"id":679,"cat":"school","pos":"명사","kr":"방학","zh":"放假","ex":null,"exZh":null,"tpl":"school"},{"id":680,"cat":"school","pos":"명사","kr":"졸업","zh":"畢業","ex":null,"exZh":null,"tpl":"school"},{"id":681,"cat":"school","pos":"명사","kr":"입학","zh":"入學","ex":null,"exZh":null,"tpl":"school"},{"id":682,"cat":"school","pos":"명사","kr":"교과서","zh":"教科書","ex":null,"exZh":null,"tpl":"school"},{"id":683,"cat":"school","pos":"명사","kr":"학생증","zh":"學生證","ex":null,"exZh":null,"tpl":"school"},{"id":684,"cat":"school","pos":"명사","kr":"장학금","zh":"獎學金","ex":null,"exZh":null,"tpl":"school"},{"id":685,"cat":"school","pos":"명사","kr":"전공","zh":"主修","ex":null,"exZh":null,"tpl":"school"},{"id":686,"cat":"school","pos":"명사","kr":"동아리","zh":"社團","ex":null,"exZh":null,"tpl":"school"},{"id":687,"cat":"school","pos":"명사","kr":"선배","zh":"學長姐","ex":null,"exZh":null,"tpl":"school"},{"id":688,"cat":"school","pos":"명사","kr":"후배","zh":"學弟妹","ex":null,"exZh":null,"tpl":"school"},{"id":689,"cat":"school","pos":"명사","kr":"대학생","zh":"大學生","ex":null,"exZh":null,"tpl":"school"},{"id":690,"cat":"school","pos":"명사","kr":"중학생","zh":"國中生","ex":null,"exZh":null,"tpl":"school"},{"id":691,"cat":"school","pos":"명사","kr":"고등학생","zh":"高中生","ex":null,"exZh":null,"tpl":"school"},{"id":692,"cat":"school","pos":"명사","kr":"초등학생","zh":"小學生","ex":null,"exZh":null,"tpl":"school"},{"id":693,"cat":"school","pos":"명사","kr":"반","zh":"班級","ex":null,"exZh":null,"tpl":"school"},{"id":694,"cat":"school","pos":"명사","kr":"학년","zh":"年級","ex":null,"exZh":null,"tpl":"school"},{"id":695,"cat":"school","pos":"명사","kr":"점수","zh":"分數","ex":null,"exZh":null,"tpl":"school"},{"id":696,"cat":"school","pos":"명사","kr":"성적","zh":"成績","ex":null,"exZh":null,"tpl":"school"},{"id":697,"cat":"school","pos":"명사","kr":"필통","zh":"鉛筆盒","ex":null,"exZh":null,"tpl":"school"},{"id":698,"cat":"school","pos":"명사","kr":"자","zh":"尺","ex":null,"exZh":null,"tpl":"school"},{"id":699,"cat":"school","pos":"명사","kr":"가위","zh":"剪刀","ex":null,"exZh":null,"tpl":"school"},{"id":700,"cat":"transport","pos":"명사","kr":"버스","zh":"公車","ex":null,"exZh":null,"tpl":"transport"},{"id":701,"cat":"transport","pos":"명사","kr":"지하철","zh":"地鐵","ex":null,"exZh":null,"tpl":"transport"},{"id":702,"cat":"transport","pos":"명사","kr":"기차","zh":"火車","ex":null,"exZh":null,"tpl":"transport"},{"id":703,"cat":"transport","pos":"명사","kr":"비행기","zh":"飛機","ex":null,"exZh":null,"tpl":"transport"},{"id":704,"cat":"transport","pos":"명사","kr":"배","zh":"船","ex":null,"exZh":null,"tpl":"transport"},{"id":705,"cat":"transport","pos":"명사","kr":"자동차","zh":"汽車","ex":null,"exZh":null,"tpl":"transport"},{"id":706,"cat":"transport","pos":"명사","kr":"자전거","zh":"腳踏車","ex":null,"exZh":null,"tpl":"transport"},{"id":707,"cat":"transport","pos":"명사","kr":"택시","zh":"計程車","ex":null,"exZh":null,"tpl":"transport"},{"id":708,"cat":"transport","pos":"명사","kr":"오토바이","zh":"摩托車","ex":null,"exZh":null,"tpl":"transport"},{"id":709,"cat":"transport","pos":"명사","kr":"신호등","zh":"紅綠燈","ex":null,"exZh":null,"tpl":"transport"},{"id":710,"cat":"transport","pos":"명사","kr":"트럭","zh":"卡車","ex":null,"exZh":null,"tpl":"transport"},{"id":711,"cat":"transport","pos":"명사","kr":"고속버스","zh":"高速巴士","ex":null,"exZh":null,"tpl":"transport"},{"id":712,"cat":"transport","pos":"명사","kr":"운전면허","zh":"駕照","ex":null,"exZh":null,"tpl":"transport"},{"id":713,"cat":"transport","pos":"명사","kr":"주유소","zh":"加油站","ex":null,"exZh":null,"tpl":"transport"},{"id":714,"cat":"transport","pos":"명사","kr":"고속도로","zh":"高速公路","ex":null,"exZh":null,"tpl":"transport"},{"id":715,"cat":"transport","pos":"명사","kr":"횡단보도","zh":"斑馬線","ex":null,"exZh":null,"tpl":"transport"},{"id":716,"cat":"transport","pos":"명사","kr":"교차로","zh":"十字路口","ex":null,"exZh":null,"tpl":"transport"},{"id":717,"cat":"transport","pos":"명사","kr":"다리","zh":"橋","ex":null,"exZh":null,"tpl":"transport"},{"id":718,"cat":"transport","pos":"명사","kr":"터널","zh":"隧道","ex":null,"exZh":null,"tpl":"transport"},{"id":719,"cat":"transport","pos":"명사","kr":"길","zh":"路","ex":null,"exZh":null,"tpl":"transport"},{"id":720,"cat":"electronics","pos":"명사","kr":"텔레비전","zh":"電視","ex":null,"exZh":null,"tpl":"electronics"},{"id":721,"cat":"electronics","pos":"명사","kr":"라디오","zh":"收音機","ex":null,"exZh":null,"tpl":"electronics"},{"id":722,"cat":"electronics","pos":"명사","kr":"카메라","zh":"相機","ex":null,"exZh":null,"tpl":"electronics"},{"id":723,"cat":"electronics","pos":"명사","kr":"냉장고","zh":"冰箱","ex":null,"exZh":null,"tpl":"electronics"},{"id":724,"cat":"electronics","pos":"명사","kr":"세탁기","zh":"洗衣機","ex":null,"exZh":null,"tpl":"electronics"},{"id":725,"cat":"electronics","pos":"명사","kr":"에어컨","zh":"冷氣","ex":null,"exZh":null,"tpl":"electronics"},{"id":726,"cat":"electronics","pos":"명사","kr":"선풍기","zh":"電風扇","ex":null,"exZh":null,"tpl":"electronics"},{"id":727,"cat":"electronics","pos":"명사","kr":"전화기","zh":"電話","ex":null,"exZh":null,"tpl":"electronics"},{"id":728,"cat":"electronics","pos":"명사","kr":"인터넷","zh":"網路","ex":null,"exZh":null,"tpl":"electronics"},{"id":729,"cat":"electronics","pos":"명사","kr":"이메일","zh":"電子郵件","ex":null,"exZh":null,"tpl":"electronics"},{"id":730,"cat":"electronics","pos":"명사","kr":"노트북","zh":"筆記型電腦","ex":null,"exZh":null,"tpl":"electronics"},{"id":731,"cat":"electronics","pos":"명사","kr":"마우스","zh":"滑鼠","ex":null,"exZh":null,"tpl":"electronics"},{"id":732,"cat":"electronics","pos":"명사","kr":"키보드","zh":"鍵盤","ex":null,"exZh":null,"tpl":"electronics"},{"id":733,"cat":"electronics","pos":"명사","kr":"충전기","zh":"充電器","ex":null,"exZh":null,"tpl":"electronics"},{"id":734,"cat":"electronics","pos":"명사","kr":"스피커","zh":"喇叭","ex":null,"exZh":null,"tpl":"electronics"},{"id":735,"cat":"electronics","pos":"명사","kr":"이어폰","zh":"耳機","ex":null,"exZh":null,"tpl":"electronics"},{"id":736,"cat":"electronics","pos":"명사","kr":"헤드폰","zh":"頭戴式耳機","ex":null,"exZh":null,"tpl":"electronics"},{"id":737,"cat":"electronics","pos":"명사","kr":"프린터","zh":"印表機","ex":null,"exZh":null,"tpl":"electronics"},{"id":738,"cat":"electronics","pos":"명사","kr":"배터리","zh":"電池","ex":null,"exZh":null,"tpl":"electronics"},{"id":739,"cat":"electronics","pos":"명사","kr":"리모컨","zh":"遙控器","ex":null,"exZh":null,"tpl":"electronics"},{"id":740,"cat":"electronics","pos":"명사","kr":"태블릿","zh":"平板電腦","ex":null,"exZh":null,"tpl":"electronics"},{"id":741,"cat":"electronics","pos":"명사","kr":"와이파이","zh":"無線網路","ex":null,"exZh":null,"tpl":"electronics"},{"id":742,"cat":"house","pos":"명사","kr":"거실","zh":"客廳","ex":null,"exZh":null,"tpl":"house"},{"id":743,"cat":"house","pos":"명사","kr":"침실","zh":"臥室","ex":null,"exZh":null,"tpl":"house"},{"id":744,"cat":"house","pos":"명사","kr":"부엌","zh":"廚房","ex":null,"exZh":null,"tpl":"house"},{"id":745,"cat":"house","pos":"명사","kr":"욕실","zh":"浴室","ex":null,"exZh":null,"tpl":"house"},{"id":746,"cat":"house","pos":"명사","kr":"마당","zh":"院子","ex":null,"exZh":null,"tpl":"house"},{"id":747,"cat":"house","pos":"명사","kr":"침대","zh":"床","ex":null,"exZh":null,"tpl":"house"},{"id":748,"cat":"house","pos":"명사","kr":"소파","zh":"沙發","ex":null,"exZh":null,"tpl":"house"},{"id":749,"cat":"house","pos":"명사","kr":"식탁","zh":"餐桌","ex":null,"exZh":null,"tpl":"house"},{"id":750,"cat":"house","pos":"명사","kr":"거울","zh":"鏡子","ex":null,"exZh":null,"tpl":"house"},{"id":751,"cat":"house","pos":"명사","kr":"창문","zh":"窗戶","ex":null,"exZh":null,"tpl":"house"},{"id":752,"cat":"house","pos":"명사","kr":"문","zh":"門","ex":null,"exZh":null,"tpl":"house"},{"id":753,"cat":"house","pos":"명사","kr":"책장","zh":"書架","ex":null,"exZh":null,"tpl":"house"},{"id":754,"cat":"house","pos":"명사","kr":"옷장","zh":"衣櫃","ex":null,"exZh":null,"tpl":"house"},{"id":755,"cat":"house","pos":"명사","kr":"계단","zh":"樓梯","ex":null,"exZh":null,"tpl":"house"},{"id":756,"cat":"house","pos":"명사","kr":"지붕","zh":"屋頂","ex":null,"exZh":null,"tpl":"house"},{"id":757,"cat":"house","pos":"명사","kr":"벽","zh":"牆壁","ex":null,"exZh":null,"tpl":"house"},{"id":758,"cat":"house","pos":"명사","kr":"바닥","zh":"地板","ex":null,"exZh":null,"tpl":"house"},{"id":759,"cat":"house","pos":"명사","kr":"전등","zh":"電燈","ex":null,"exZh":null,"tpl":"house"},{"id":760,"cat":"house","pos":"명사","kr":"수건","zh":"毛巾","ex":null,"exZh":null,"tpl":"house"},{"id":761,"cat":"house","pos":"명사","kr":"비누","zh":"肥皂","ex":null,"exZh":null,"tpl":"house"},{"id":762,"cat":"house","pos":"명사","kr":"냄비","zh":"鍋子","ex":null,"exZh":null,"tpl":"house"},{"id":763,"cat":"house","pos":"명사","kr":"프라이팬","zh":"平底鍋","ex":null,"exZh":null,"tpl":"house"},{"id":764,"cat":"house","pos":"명사","kr":"쓰레기통","zh":"垃圾桶","ex":null,"exZh":null,"tpl":"house"},{"id":765,"cat":"house","pos":"명사","kr":"빗자루","zh":"掃把","ex":null,"exZh":null,"tpl":"house"},{"id":766,"cat":"house","pos":"명사","kr":"세제","zh":"洗潔精","ex":null,"exZh":null,"tpl":"house"},{"id":767,"cat":"house","pos":"명사","kr":"휴지","zh":"衛生紙","ex":null,"exZh":null,"tpl":"house"},{"id":768,"cat":"house","pos":"명사","kr":"베개","zh":"枕頭","ex":null,"exZh":null,"tpl":"house"},{"id":769,"cat":"house","pos":"명사","kr":"이불","zh":"棉被","ex":null,"exZh":null,"tpl":"house"},{"id":770,"cat":"house","pos":"명사","kr":"책상","zh":"書桌","ex":null,"exZh":null,"tpl":"house"},{"id":771,"cat":"house","pos":"명사","kr":"의자","zh":"椅子","ex":null,"exZh":null,"tpl":"house"},{"id":772,"cat":"hobby","pos":"명사","kr":"축구","zh":"足球","ex":null,"exZh":null,"tpl":"hobby"},{"id":773,"cat":"hobby","pos":"명사","kr":"야구","zh":"棒球","ex":null,"exZh":null,"tpl":"hobby"},{"id":774,"cat":"hobby","pos":"명사","kr":"농구","zh":"籃球","ex":null,"exZh":null,"tpl":"hobby"},{"id":775,"cat":"hobby","pos":"명사","kr":"수영","zh":"游泳","ex":null,"exZh":null,"tpl":"hobby"},{"id":776,"cat":"hobby","pos":"명사","kr":"등산","zh":"爬山","ex":null,"exZh":null,"tpl":"hobby"},{"id":777,"cat":"hobby","pos":"명사","kr":"낚시","zh":"釣魚","ex":null,"exZh":null,"tpl":"hobby"},{"id":778,"cat":"hobby","pos":"명사","kr":"춤","zh":"舞蹈","ex":null,"exZh":null,"tpl":"hobby"},{"id":779,"cat":"hobby","pos":"명사","kr":"노래","zh":"歌曲","ex":null,"exZh":null,"tpl":"hobby"},{"id":780,"cat":"hobby","pos":"명사","kr":"그림","zh":"畫","ex":null,"exZh":null,"tpl":"hobby"},{"id":781,"cat":"hobby","pos":"명사","kr":"사진","zh":"照片","ex":null,"exZh":null,"tpl":"hobby"},{"id":782,"cat":"hobby","pos":"명사","kr":"게임","zh":"遊戲","ex":null,"exZh":null,"tpl":"hobby"},{"id":783,"cat":"hobby","pos":"명사","kr":"독서","zh":"閱讀","ex":null,"exZh":null,"tpl":"hobby"},{"id":784,"cat":"hobby","pos":"명사","kr":"운동","zh":"運動","ex":null,"exZh":null,"tpl":"hobby"},{"id":785,"cat":"hobby","pos":"명사","kr":"음악","zh":"音樂","ex":null,"exZh":null,"tpl":"hobby"},{"id":786,"cat":"hobby","pos":"명사","kr":"영화","zh":"電影","ex":null,"exZh":null,"tpl":"hobby"},{"id":787,"cat":"hobby","pos":"명사","kr":"악기","zh":"樂器","ex":null,"exZh":null,"tpl":"hobby"},{"id":788,"cat":"hobby","pos":"명사","kr":"피아노","zh":"鋼琴","ex":null,"exZh":null,"tpl":"hobby"},{"id":789,"cat":"hobby","pos":"명사","kr":"기타","zh":"吉他","ex":null,"exZh":null,"tpl":"hobby"},{"id":790,"cat":"hobby","pos":"명사","kr":"야구장","zh":"棒球場","ex":null,"exZh":null,"tpl":"hobby"},{"id":791,"cat":"hobby","pos":"명사","kr":"축구장","zh":"足球場","ex":null,"exZh":null,"tpl":"hobby"},{"id":792,"cat":"hobby","pos":"명사","kr":"체육관","zh":"體育館","ex":null,"exZh":null,"tpl":"hobby"},{"id":793,"cat":"hobby","pos":"명사","kr":"요가","zh":"瑜珈","ex":null,"exZh":null,"tpl":"hobby"},{"id":794,"cat":"hobby","pos":"명사","kr":"볼링","zh":"保齡球","ex":null,"exZh":null,"tpl":"hobby"},{"id":795,"cat":"hobby","pos":"명사","kr":"탁구","zh":"桌球","ex":null,"exZh":null,"tpl":"hobby"},{"id":796,"cat":"hobby","pos":"명사","kr":"배드민턴","zh":"羽毛球","ex":null,"exZh":null,"tpl":"hobby"},{"id":797,"cat":"hobby","pos":"명사","kr":"스키","zh":"滑雪","ex":null,"exZh":null,"tpl":"hobby"},{"id":798,"cat":"hobby","pos":"명사","kr":"스케이트","zh":"溜冰","ex":null,"exZh":null,"tpl":"hobby"},{"id":799,"cat":"hobby","pos":"명사","kr":"캠핑","zh":"露營","ex":null,"exZh":null,"tpl":"hobby"},{"id":800,"cat":"hobby","pos":"명사","kr":"드라마","zh":"電視劇","ex":null,"exZh":null,"tpl":"hobby"},{"id":801,"cat":"shopping","pos":"명사","kr":"가격","zh":"價格","ex":null,"exZh":null,"tpl":"shopping"},{"id":802,"cat":"shopping","pos":"명사","kr":"할인","zh":"折扣","ex":null,"exZh":null,"tpl":"shopping"},{"id":803,"cat":"shopping","pos":"명사","kr":"계산","zh":"結帳","ex":null,"exZh":null,"tpl":"shopping"},{"id":804,"cat":"shopping","pos":"명사","kr":"영수증","zh":"收據","ex":null,"exZh":null,"tpl":"shopping"},{"id":805,"cat":"shopping","pos":"명사","kr":"신용카드","zh":"信用卡","ex":null,"exZh":null,"tpl":"shopping"},{"id":806,"cat":"shopping","pos":"명사","kr":"현금","zh":"現金","ex":null,"exZh":null,"tpl":"shopping"},{"id":807,"cat":"shopping","pos":"명사","kr":"쇼핑","zh":"購物","ex":null,"exZh":null,"tpl":"shopping"},{"id":808,"cat":"shopping","pos":"명사","kr":"세일","zh":"特賣","ex":null,"exZh":null,"tpl":"shopping"},{"id":809,"cat":"shopping","pos":"명사","kr":"포인트","zh":"點數","ex":null,"exZh":null,"tpl":"shopping"},{"id":810,"cat":"shopping","pos":"명사","kr":"상품","zh":"商品","ex":null,"exZh":null,"tpl":"shopping"},{"id":811,"cat":"shopping","pos":"명사","kr":"사이즈","zh":"尺寸","ex":null,"exZh":null,"tpl":"shopping"},{"id":812,"cat":"shopping","pos":"명사","kr":"교환","zh":"換貨","ex":null,"exZh":null,"tpl":"shopping"},{"id":813,"cat":"shopping","pos":"명사","kr":"환불","zh":"退款","ex":null,"exZh":null,"tpl":"shopping"},{"id":814,"cat":"shopping","pos":"명사","kr":"배송","zh":"配送","ex":null,"exZh":null,"tpl":"shopping"},{"id":815,"cat":"shopping","pos":"명사","kr":"포장","zh":"包裝","ex":null,"exZh":null,"tpl":"shopping"},{"id":816,"cat":"shopping","pos":"명사","kr":"브랜드","zh":"品牌","ex":null,"exZh":null,"tpl":"shopping"},{"id":817,"cat":"shopping","pos":"명사","kr":"영업시간","zh":"營業時間","ex":null,"exZh":null,"tpl":"shopping"},{"id":818,"cat":"shopping","pos":"명사","kr":"단골","zh":"常客","ex":null,"exZh":null,"tpl":"shopping"},{"id":819,"cat":"country","pos":"명사","kr":"한국","zh":"韓國","ex":null,"exZh":null,"tpl":"country"},{"id":820,"cat":"country","pos":"명사","kr":"중국","zh":"中國","ex":null,"exZh":null,"tpl":"country"},{"id":821,"cat":"country","pos":"명사","kr":"미국","zh":"美國","ex":null,"exZh":null,"tpl":"country"},{"id":822,"cat":"country","pos":"명사","kr":"일본","zh":"日本","ex":null,"exZh":null,"tpl":"country"},{"id":823,"cat":"country","pos":"명사","kr":"영어","zh":"英語","ex":null,"exZh":null,"tpl":"country"},{"id":824,"cat":"country","pos":"명사","kr":"중국어","zh":"中文","ex":null,"exZh":null,"tpl":"country"},{"id":825,"cat":"country","pos":"명사","kr":"한국어","zh":"韓語","ex":null,"exZh":null,"tpl":"country"},{"id":826,"cat":"country","pos":"명사","kr":"일본어","zh":"日語","ex":null,"exZh":null,"tpl":"country"},{"id":827,"cat":"country","pos":"명사","kr":"외국","zh":"外國","ex":null,"exZh":null,"tpl":"country"},{"id":828,"cat":"country","pos":"명사","kr":"외국인","zh":"外國人","ex":null,"exZh":null,"tpl":"country"},{"id":829,"cat":"country","pos":"명사","kr":"나라","zh":"國家","ex":null,"exZh":null,"tpl":"country"},{"id":830,"cat":"country","pos":"명사","kr":"언어","zh":"語言","ex":null,"exZh":null,"tpl":"country"},{"id":831,"cat":"country","pos":"명사","kr":"영국","zh":"英國","ex":null,"exZh":null,"tpl":"country"},{"id":832,"cat":"country","pos":"명사","kr":"프랑스","zh":"法國","ex":null,"exZh":null,"tpl":"country"},{"id":833,"cat":"country","pos":"명사","kr":"독일","zh":"德國","ex":null,"exZh":null,"tpl":"country"},{"id":834,"cat":"country","pos":"명사","kr":"호주","zh":"澳洲","ex":null,"exZh":null,"tpl":"country"},{"id":835,"cat":"country","pos":"명사","kr":"태국","zh":"泰國","ex":null,"exZh":null,"tpl":"country"},{"id":836,"cat":"country","pos":"명사","kr":"베트남","zh":"越南","ex":null,"exZh":null,"tpl":"country"},{"id":837,"cat":"country","pos":"명사","kr":"필리핀","zh":"菲律賓","ex":null,"exZh":null,"tpl":"country"},{"id":838,"cat":"country","pos":"명사","kr":"인도","zh":"印度","ex":null,"exZh":null,"tpl":"country"},{"id":839,"cat":"country","pos":"명사","kr":"캐나다","zh":"加拿大","ex":null,"exZh":null,"tpl":"country"},{"id":840,"cat":"country","pos":"명사","kr":"스페인","zh":"西班牙","ex":null,"exZh":null,"tpl":"country"},{"id":841,"cat":"country","pos":"명사","kr":"이탈리아","zh":"義大利","ex":null,"exZh":null,"tpl":"country"},{"id":842,"cat":"country","pos":"명사","kr":"대만","zh":"台灣","ex":null,"exZh":null,"tpl":"country"},{"id":843,"cat":"country","pos":"명사","kr":"싱가포르","zh":"新加坡","ex":null,"exZh":null,"tpl":"country"},{"id":844,"cat":"country","pos":"명사","kr":"러시아","zh":"俄羅斯","ex":null,"exZh":null,"tpl":"country"},{"id":845,"cat":"office","pos":"명사","kr":"이름","zh":"名字","ex":null,"exZh":null,"tpl":"office"},{"id":846,"cat":"office","pos":"명사","kr":"나이","zh":"年紀","ex":null,"exZh":null,"tpl":"office"},{"id":847,"cat":"office","pos":"명사","kr":"생일","zh":"生日","ex":null,"exZh":null,"tpl":"office"},{"id":848,"cat":"office","pos":"명사","kr":"주소","zh":"地址","ex":null,"exZh":null,"tpl":"office"},{"id":849,"cat":"office","pos":"명사","kr":"전화번호","zh":"電話號碼","ex":null,"exZh":null,"tpl":"office"},{"id":850,"cat":"office","pos":"명사","kr":"계획","zh":"計劃","ex":null,"exZh":null,"tpl":"office"},{"id":851,"cat":"office","pos":"명사","kr":"약속","zh":"約定","ex":null,"exZh":null,"tpl":"office"},{"id":852,"cat":"office","pos":"명사","kr":"회의","zh":"會議","ex":null,"exZh":null,"tpl":"office"},{"id":853,"cat":"office","pos":"명사","kr":"모임","zh":"聚會","ex":null,"exZh":null,"tpl":"office"},{"id":854,"cat":"office","pos":"명사","kr":"파티","zh":"派對","ex":null,"exZh":null,"tpl":"office"},{"id":855,"cat":"office","pos":"명사","kr":"휴가","zh":"休假","ex":null,"exZh":null,"tpl":"office"},{"id":856,"cat":"office","pos":"명사","kr":"뉴스","zh":"新聞","ex":null,"exZh":null,"tpl":"office"},{"id":857,"cat":"office","pos":"명사","kr":"신문","zh":"報紙","ex":null,"exZh":null,"tpl":"office"},{"id":858,"cat":"office","pos":"명사","kr":"잡지","zh":"雜誌","ex":null,"exZh":null,"tpl":"office"},{"id":859,"cat":"office","pos":"명사","kr":"편지","zh":"信","ex":null,"exZh":null,"tpl":"office"},{"id":860,"cat":"office","pos":"명사","kr":"소포","zh":"包裹","ex":null,"exZh":null,"tpl":"office"},{"id":861,"cat":"office","pos":"명사","kr":"택배","zh":"宅配","ex":null,"exZh":null,"tpl":"office"},{"id":862,"cat":"office","pos":"명사","kr":"여권","zh":"護照","ex":null,"exZh":null,"tpl":"office"},{"id":863,"cat":"office","pos":"명사","kr":"비자","zh":"簽證","ex":null,"exZh":null,"tpl":"office"},{"id":864,"cat":"office","pos":"명사","kr":"짐","zh":"行李","ex":null,"exZh":null,"tpl":"office"},{"id":865,"cat":"office","pos":"명사","kr":"고객","zh":"顧客","ex":null,"exZh":null,"tpl":"office"},{"id":866,"cat":"office","pos":"명사","kr":"손님","zh":"客人","ex":null,"exZh":null,"tpl":"office"},{"id":867,"cat":"office","pos":"명사","kr":"관광객","zh":"觀光客","ex":null,"exZh":null,"tpl":"office"},{"id":868,"cat":"office","pos":"명사","kr":"직원","zh":"職員","ex":null,"exZh":null,"tpl":"office"},{"id":869,"cat":"office","pos":"명사","kr":"사장","zh":"老闆","ex":null,"exZh":null,"tpl":"office"},{"id":870,"cat":"office","pos":"명사","kr":"회의실","zh":"會議室","ex":null,"exZh":null,"tpl":"office"},{"id":871,"cat":"office","pos":"명사","kr":"사무실","zh":"辦公室","ex":null,"exZh":null,"tpl":"office"},{"id":872,"cat":"office","pos":"명사","kr":"명함","zh":"名片","ex":null,"exZh":null,"tpl":"office"},{"id":873,"cat":"office","pos":"명사","kr":"서류","zh":"文件","ex":null,"exZh":null,"tpl":"office"},{"id":874,"cat":"office","pos":"명사","kr":"도장","zh":"印章","ex":null,"exZh":null,"tpl":"office"},{"id":875,"cat":"office","pos":"명사","kr":"지폐","zh":"紙鈔","ex":null,"exZh":null,"tpl":"office"},{"id":876,"cat":"office","pos":"명사","kr":"동전","zh":"硬幣","ex":null,"exZh":null,"tpl":"office"},{"id":877,"cat":"office","pos":"명사","kr":"환율","zh":"匯率","ex":null,"exZh":null,"tpl":"office"},{"id":878,"cat":"office","pos":"명사","kr":"통장","zh":"存摺","ex":null,"exZh":null,"tpl":"office"},{"id":879,"cat":"office","pos":"명사","kr":"비밀번호","zh":"密碼","ex":null,"exZh":null,"tpl":"office"},{"id":880,"cat":"office","pos":"명사","kr":"아이디","zh":"帳號","ex":null,"exZh":null,"tpl":"office"},{"id":881,"cat":"office","pos":"명사","kr":"비밀","zh":"秘密","ex":null,"exZh":null,"tpl":"office"},{"id":882,"cat":"office","pos":"명사","kr":"거짓말","zh":"謊言","ex":null,"exZh":null,"tpl":"office"},{"id":883,"cat":"office","pos":"명사","kr":"선택","zh":"選擇","ex":null,"exZh":null,"tpl":"office"},{"id":884,"cat":"office","pos":"명사","kr":"기회","zh":"機會","ex":null,"exZh":null,"tpl":"office"},{"id":885,"cat":"office","pos":"명사","kr":"경험","zh":"經驗","ex":null,"exZh":null,"tpl":"office"},{"id":886,"cat":"office","pos":"명사","kr":"실수","zh":"失誤","ex":null,"exZh":null,"tpl":"office"},{"id":887,"cat":"office","pos":"명사","kr":"성공","zh":"成功","ex":null,"exZh":null,"tpl":"office"},{"id":888,"cat":"office","pos":"명사","kr":"실패","zh":"失敗","ex":null,"exZh":null,"tpl":"office"},{"id":889,"cat":"emotion","pos":"명사","kr":"기쁨","zh":"喜悅","ex":null,"exZh":null,"tpl":"office"},{"id":890,"cat":"emotion","pos":"명사","kr":"슬픔","zh":"悲傷","ex":null,"exZh":null,"tpl":"office"},{"id":891,"cat":"emotion","pos":"명사","kr":"사랑","zh":"愛","ex":null,"exZh":null,"tpl":"office"},{"id":892,"cat":"emotion","pos":"명사","kr":"행복","zh":"幸福","ex":null,"exZh":null,"tpl":"office"},{"id":893,"cat":"emotion","pos":"명사","kr":"걱정","zh":"擔心","ex":null,"exZh":null,"tpl":"office"},{"id":894,"cat":"emotion","pos":"명사","kr":"화","zh":"生氣","ex":null,"exZh":null,"tpl":"office"},{"id":895,"cat":"emotion","pos":"명사","kr":"희망","zh":"希望","ex":null,"exZh":null,"tpl":"office"},{"id":896,"cat":"emotion","pos":"명사","kr":"꿈","zh":"夢想","ex":null,"exZh":null,"tpl":"office"},{"id":897,"cat":"emotion","pos":"명사","kr":"행운","zh":"幸運","ex":null,"exZh":null,"tpl":"office"},{"id":898,"cat":"emotion","pos":"명사","kr":"불행","zh":"不幸","ex":null,"exZh":null,"tpl":"office"},{"id":899,"cat":"food","pos":"명사","kr":"도시락","zh":"便當","ex":null,"exZh":null,"tpl":null},{"id":900,"cat":"food","pos":"명사","kr":"반찬","zh":"小菜","ex":null,"exZh":null,"tpl":null},{"id":901,"cat":"food","pos":"명사","kr":"국","zh":"湯","ex":null,"exZh":null,"tpl":null},{"id":902,"cat":"food","pos":"명사","kr":"볶음밥","zh":"炒飯","ex":null,"exZh":null,"tpl":null},{"id":903,"cat":"food","pos":"명사","kr":"냉면","zh":"冷麵","ex":null,"exZh":null,"tpl":null},{"id":904,"cat":"food","pos":"명사","kr":"만두","zh":"餃子","ex":null,"exZh":null,"tpl":null},{"id":905,"cat":"food","pos":"명사","kr":"비빔면","zh":"拌麵","ex":null,"exZh":null,"tpl":null},{"id":906,"cat":"food","pos":"명사","kr":"라볶이","zh":"拉炒年糕","ex":null,"exZh":null,"tpl":null},{"id":907,"cat":"food","pos":"명사","kr":"어묵","zh":"魚板","ex":null,"exZh":null,"tpl":null},{"id":908,"cat":"food","pos":"명사","kr":"붕어빵","zh":"鯉魚燒","ex":null,"exZh":null,"tpl":null},{"id":909,"cat":"food","pos":"명사","kr":"찐빵","zh":"小籠包","ex":null,"exZh":null,"tpl":null},{"id":910,"cat":"food","pos":"명사","kr":"약과","zh":"藥果","ex":null,"exZh":null,"tpl":null},{"id":911,"cat":"food","pos":"명사","kr":"간식","zh":"點心","ex":null,"exZh":null,"tpl":null},{"id":912,"cat":"food","pos":"명사","kr":"디저트","zh":"甜點","ex":null,"exZh":null,"tpl":null},{"id":913,"cat":"food","pos":"명사","kr":"메뉴","zh":"菜單","ex":null,"exZh":null,"tpl":null},{"id":914,"cat":"food","pos":"명사","kr":"식사","zh":"用餐","ex":null,"exZh":null,"tpl":null},{"id":915,"cat":"food","pos":"명사","kr":"냉동식품","zh":"冷凍食品","ex":null,"exZh":null,"tpl":null},{"id":916,"cat":"food","pos":"명사","kr":"통조림","zh":"罐頭","ex":null,"exZh":null,"tpl":null},{"id":917,"cat":"food","pos":"명사","kr":"인절미","zh":"黃豆糕","ex":null,"exZh":null,"tpl":null},{"id":918,"cat":"food","pos":"명사","kr":"식용유","zh":"食用油","ex":null,"exZh":null,"tpl":null},{"id":919,"cat":"body","pos":"명사","kr":"목소리","zh":"聲音","ex":null,"exZh":null,"tpl":"body"},{"id":920,"cat":"body","pos":"명사","kr":"땀","zh":"汗","ex":null,"exZh":null,"tpl":"body"},{"id":921,"cat":"body","pos":"명사","kr":"눈물","zh":"眼淚","ex":null,"exZh":null,"tpl":"body"},{"id":922,"cat":"body","pos":"명사","kr":"체중","zh":"體重","ex":null,"exZh":null,"tpl":"body"},{"id":923,"cat":"body","pos":"명사","kr":"키","zh":"身高","ex":null,"exZh":null,"tpl":"body"},{"id":924,"cat":"clothes","pos":"명사","kr":"손수건","zh":"手帕","ex":null,"exZh":null,"tpl":"clothes"},{"id":925,"cat":"clothes","pos":"명사","kr":"우비","zh":"雨衣","ex":null,"exZh":null,"tpl":"clothes"},{"id":926,"cat":"clothes","pos":"명사","kr":"조끼","zh":"背心","ex":null,"exZh":null,"tpl":"clothes"},{"id":927,"cat":"clothes","pos":"명사","kr":"반지","zh":"戒指","ex":null,"exZh":null,"tpl":"clothes"},{"id":928,"cat":"clothes","pos":"명사","kr":"목걸이","zh":"項鍊","ex":null,"exZh":null,"tpl":"clothes"},{"id":929,"cat":"clothes","pos":"명사","kr":"귀걸이","zh":"耳環","ex":null,"exZh":null,"tpl":"clothes"},{"id":930,"cat":"clothes","pos":"명사","kr":"팔찌","zh":"手鍊","ex":null,"exZh":null,"tpl":"clothes"},{"id":931,"cat":"house","pos":"명사","kr":"옷걸이","zh":"衣架","ex":null,"exZh":null,"tpl":"house"},{"id":932,"cat":"house","pos":"명사","kr":"전자레인지","zh":"微波爐","ex":null,"exZh":null,"tpl":"house"},{"id":933,"cat":"house","pos":"명사","kr":"오븐","zh":"烤箱","ex":null,"exZh":null,"tpl":"house"},{"id":934,"cat":"house","pos":"명사","kr":"가스레인지","zh":"瓦斯爐","ex":null,"exZh":null,"tpl":"house"},{"id":935,"cat":"house","pos":"명사","kr":"싱크대","zh":"流理台","ex":null,"exZh":null,"tpl":"house"},{"id":936,"cat":"house","pos":"명사","kr":"욕조","zh":"浴缸","ex":null,"exZh":null,"tpl":"house"},{"id":937,"cat":"house","pos":"명사","kr":"샤워기","zh":"蓮蓬頭","ex":null,"exZh":null,"tpl":"house"},{"id":938,"cat":"electronics","pos":"명사","kr":"스캐너","zh":"掃描器","ex":null,"exZh":null,"tpl":"electronics"},{"id":939,"cat":"electronics","pos":"명사","kr":"플러그","zh":"插頭","ex":null,"exZh":null,"tpl":"electronics"},{"id":940,"cat":"electronics","pos":"명사","kr":"전선","zh":"電線","ex":null,"exZh":null,"tpl":"electronics"},{"id":941,"cat":"electronics","pos":"명사","kr":"모니터","zh":"螢幕","ex":null,"exZh":null,"tpl":"electronics"},{"id":942,"cat":"school","pos":"명사","kr":"기숙사","zh":"宿舍","ex":null,"exZh":null,"tpl":"school"},{"id":943,"cat":"school","pos":"명사","kr":"강의실","zh":"講堂、教室","ex":null,"exZh":null,"tpl":"school"},{"id":944,"cat":"school","pos":"명사","kr":"캠퍼스","zh":"校園","ex":null,"exZh":null,"tpl":"school"},{"id":945,"cat":"school","pos":"명사","kr":"입시","zh":"升學考試","ex":null,"exZh":null,"tpl":"school"},{"id":946,"cat":"country","pos":"명사","kr":"이집트","zh":"埃及","ex":null,"exZh":null,"tpl":"country"},{"id":947,"cat":"country","pos":"명사","kr":"터키","zh":"土耳其","ex":null,"exZh":null,"tpl":"country"},{"id":948,"cat":"country","pos":"명사","kr":"브라질","zh":"巴西","ex":null,"exZh":null,"tpl":"country"},{"id":949,"cat":"country","pos":"명사","kr":"멕시코","zh":"墨西哥","ex":null,"exZh":null,"tpl":"country"},{"id":950,"cat":"weather","pos":"명사","kr":"계절","zh":"季節","ex":null,"exZh":null,"tpl":"nature"},{"id":951,"cat":"weather","pos":"명사","kr":"기온","zh":"氣溫","ex":null,"exZh":null,"tpl":"nature"},{"id":952,"cat":"weather","pos":"명사","kr":"습도","zh":"濕度","ex":null,"exZh":null,"tpl":"nature"},{"id":953,"cat":"number","pos":"명사","kr":"영","zh":"零","ex":null,"exZh":null,"tpl":"number"},{"id":954,"cat":"number","pos":"명사","kr":"백만","zh":"一百萬","ex":null,"exZh":null,"tpl":"number"},{"id":955,"cat":"number","pos":"명사","kr":"천만","zh":"一千萬","ex":null,"exZh":null,"tpl":"number"},{"id":956,"cat":"number","pos":"명사","kr":"억","zh":"一億","ex":null,"exZh":null,"tpl":"number"},{"id":957,"cat":"hobby","pos":"명사","kr":"콘서트","zh":"演唱會","ex":null,"exZh":null,"tpl":"hobby"},{"id":958,"cat":"hobby","pos":"명사","kr":"공연","zh":"表演","ex":null,"exZh":null,"tpl":"hobby"},{"id":959,"cat":"hobby","pos":"명사","kr":"전시회","zh":"展覽","ex":null,"exZh":null,"tpl":"hobby"},{"id":960,"cat":"hobby","pos":"명사","kr":"축제","zh":"慶典、節慶","ex":null,"exZh":null,"tpl":"hobby"},{"id":961,"cat":"daily","pos":"명사","kr":"우표","zh":"郵票","ex":null,"exZh":null,"tpl":null},{"id":962,"cat":"daily","pos":"명사","kr":"편지지","zh":"信紙","ex":null,"exZh":null,"tpl":null},{"id":963,"cat":"daily","pos":"명사","kr":"수첩","zh":"手冊、記事本","ex":null,"exZh":null,"tpl":null},{"id":964,"cat":"daily","pos":"명사","kr":"달력","zh":"月曆","ex":null,"exZh":null,"tpl":null},{"id":965,"cat":"daily","pos":"명사","kr":"알람시계","zh":"鬧鐘","ex":null,"exZh":null,"tpl":null},{"id":966,"cat":"daily","pos":"명사","kr":"건전지","zh":"電池","ex":null,"exZh":null,"tpl":null},{"id":967,"cat":"job","pos":"명사","kr":"승무원","zh":"空服員","ex":null,"exZh":null,"tpl":"job"},{"id":968,"cat":"job","pos":"명사","kr":"연예인","zh":"藝人","ex":null,"exZh":null,"tpl":"job"},{"id":969,"cat":"job","pos":"명사","kr":"아나운서","zh":"主播","ex":null,"exZh":null,"tpl":"job"},{"id":970,"cat":"job","pos":"명사","kr":"프로그래머","zh":"工程師(程式設計師)","ex":null,"exZh":null,"tpl":"job"},{"id":971,"cat":"animal","pos":"명사","kr":"잠자리","zh":"蜻蜓","ex":null,"exZh":null,"tpl":"animal"},{"id":972,"cat":"animal","pos":"명사","kr":"매미","zh":"蟬","ex":null,"exZh":null,"tpl":"animal"},{"id":973,"cat":"animal","pos":"명사","kr":"반딧불이","zh":"螢火蟲","ex":null,"exZh":null,"tpl":"animal"},{"id":974,"cat":"food","pos":"명사","kr":"팥","zh":"紅豆","ex":null,"exZh":null,"tpl":null},{"id":975,"cat":"food","pos":"명사","kr":"견과류","zh":"堅果類","ex":null,"exZh":null,"tpl":null},{"id":976,"cat":"food","pos":"명사","kr":"아몬드","zh":"杏仁","ex":null,"exZh":null,"tpl":null},{"id":977,"cat":"food","pos":"명사","kr":"땅콩","zh":"花生","ex":null,"exZh":null,"tpl":null},{"id":978,"cat":"food","pos":"명사","kr":"수박씨","zh":"西瓜籽","ex":null,"exZh":null,"tpl":null},{"id":979,"cat":"food","pos":"명사","kr":"고구마","zh":"地瓜","ex":null,"exZh":null,"tpl":null},{"id":980,"cat":"food","pos":"명사","kr":"옥수수","zh":"玉米","ex":null,"exZh":null,"tpl":null},{"id":981,"cat":"food","pos":"명사","kr":"호박","zh":"南瓜","ex":null,"exZh":null,"tpl":null},{"id":982,"cat":"food","pos":"명사","kr":"마늘","zh":"大蒜","ex":null,"exZh":null,"tpl":null},{"id":983,"cat":"food","pos":"명사","kr":"생강","zh":"薑","ex":null,"exZh":null,"tpl":null},{"id":984,"cat":"daily","pos":"명사","kr":"안경집","zh":"眼鏡盒","ex":null,"exZh":null,"tpl":null},{"id":985,"cat":"daily","pos":"명사","kr":"손전등","zh":"手電筒","ex":null,"exZh":null,"tpl":null},{"id":986,"cat":"daily","pos":"명사","kr":"우산꽂이","zh":"傘架","ex":null,"exZh":null,"tpl":null},{"id":987,"cat":"daily","pos":"명사","kr":"열쇠고리","zh":"鑰匙圈","ex":null,"exZh":null,"tpl":null},{"id":988,"cat":"office","pos":"명사","kr":"일정","zh":"行程、日程","ex":null,"exZh":null,"tpl":"office"},{"id":989,"cat":"office","pos":"명사","kr":"서명","zh":"簽名","ex":null,"exZh":null,"tpl":"office"},{"id":990,"cat":"office","pos":"명사","kr":"계약","zh":"合約","ex":null,"exZh":null,"tpl":"office"},{"id":991,"cat":"office","pos":"명사","kr":"면접","zh":"面試","ex":null,"exZh":null,"tpl":"office"},{"id":992,"cat":"office","pos":"명사","kr":"이력서","zh":"履歷表","ex":null,"exZh":null,"tpl":"office"},{"id":993,"cat":"office","pos":"명사","kr":"자기소개","zh":"自我介紹","ex":null,"exZh":null,"tpl":"office"},{"id":994,"cat":"office","pos":"명사","kr":"휴일","zh":"假日","ex":null,"exZh":null,"tpl":"office"},{"id":995,"cat":"office","pos":"명사","kr":"공휴일","zh":"國定假日","ex":null,"exZh":null,"tpl":"office"},{"id":996,"cat":"office","pos":"명사","kr":"설날","zh":"農曆新年","ex":null,"exZh":null,"tpl":"office"},{"id":997,"cat":"office","pos":"명사","kr":"추석","zh":"中秋節","ex":null,"exZh":null,"tpl":"office"},{"id":998,"cat":"office","pos":"명사","kr":"크리스마스","zh":"聖誕節","ex":null,"exZh":null,"tpl":"office"},{"id":999,"cat":"office","pos":"명사","kr":"생신","zh":"生日(敬語)","ex":null,"exZh":null,"tpl":"office"},{"id":1000,"cat":"office","pos":"명사","kr":"메모","zh":"便條、備忘","ex":null,"exZh":null,"tpl":"office"}];
+
+const CATS = {
+  all:'전체', greet:'인사·표현', family:'가족', food:'음식', place:'장소', time:'시간',
+  calendar:'달력', number:'숫자', counter:'단위', verb:'동사', adj:'형용사', adverb:'부사',
+  conj:'접속사', pronoun:'대명사', question:'의문사', position:'위치', body:'신체',
+  health:'건강', clothes:'옷', color:'색깔', weather:'날씨·자연', animal:'동물',
+  job:'직업', school:'학교', transport:'교통', electronics:'전자기기', house:'집·가구',
+  hobby:'취미·운동', shopping:'쇼핑', country:'나라·언어', office:'생활·사무', emotion:'감정',
+  daily:'생활용품'
+};
+
+/* ---- Korean pronunciation (Web Speech API text-to-speech) ---- */
+const TTS_SUPPORTED = typeof window!=='undefined' && 'speechSynthesis' in window;
+let ttsVoice = null;
+function pickKoreanVoice(){
+  if(!TTS_SUPPORTED) return;
+  const voices = window.speechSynthesis.getVoices();
+  ttsVoice = voices.find(v=>v.lang==='ko-KR') || voices.find(v=>v.lang && v.lang.startsWith('ko')) || null;
+}
+if(TTS_SUPPORTED){
+  pickKoreanVoice();
+  window.speechSynthesis.onvoiceschanged = pickKoreanVoice;
+}
+function speak(text, ev){
+  if(ev) ev.stopPropagation();
+  if(!TTS_SUPPORTED){
+    alert('이 브라우저는 음성 재생을 지원하지 않아요 · 此瀏覽器不支援語音播放');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
+  u.rate = 0.85;
+  if(ttsVoice) u.voice = ttsVoice;
+  window.speechSynthesis.speak(u);
+}
+function esc4js(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function spkBtn(text, cls){
+  return '<button class="spk-btn'+(cls?(' '+cls):'')+'" onclick="speak(\''+esc4js(text)+'\', event)" title="발음 듣기 · 播放發音">🔊</button>';
+}
+
+/* ---- Korean particle helpers (batchim-aware) ---- */
+function hasBatchim(kr){
+  const ch = kr[kr.length-1];
+  const code = ch.charCodeAt(0);
+  if(code<0xAC00||code>0xD7A3) return false;
+  return (code-0xAC00)%28!==0;
+}
+function josa(kr,type){
+  const b = hasBatchim(kr);
+  if(type==='subj') return b?'이':'가';
+  if(type==='topic') return b?'은':'는';
+  if(type==='obj') return b?'을':'를';
+  if(type==='cop') return b?'이에요':'예요';
+  return '';
+}
+
+/* ---- example-sentence generator for template (non hand-written) words ---- */
+function genExample(w){
+  if(w.ex) return {ex:w.ex, exZh:w.exZh};
+  const kr=w.kr, zh=w.zh, id=w.id;
+  const subj=josa(kr,'subj'), obj=josa(kr,'obj'), cop=josa(kr,'cop');
+  switch(w.cat){
+    case 'family':
+      return {ex:'이 사람은 제 '+kr+'입니다.', exZh:'這位是我的'+zh+'。'};
+    case 'food': {
+      const v=[
+        {ex:'저는 '+kr+obj+' 좋아해요.', exZh:'我喜歡'+zh+'。'},
+        {ex:kr+subj+' 맛있어요.', exZh:zh+'很好吃。'},
+        {ex:'어제 '+kr+obj+' 먹었어요.', exZh:'昨天吃了'+zh+'。'}
+      ];
+      return v[id%v.length];
+    }
+    case 'place': {
+      const v=[
+        {ex:'저는 '+kr+'에 가요.', exZh:'我去'+zh+'。'},
+        {ex:kr+subj+' 여기에서 가까워요.', exZh:zh+'離這裡很近。'}
+      ];
+      return v[id%v.length];
+    }
+    case 'daily':
+      return {ex:kr+subj+' 필요해요.', exZh:'需要'+zh+'。'};
+    case 'calendar':
+      if(w.tpl==='month') return {ex:'제 생일은 '+kr+cop, exZh:'我的生日是'+zh+'。'};
+      if(w.tpl==='season') return {ex:'저는 '+kr+obj+' 좋아해요.', exZh:'我喜歡'+zh+'。'};
+      return {ex:'오늘은 '+kr+cop, exZh:'今天是'+zh+'。'};
+    case 'number':
+      return {ex:"숫자 '"+kr+"'"+obj+' 배워요.', exZh:'學習數字「'+zh+'」。'};
+    case 'counter':
+      return {ex:"이건 물건을 세는 단위, '"+kr+"'입니다.", exZh:'這是量詞「'+zh+'」。'};
+    case 'position':
+      return {ex:'책상 '+kr+'에 있어요.', exZh:'在桌子的'+zh+'。'};
+    case 'body':
+      return {ex:kr+subj+' 아파요.', exZh:zh+'很痛。'};
+    case 'health':
+      return {ex:'저는 '+kr+' 때문에 병원에 갔어요.', exZh:'我因為'+zh+'去了醫院。'};
+    case 'clothes':
+      return {ex:'이 '+kr+subj+' 예뻐요.', exZh:'這個'+zh+'很漂亮。'};
+    case 'color':
+      return {ex:'저는 '+kr+obj+' 좋아해요.', exZh:'我喜歡'+zh+'。'};
+    case 'weather':
+      return {ex:kr+subj+' 아름다워요.', exZh:zh+'很美。'};
+    case 'animal':
+      return {ex:kr+subj+' 귀여워요.', exZh:zh+'很可愛。'};
+    case 'job':
+      return {ex:'저는 '+kr+subj+' 되고 싶어요.', exZh:'我想成為'+zh+'。'};
+    case 'school':
+      return {ex:'학교에 '+kr+subj+' 있어요.', exZh:'學校有'+zh+'。'};
+    case 'transport':
+      return {ex:'길에 '+kr+subj+' 있어요.', exZh:'路上有'+zh+'。'};
+    case 'electronics':
+      return {ex:'저는 '+kr+obj+' 써요.', exZh:'我使用'+zh+'。'};
+    case 'house':
+      return {ex:kr+subj+' 깨끗해요.', exZh:zh+'很乾淨。'};
+    case 'hobby':
+      return {ex:'저는 '+kr+obj+' 좋아해요.', exZh:'我喜歡'+zh+'。'};
+    case 'shopping':
+      return {ex:'이 '+kr+subj+' 비싸요.', exZh:'這個'+zh+'很貴。'};
+    case 'country': {
+      const langWords=['영어','중국어','한국어','일본어','외국','외국인','나라','언어'];
+      if(langWords.includes(kr)) return {ex:'저는 '+kr+obj+' 공부해요.', exZh:'我學習'+zh+'。'};
+      return {ex:'저는 '+kr+'에 가고 싶어요.', exZh:'我想去'+zh+'。'};
+    }
+    case 'office':
+      return {ex:kr+subj+' 중요해요.', exZh:zh+'很重要。'};
+    case 'emotion':
+      return {ex:'저는 지금 '+kr+obj+' 느껴요.', exZh:'我現在感覺到'+zh+'。'};
+    default:
+      return {ex:'이것은 '+kr+'입니다.', exZh:'這是'+zh+'。'};
+  }
+}
+
+/* ================= STATE ================= */
+const S = {
+  view:'study',
+  studyCat:'all',
+  studyQuery:'',
+  flash:{cat:'all', list:[], pos:0, flipped:false, shuffle:false, initd:false},
+  quiz:{phase:'setup', cat:'all', dir:'kr2zh', total:10, questions:[], qIndex:0, score:0, wrongIds:[], answered:false, selectedIdx:null},
+  progress:{learned:new Set(), wrong:{}, studied:new Set(), flashPos:{}, lastCat:'all'}
+};
+
+/* ================= STORAGE ================= */
+async function loadProgress(){
+  try{
+    const res = await window.storage.get('topik-progress');
+    if(res && res.value){
+      const data = JSON.parse(res.value);
+      S.progress.learned = new Set(data.learned||[]);
+      S.progress.wrong = data.wrong||{};
+      S.progress.studied = new Set(data.studied||[]);
+      S.progress.flashPos = data.flashPos||{};
+      S.progress.lastCat = data.lastCat||'all';
+    }
+  }catch(e){ /* no saved data yet */ }
+}
+async function saveProgress(){
+  try{
+    await window.storage.set('topik-progress', JSON.stringify({
+      learned:[...S.progress.learned],
+      wrong:S.progress.wrong,
+      studied:[...S.progress.studied],
+      flashPos:S.progress.flashPos,
+      lastCat:S.progress.lastCat
+    }), false);
+  }catch(e){ console.error('save failed', e); }
+}
+
+/* ================= HELPERS ================= */
+function shuffleArr(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function wordsByCat(cat){ return cat==='all' ? WORDS : WORDS.filter(w=>w.cat===cat); }
+function findWord(id){ return WORDS.find(w=>w.id===Number(id)); }
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ================= NAV ================= */
+function setView(v){
+  S.view=v;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  document.querySelectorAll('.view-section').forEach(sec=>sec.classList.toggle('active', sec.id==='view-'+v));
+  if(v==='study') renderStudy();
+  if(v==='flashcards') renderFlashSetupUI();
+  if(v==='quiz') renderQuiz();
+  if(v==='wrongbook') renderWrongbook();
+  renderStats();
+}
+
+function isFlagged(id){ return (S.progress.wrong[id]||0) > 0; }
+
+function renderStats(){
+  const learned = S.progress.learned.size;
+  const wrongCount = Object.keys(S.progress.wrong).length;
+  const studied = S.progress.studied.size;
+  document.getElementById('stats-bar').innerHTML =
+    '<span class="stat-pill">전체 단어 <b>'+WORDS.length+'</b></span>'+
+    '<span class="stat-pill">학습 진도 <b>'+studied+'</b> / '+WORDS.length+'</span>'+
+    '<span class="stat-pill">외운 단어 <b>'+learned+'</b></span>'+
+    '<span class="stat-pill">오답노트 <b>'+wrongCount+'</b></span>';
+  const sub = document.getElementById('wb-tab-sub');
+  sub.textContent = wrongCount>0 ? '錯題本 · '+wrongCount : '錯題本';
+}
+
+/* ================= STUDY VIEW ================= */
+function setStudyCat(cat){ S.studyCat=cat; renderStudy(); }
+function setStudyQuery(q){ S.studyQuery=q; renderStudy(); }
+function toggleLearned(id){
+  id = Number(id);
+  if(S.progress.learned.has(id)) S.progress.learned.delete(id);
+  else { S.progress.learned.add(id); delete S.progress.wrong[id]; }
+  saveProgress();
+  renderStudy();
+  renderStats();
+}
+function renderStudy(){
+  document.getElementById('study-chips').innerHTML = Object.keys(CATS).map(k=>
+    '<button class="chip'+(S.studyCat===k?' active':'')+'" onclick="setStudyCat(\''+k+'\')">'+CATS[k]+'</button>'
+  ).join('');
+
+  let list = wordsByCat(S.studyCat);
+  const q = S.studyQuery.trim();
+  if(q) list = list.filter(w=>w.kr.includes(q)||w.zh.includes(q));
+
+  const cardsEl = document.getElementById('study-cards');
+  if(list.length===0){
+    cardsEl.innerHTML = '<div class="empty-msg">검색 결과가 없어요 · 找不到符合的單字</div>';
+    return;
+  }
+  cardsEl.innerHTML = list.map(w=>{
+    const on = S.progress.learned.has(w.id);
+    const flagged = isFlagged(w.id);
+    const ex = genExample(w);
+    const flag = flagged ? '<span class="review-flag" title="아직 헷갈리는 단어예요 · 還不熟的單字">★</span>' : '';
+    return '<div class="word-card">'+
+      '<button class="star-btn'+(on?' on':'')+'" onclick="toggleLearned('+w.id+')" title="외운 단어로 표시">'+(on?'★':'☆')+'</button>'+
+      '<span class="pos-tag">'+w.pos+'</span>'+
+      '<p class="kr-word">'+w.kr+flag+spkBtn(w.kr,'inline-sm')+'</p>'+
+      '<p class="zh-word">'+w.zh+'</p>'+
+      '<div class="ex-block"><p class="ex-kr">'+ex.ex+spkBtn(ex.ex,'inline-sm')+'</p><p class="ex-zh">'+ex.exZh+'</p></div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ================= FLASHCARDS ================= */
+function renderFlashSetupUI(){
+  if(!S.flash.initd){
+    S.flash.cat = S.progress.lastCat || 'all';
+    S.flash.initd = true;
+  }
+  const sel = document.getElementById('flash-cat-select');
+  sel.innerHTML = Object.keys(CATS).map(k=>'<option value="'+k+'"'+(S.flash.cat===k?' selected':'')+'>'+CATS[k]+'</option>').join('');
+  document.getElementById('flash-shuffle-btn').classList.toggle('active-on', S.flash.shuffle);
+  if(S.flash.list.length===0) startFlash(S.flash.cat);
+  else renderFlash();
+}
+function startFlash(cat){
+  S.flash.cat = cat;
+  S.progress.lastCat = cat;
+  let list = wordsByCat(cat).slice();
+  if(S.flash.shuffle){
+    list = shuffleArr(list);
+    S.flash.pos = 0;
+  }else{
+    const saved = S.progress.flashPos[cat];
+    S.flash.pos = (typeof saved==='number' && saved < list.length) ? saved : 0;
+  }
+  S.flash.list = list;
+  S.flash.flipped = false;
+  saveProgress();
+  renderFlash();
+}
+function saveFlashPos(){
+  S.progress.flashPos[S.flash.cat] = S.flash.pos;
+  saveProgress();
+}
+function resetFlash(){
+  S.progress.flashPos[S.flash.cat] = 0;
+  startFlash(S.flash.cat);
+}
+function toggleFlashShuffle(){
+  S.flash.shuffle = !S.flash.shuffle;
+  document.getElementById('flash-shuffle-btn').classList.toggle('active-on', S.flash.shuffle);
+  startFlash(S.flash.cat);
+}
+function flipCard(){
+  S.flash.flipped = !S.flash.flipped;
+  if(S.flash.flipped){
+    const w = S.flash.list[S.flash.pos];
+    if(w && !S.progress.studied.has(w.id)){
+      S.progress.studied.add(w.id);
+      saveProgress();
+      renderStats();
+    }
+  }
+  renderFlash();
+}
+function flashPrev(){
+  if(S.flash.pos>0){
+    S.flash.pos--; S.flash.flipped=false;
+    saveFlashPos();
+    renderFlash();
+  }
+}
+function flashMark(known){
+  const w = S.flash.list[S.flash.pos];
+  if(w){
+    if(known){ S.progress.learned.add(w.id); delete S.progress.wrong[w.id]; }
+    else{ S.progress.wrong[w.id] = (S.progress.wrong[w.id]||0)+1; }
+    S.progress.studied.add(w.id);
+    saveProgress();
+    renderStats();
+  }
+  if(S.flash.pos < S.flash.list.length-1){ S.flash.pos++; }
+  else{ S.flash.pos = S.flash.list.length; }
+  S.flash.flipped = false;
+  saveFlashPos();
+  renderFlash();
+}
+function renderFlash(){
+  const area = document.getElementById('flash-area');
+  const list = S.flash.list;
+  if(list.length===0){
+    area.innerHTML = '<div class="empty-msg">이 카테고리에 단어가 없어요.</div>';
+    return;
+  }
+  if(S.flash.pos >= list.length){
+    area.innerHTML = '<div class="flash-wrap"><p class="empty-msg">🎉 이 카테고리를 모두 복습했어요! · 已複習完這個分類！</p>'+
+      '<button class="primary-btn" onclick="startFlash(S.flash.cat)">다시 처음부터 · 重新開始</button></div>';
+    return;
+  }
+  const w = list[S.flash.pos];
+  const ex = genExample(w);
+  const flag = isFlagged(w.id) ? '<span class="review-flag" title="아직 헷갈리는 단어예요 · 還不熟的單字">★</span>' : '';
+  const cardInner = !S.flash.flipped
+    ? '<div class="flash-front"><span class="pos-tag">'+w.pos+'</span><p class="fc-kr">'+w.kr+flag+spkBtn(w.kr,'big')+'</p><p class="flash-hint">카드를 클릭해서 뜻 보기 · 點卡片看意思</p></div>'
+    : '<div class="flash-back"><p class="fc-zh">'+w.zh+'</p><div class="fc-ex"><span class="ex-line">'+ex.ex+spkBtn(ex.ex,'inline-sm')+'</span><p class="fc-exzh">'+ex.exZh+'</p></div></div>';
+
+  area.innerHTML =
+    '<div class="flash-wrap">'+
+      '<div class="flash-counter">'+(S.flash.pos+1)+' / '+list.length+(S.flash.pos>0?' <span class="resume-tag">· 이어서 학습 중 繼續上次進度</span>':'')+'</div>'+
+      '<div class="flash-card" onclick="flipCard()">'+cardInner+'</div>'+
+      '<div class="flash-btn-row">'+
+        '<button class="nav-btn" onclick="flashPrev()">← 이전</button>'+
+        '<button class="dontknow-btn" onclick="flashMark(false)">✗ 아직 몰라요</button>'+
+        '<button class="know-btn" onclick="flashMark(true)">✓ 기억했어요</button>'+
+      '</div>'+
+    '</div>';
+}
+
+/* ================= QUIZ ================= */
+function quizSetField(key,val){ S.quiz[key]=val; }
+function startQuiz(){
+  const catSel = document.getElementById('quiz-cat-select');
+  const dirSel = document.querySelector('input[name="quiz-dir"]:checked');
+  const totalSel = document.getElementById('quiz-total-select');
+  const cat = catSel.value;
+  const dir = dirSel ? dirSel.value : 'kr2zh';
+  const totalRaw = totalSel.value;
+
+  const pool = wordsByCat(cat);
+  if(pool.length < 4){
+    alert('이 카테고리는 문제를 만들기에 단어가 부족해요 (4개 이상 필요).');
+    return;
+  }
+  const total = totalRaw==='all' ? pool.length : Math.min(Number(totalRaw), pool.length);
+  const chosen = shuffleArr(pool).slice(0,total);
+  const questions = chosen.map(w=>{
+    const distractorsPool = pool.filter(x=>x.id!==w.id);
+    const distractors = shuffleArr(distractorsPool).slice(0,3);
+    const options = shuffleArr([w,...distractors]);
+    return {word:w, options};
+  });
+  S.quiz = {phase:'running', cat, dir, total, questions, qIndex:0, score:0, wrongIds:[], answered:false, selectedIdx:null};
+  renderQuiz();
+}
+function quizFromPool(pool, label){
+  if(pool.length===0) return;
+  const questions = pool.map(w=>{
+    const distractorsPool = WORDS.filter(x=>x.id!==w.id);
+    const distractors = shuffleArr(distractorsPool).slice(0,3);
+    const options = shuffleArr([w,...distractors]);
+    return {word:w, options};
+  });
+  S.quiz = {phase:'running', cat:'all', dir:'kr2zh', total:questions.length, questions, qIndex:0, score:0, wrongIds:[], answered:false, selectedIdx:null};
+  setView('quiz');
+}
+function reviewWrongOnly(){
+  const ids = [...new Set(S.quiz.wrongIds)];
+  quizFromPool(WORDS.filter(w=>ids.includes(w.id)));
+}
+function answerQuiz(idx){
+  if(S.quiz.answered) return;
+  S.quiz.answered = true;
+  S.quiz.selectedIdx = idx;
+  const q = S.quiz.questions[S.quiz.qIndex];
+  const correct = q.options[idx].id === q.word.id;
+  if(correct){ S.quiz.score++; }
+  else{
+    S.quiz.wrongIds.push(q.word.id);
+    S.progress.wrong[q.word.id] = (S.progress.wrong[q.word.id]||0)+1;
+    saveProgress();
+    renderStats();
+  }
+  renderQuiz();
+}
+function nextQuiz(){
+  if(S.quiz.qIndex < S.quiz.questions.length-1){
+    S.quiz.qIndex++; S.quiz.answered=false; S.quiz.selectedIdx=null;
+  }else{
+    S.quiz.phase='result';
+  }
+  renderQuiz();
+}
+function backToSetup(){ S.quiz.phase='setup'; renderQuiz(); }
+
+function renderQuiz(){
+  const area = document.getElementById('quiz-area');
+
+  if(S.quiz.phase==='setup'){
+    area.innerHTML =
+      '<div class="quiz-setup">'+
+        '<div class="field-row"><label>범위 선택 · 選擇範圍</label>'+
+          '<select class="select-basic" id="quiz-cat-select" style="width:100%;">'+
+            Object.keys(CATS).map(k=>'<option value="'+k+'">'+CATS[k]+'</option>').join('')+
+          '</select>'+
+        '</div>'+
+        '<div class="field-row"><label>문제 방향 · 出題方向</label>'+
+          '<div class="radio-row">'+
+            '<label><input type="radio" name="quiz-dir" value="kr2zh" checked> 한국어 → 중국어</label>'+
+            '<label><input type="radio" name="quiz-dir" value="zh2kr"> 중국어 → 한국어</label>'+
+          '</div>'+
+        '</div>'+
+        '<div class="field-row"><label>문제 수 · 題數</label>'+
+          '<select class="select-basic" id="quiz-total-select" style="width:100%;">'+
+            '<option value="10">10문제</option><option value="20">20문제</option><option value="all">전체 다</option>'+
+          '</select>'+
+        '</div>'+
+        '<button class="primary-btn" onclick="startQuiz()">테스트 시작 · 開始測驗</button>'+
+      '</div>';
+    return;
+  }
+
+  if(S.quiz.phase==='running'){
+    const total = S.quiz.questions.length;
+    const q = S.quiz.questions[S.quiz.qIndex];
+    const pct = Math.round(((S.quiz.qIndex)/total)*100);
+    const zhMode = S.quiz.dir==='zh2kr';
+    const promptText = zhMode ? q.word.zh : q.word.kr;
+    const optLabel = o => zhMode ? o.kr : o.zh;
+
+    const optsHtml = q.options.map((o,idx)=>{
+      let cls='opt-btn';
+      if(S.quiz.answered){
+        if(o.id===q.word.id) cls+=' correct';
+        else if(idx===S.quiz.selectedIdx) cls+=' wrong';
+      }
+      const label = optLabel(o);
+      const spk = zhMode ? spkBtn(o.kr,'inline-sm') : '';
+      return '<div class="'+cls+'" role="button" tabindex="0" onclick="answerQuiz('+idx+')">'+label+spk+'</div>';
+    }).join('');
+
+    area.innerHTML =
+      '<div class="quiz-progress">문제 '+(S.quiz.qIndex+1)+' / '+total+'　·　점수 '+S.quiz.score+'</div>'+
+      '<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%;"></div></div>'+
+      '<div class="quiz-question'+(zhMode?' zh-mode':'')+'">'+promptText+(zhMode?'':spkBtn(q.word.kr))+'</div>'+
+      '<div class="quiz-options">'+optsHtml+'</div>'+
+      '<div class="quiz-footer">'+(S.quiz.answered ? '<button class="primary-btn" onclick="nextQuiz()">'+(S.quiz.qIndex<total-1?'다음 문제 · 下一題':'결과 보기 · 查看結果')+'</button>' : '')+'</div>';
+    return;
+  }
+
+  if(S.quiz.phase==='result'){
+    const total = S.quiz.questions.length;
+    const wrongIds = [...new Set(S.quiz.wrongIds)];
+    const wrongWords = wrongIds.map(id=>findWord(id)).filter(Boolean);
+    area.innerHTML =
+      '<div class="result-wrap">'+
+        '<div class="result-score">'+S.quiz.score+' / '+total+'</div>'+
+        (wrongWords.length>0
+          ? '<p class="result-note">틀린 단어는 오답노트에 저장됐어요! · 錯的單字已自動收進錯題本！</p>'+
+            '<div class="result-wrongs">'+wrongWords.map(w=>'<div class="rw-item"><span>'+w.kr+'</span><span>'+w.zh+'</span></div>').join('')+'</div>'
+          : '<p class="result-note" style="color:var(--green);">완벽해요! 틀린 문제가 없어요 · 全部答對了！</p>')+
+        '<div class="result-actions">'+
+          (wrongWords.length>0 ? '<button class="ghost-btn" onclick="reviewWrongOnly()">틀린 것만 다시 · 只重測錯題</button>' : '')+
+          '<button class="ghost-btn" onclick="backToSetup()">다시 설정 · 重新設定</button>'+
+          '<button class="primary-btn" onclick="setView(\'wrongbook\')">오답노트 보기 · 查看錯題本</button>'+
+        '</div>'+
+      '</div>';
+  }
+}
+
+/* ================= WRONG NOTEBOOK ================= */
+function masteredWrong(id){
+  delete S.progress.wrong[id];
+  saveProgress();
+  renderWrongbook();
+  renderStats();
+}
+function quizAllWrong(){
+  const ids = Object.keys(S.progress.wrong).map(Number);
+  quizFromPool(WORDS.filter(w=>ids.includes(w.id)));
+}
+function renderWrongbook(){
+  const area = document.getElementById('wrongbook-area');
+  const entries = Object.keys(S.progress.wrong)
+    .map(id=>({id:Number(id), count:S.progress.wrong[id], word:findWord(id)}))
+    .filter(e=>e.word)
+    .sort((a,b)=>b.count-a.count);
+
+  if(entries.length===0){
+    area.innerHTML = '<div class="empty-msg">아직 오답이 없어요! 테스트나 카드 복습에서 틀리면 여기에 모여요 📕<br>還沒有錯題,測驗或複習卡答錯的單字會自動收錄在這裡。</div>';
+    return;
+  }
+  area.innerHTML =
+    '<div class="wb-header"><span class="wb-note">✎ 다시 외워야 할 단어들!</span>'+
+      '<button class="primary-btn" onclick="quizAllWrong()">이 단어들로 테스트 · 用這些單字測驗</button></div>'+
+    '<div class="wb-list">'+entries.map(e=>
+      '<div class="wb-item">'+
+        '<span class="wb-kr">'+e.word.kr+'</span>'+
+        '<span class="wb-zh-wrap"><span class="wb-zh">'+e.word.zh+'</span></span>'+
+        '<span class="wb-count">'+e.count+'번 틀림</span>'+
+        '<button class="wb-remove" onclick="masteredWrong('+e.id+')">외웠어요 · 已學會</button>'+
+      '</div>'
+    ).join('')+'</div>';
+}
+
+/* ================= INIT ================= */
+(async function init(){
+  await loadProgress();
+  renderStudy();
+  renderStats();
+  renderQuiz();
+})();
+</script>
+</body>
+</html>
