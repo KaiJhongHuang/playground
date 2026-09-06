@@ -733,15 +733,34 @@ function makeBackupCode(){
   const meta = {w:p.wrong, f:p.flashPos, c:p.lastCat};
   return 'TOPIK1.' + idsToBitmap(p.learned) + '.' + idsToBitmap(p.studied) + '.' + btoa(JSON.stringify(meta));
 }
-function applyBackupCode(code){
-  const parts = String(code).trim().split('.');
+/* 吃兩種格式：
+   1. 本站產生的 TOPIK1. 備份碼
+   2. 舊版 Claude artifact 直接倒出來的 JSON —— 進度物件本身，
+      或 window.storage.get() 回傳的 {value:"…"} 外包裝都可以 */
+function parseBackupInput(text){
+  const t = String(text).trim();
+  if(!t) throw new Error('請先貼上備份碼');
+
+  if(t.charAt(0) === '{'){
+    let d = JSON.parse(t);
+    if(typeof d.value === 'string') d = JSON.parse(d.value);   // {value:"…"} 外包裝
+    if(!d || (!d.learned && !d.studied && !d.wrong)) throw new Error('這段 JSON 裡沒有進度資料');
+    return {
+      learned: d.learned||[], studied: d.studied||[],
+      wrong: d.wrong||{}, flashPos: d.flashPos||{}, lastCat: d.lastCat||'all'
+    };
+  }
+
+  const parts = t.split('.');
   if(parts.length !== 4 || parts[0] !== 'TOPIK1') throw new Error('備份碼格式不對');
   const meta = JSON.parse(atob(parts[3]));
-  applySnapshot(mergeProgress(snapshot(), {
-    learned: bitmapToIds(parts[1]),
-    studied: bitmapToIds(parts[2]),
+  return {
+    learned: bitmapToIds(parts[1]), studied: bitmapToIds(parts[2]),
     wrong: meta.w||{}, flashPos: meta.f||{}, lastCat: meta.c||'all'
-  }));
+  };
+}
+function applyBackupCode(code){
+  applySnapshot(mergeProgress(snapshot(), parseBackupInput(code)));
   saveLocal();
   refreshAfterSync();
   pushCloud();
@@ -792,7 +811,8 @@ function renderSyncPanel(){
         : '') +
       '<details>' +
         '<summary>수동 백업 · 手動備份／還原</summary>' +
-        '<p class="sync-note" style="margin-top:10px;">把下面這串代碼複製起來收好。換裝置或同步壞掉時，貼進去按還原就能把進度接回來。</p>' +
+        '<p class="sync-note" style="margin-top:10px;">把下面這串代碼複製起來收好。換裝置或同步壞掉時，貼進去按還原就能把進度接回來。' +
+          '從舊版倒出來的 JSON 也可以直接貼在這裡還原。</p>' +
         '<textarea class="sync-code" id="sync-code" spellcheck="false"></textarea>' +
         '<div class="sync-actions">' +
           '<button class="ghost-btn" onclick="copyBackupCode()">📋 복사 · 複製備份碼</button>' +
