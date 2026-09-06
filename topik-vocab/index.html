@@ -258,6 +258,19 @@ h1{
 .sync-mini.ok .sync-dot{background:var(--green);}
 .sync-mini.syncing .sync-dot,.sync-mini.pending .sync-dot{background:#d9a520;}
 .sync-mini.error .sync-dot,.sync-mini.offline .sync-dot{background:var(--red);}
+.sync-mini.nokey .sync-dot{background:#b9c2cf;}
+.key-box{margin-top:4px;}
+.key-input{
+  width:100%;padding:11px 12px;margin-bottom:10px;
+  border:1px solid #dbe1ea;border-radius:8px;background:#fafbfc;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--ink);
+}
+.key-input:focus{outline:none;border-color:var(--ink-soft);}
+.key-shown{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+  color:var(--ink);background:#f4f6fa;border:1px solid #e2e7ef;
+  border-radius:8px;padding:10px 12px;margin-bottom:8px;word-break:break-all;
+}
 .sync-card{
   border:1px solid #e4e8ee;border-radius:var(--radius);
   padding:20px 22px;margin-bottom:18px;background:#fcfdff;
@@ -496,15 +509,34 @@ const S = {
    寫入一律「先拉雲端 → 合併 → 寫回」，所以先開哪一台裝置都不會蓋掉新進度。
    合併規則：learned / studied 取聯集，wrong / flashPos 取較大值。 */
 const LS_KEY        = 'topik-progress';
+const KEY_LS        = 'topik-sync-key';   // 金鑰只存在使用者自己的瀏覽器，不進原始碼
 const BIN_ID        = '6a9ce7f3f5f4af5e29701dc1';
-const ACCESS_KEY    = '$2a$10$xZRRr/BZcD49vhJg9PkFv.tqmGdo0jrwlzMWZverhqwssSRAXmxjS';
 const BIN_URL       = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
 const PUSH_DEBOUNCE = 4000;   // 存檔後多久才推雲端（省 API 額度）
 const PUSH_RETRY    = 30000;  // 推失敗後自己重試的間隔
 const PULL_STALE_MS = 30000;  // 回到分頁時，距上次拉取超過這個時間就重拉
 const MAX_ID        = 1000;   // 備份碼 bitmap 上限，單字量超過 1000 時要一起調大
 
-const SYNC = { state:'idle', lastPull:0, lastPush:0, pending:false, timer:null, inflight:false };
+const SYNC = { state:'idle', lastPull:0, lastPush:0, pending:false, timer:null, inflight:false, editKey:false };
+
+/* ---------- 同步金鑰（每個瀏覽器自己輸入一次，之後記住） ---------- */
+let ACCESS_KEY = '';
+function loadKey(){
+  try{ ACCESS_KEY = localStorage.getItem(KEY_LS) || ''; }
+  catch(e){ ACCESS_KEY = ''; }
+}
+function setKey(k){
+  ACCESS_KEY = k;
+  try{ localStorage.setItem(KEY_LS, k); }catch(e){ console.warn('key save failed', e); }
+}
+function forgetKey(){
+  ACCESS_KEY = '';
+  try{ localStorage.removeItem(KEY_LS); }catch(e){}
+}
+function hasKey(){ return ACCESS_KEY.length > 0; }
+function maskKey(k){
+  return k.length <= 18 ? k.slice(0,4) + '……' : k.slice(0,10) + '……' + k.slice(-6);
+}
 
 /* ---------- 快照 / 還原 ---------- */
 function snapshot(){
@@ -537,6 +569,18 @@ function mergeProgress(a, b){
   return out;
 }
 
+/* 合併結果一定是雲端的超集，所以數量與數值都一樣就代表雲端沒漏東西 */
+function sameAsRemote(merged, remote){
+  if(merged.learned.length !== (remote.learned||[]).length) return false;
+  if(merged.studied.length !== (remote.studied||[]).length) return false;
+  const rw = remote.wrong||{}, rf = remote.flashPos||{};
+  if(Object.keys(merged.wrong).length !== Object.keys(rw).length) return false;
+  for(const k in merged.wrong) if(Number(rw[k]) !== Number(merged.wrong[k])) return false;
+  if(Object.keys(merged.flashPos).length !== Object.keys(rf).length) return false;
+  for(const k in merged.flashPos) if(Number(rf[k]) !== Number(merged.flashPos[k])) return false;
+  return true;
+}
+
 /* ---------- 本機 ---------- */
 function saveLocal(){
   try{ localStorage.setItem(LS_KEY, JSON.stringify(snapshot())); }
@@ -549,9 +593,11 @@ async function loadProgress(){
   }catch(e){ console.warn('local load failed', e); }
 }
 
-/* 全站唯一的存檔入口：本機立即寫，雲端延遲推 */
+/* 全站唯一的存檔入口：本機立即寫，雲端延遲推。
+   沒設定金鑰時照樣存本機，只是不上傳。 */
 function saveProgress(){
   saveLocal();
+  if(!hasKey()){ setSyncState('nokey'); return; }
   SYNC.pending = true;
   setSyncState('pending');
   clearTimeout(SYNC.timer);
@@ -583,13 +629,21 @@ function scheduleRetry(ms){
 }
 
 async function pullCloud(){
+  if(!hasKey()){ setSyncState('nokey'); return; }
   if(SYNC.inflight) return;
   SYNC.inflight = true; setSyncState('syncing');
   try{
     const remote = await cloudGet();
-    applySnapshot(mergeProgress(snapshot(), remote));
+    const merged = mergeProgress(snapshot(), remote);
+    applySnapshot(merged);
     saveLocal();
     SYNC.lastPull = Date.now();
+    /* 這台有、雲端沒有的進度要補推上去
+       （例如離線背完就關掉，或剛輸入金鑰之前先背了一陣子） */
+    if(!sameAsRemote(merged, remote)){
+      SYNC.pending = true;
+      scheduleRetry(PUSH_DEBOUNCE);
+    }
     setSyncState(SYNC.pending ? 'pending' : 'ok');
     refreshAfterSync();
   }catch(e){
@@ -600,6 +654,7 @@ async function pullCloud(){
 
 async function pushCloud(){
   clearTimeout(SYNC.timer); SYNC.timer = null;
+  if(!hasKey()){ setSyncState('nokey'); return; }
   if(SYNC.inflight){ SYNC.pending = true; scheduleRetry(PUSH_DEBOUNCE); return; }
   SYNC.inflight = true; setSyncState('syncing');
   try{
@@ -630,6 +685,7 @@ function refreshAfterSync(){
 /* ---------- 狀態顯示 ---------- */
 const SYNC_LABELS = {
   idle:    ['확인 중…', '檢查中'],
+  nokey:   ['동기화 미설정', '尚未設定同步'],
   syncing: ['동기화 중…', '同步中'],
   ok:      ['동기화됨', '已同步'],
   pending: ['저장됨', '已存本機．待上傳'],
@@ -692,18 +748,48 @@ function applyBackupCode(code){
 }
 
 /* ---------- 동기화 分頁 ---------- */
+/* 金鑰設定區：已設定就顯示遮罩過的金鑰，沒設定（或按了更換）就顯示輸入框 */
+function keySectionHtml(){
+  if(hasKey() && !SYNC.editKey){
+    return '<div class="key-box">' +
+        '<div class="key-shown">🔑 ' + escapeHtml(maskKey(ACCESS_KEY)) + '</div>' +
+        '<p class="sync-note">這個瀏覽器已經記住金鑰了，之後打開就會自動同步。</p>' +
+        '<div class="sync-actions">' +
+          '<button class="ghost-btn" onclick="editKey()">변경 · 更換金鑰</button>' +
+          '<button class="ghost-btn" onclick="removeKey()">✕ 이 기기에서 삭제 · 從這台移除</button>' +
+        '</div>' +
+      '</div>';
+  }
+  return '<div class="key-box">' +
+      '<p class="sync-note" style="margin-bottom:8px;">貼上同步金鑰，這個瀏覽器只需要輸入一次。' +
+        '沒有金鑰也能正常背單字，只是進度只留在這一台。</p>' +
+      '<input class="key-input" id="sync-key-input" type="password" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="동기화 키 · 同步金鑰">' +
+      '<div class="sync-actions">' +
+        '<button class="primary-btn" onclick="submitKey()">저장 · 儲存並連線</button>' +
+        (hasKey() ? '<button class="ghost-btn" onclick="cancelEditKey()">취소 · 取消</button>' : '') +
+      '</div>' +
+      '<p class="sync-msg" id="key-msg"></p>' +
+    '</div>';
+}
 function renderSyncPanel(){
   document.getElementById('sync-area').innerHTML =
+    '<div class="sync-card">' +
+      '<h3>🔑 동기화 설정 · 同步設定</h3>' +
+      keySectionHtml() +
+    '</div>' +
     '<div class="sync-card">' +
       '<h3>🔄 자동 동기화 · 自動同步</h3>' +
       '<div id="sync-state-line" class="sync-line"></div>' +
       '<p class="sync-note" id="sync-when"></p>' +
-      '<p class="sync-note">進度會先存在這台裝置上，之後自動上傳。在另一台裝置或另一個瀏覽器打開同一個網址，進度就會合併進來，' +
+      '<p class="sync-note">進度會先存在這台裝置上，之後自動上傳。在另一台裝置或另一個瀏覽器打開同一個網址並輸入同一把金鑰，進度就會合併進來，' +
         '<b>先開哪一台都不會把新的進度蓋掉</b>。平常不需要打開這一頁。</p>' +
-      '<div class="sync-actions">' +
-        '<button class="primary-btn" onclick="pushCloud()">지금 동기화 · 立即同步</button>' +
-        '<button class="ghost-btn" onclick="pullCloud()">↓ 다시 불러오기 · 重新拉取</button>' +
-      '</div>' +
+      (hasKey()
+        ? '<div class="sync-actions">' +
+            '<button class="primary-btn" onclick="pushCloud()">지금 동기화 · 立即同步</button>' +
+            '<button class="ghost-btn" onclick="pullCloud()">↓ 다시 불러오기 · 重新拉取</button>' +
+          '</div>'
+        : '') +
       '<details>' +
         '<summary>수동 백업 · 手動備份／還原</summary>' +
         '<p class="sync-note" style="margin-top:10px;">把下面這串代碼複製起來收好。換裝置或同步壞掉時，貼進去按還原就能把進度接回來。</p>' +
@@ -717,6 +803,47 @@ function renderSyncPanel(){
     '</div>';
   document.getElementById('sync-code').value = makeBackupCode();
   updateSyncStatus();
+}
+
+/* ---------- 金鑰設定的動作 ---------- */
+function keyMsg(text, isErr){
+  const el = document.getElementById('key-msg');
+  if(!el) return;
+  el.className = 'sync-msg' + (isErr ? ' err' : '');
+  el.textContent = text;
+}
+function editKey(){ SYNC.editKey = true; renderSyncPanel(); }
+function cancelEditKey(){ SYNC.editKey = false; renderSyncPanel(); }
+function removeKey(){
+  forgetKey();
+  SYNC.editKey = false;
+  SYNC.pending = false;
+  clearTimeout(SYNC.timer); SYNC.timer = null;
+  setSyncState('nokey');
+  renderSyncPanel();
+  keyMsg('已從這台裝置移除金鑰，進度仍留在本機。');
+}
+/* 存之前先打一次 API 驗證，避免使用者存了一把錯的金鑰卻以為在同步 */
+async function submitKey(){
+  const input = document.getElementById('sync-key-input');
+  const k = (input.value || '').trim();
+  if(!k){ keyMsg('請先貼上金鑰。', true); return; }
+  keyMsg('확인 중… 驗證中…');
+  try{
+    const res = await fetch(BIN_URL + '/latest', {
+      headers:{'X-Access-Key':k}, cache:'no-store'
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    await res.json();
+    setKey(k);
+    SYNC.editKey = false;
+    renderSyncPanel();
+    keyMsg('金鑰已儲存，這個瀏覽器以後會自動同步。');
+    pullCloud();
+  }catch(e){
+    console.warn('key check failed', e);
+    keyMsg('這把金鑰用不了（' + e.message + '），請確認後再試一次。', true);
+  }
 }
 function syncMsg(text, isErr){
   const el = document.getElementById('sync-msg');
@@ -1129,8 +1256,9 @@ function renderWrongbook(){
   renderStats();
   renderQuiz();
   initSync();
-  setSyncState('idle');
-  pullCloud();
+  loadKey();
+  if(hasKey()){ setSyncState('idle'); pullCloud(); }
+  else setSyncState('nokey');
 })();
 </script>
 </body>
