@@ -109,9 +109,11 @@ const setTag=(id,txt,cls)=>{const t=$(id);t.textContent=txt;t.className="tag"+(c
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
 /* 畫布尺寸 */
-function fit(c){const r=window.devicePixelRatio||1,w=c.clientWidth,h=+c.getAttribute("height");c.width=w*r;c.height=h*r;c.style.height=h+"px";const x=c.getContext("2d");x.setTransform(r,0,0,r,0,0);return{x,w,h}}
-let B,C,S,T;function fitAll(){B=fit($("ball"));C=fit($("compass"));S=fit($("shake"));T=fit($("track"));drawTrack()}
-addEventListener("resize",fitAll);
+// 原始高度記在 data-h，避免重算時讀到已放大的 canvas.height 而越拉越長
+function fit(c){if(!c.dataset.h)c.dataset.h=c.getAttribute("height");const r=window.devicePixelRatio||1,w=c.clientWidth,h=+c.dataset.h;c.width=Math.round(w*r);c.height=Math.round(h*r);c.style.height=h+"px";const x=c.getContext("2d");x.setTransform(r,0,0,r,0,0);return{x,w,h}}
+let B,C,S,T,lastW=0;function fitAll(){lastW=document.documentElement.clientWidth;B=fit($("ball"));C=fit($("compass"));S=fit($("shake"));T=fit($("track"));drawTrack()}
+// 手機捲動時網址列伸縮也會觸發 resize，只有寬度真的變了才重算
+addEventListener("resize",()=>{if(document.documentElement.clientWidth!==lastW)fitAll()});
 
 /* ---------- 環境診斷 ---------- */
 function inIframe(){try{return window.self!==window.top}catch(e){return true}}
