@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1216">
+<title>感測器實驗室</title>
+<style>
+:root{--bg:#0f1216;--card:#181c22;--line:#2a3039;--ink:#e8ecf1;--mute:#8a94a3;--acc:#5fd1b3;--warn:#f0b35a;--bad:#ef6b6b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;padding:16px 14px calc(40px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;-webkit-user-select:none;user-select:none}
+h1{font-size:22px;margin:4px 0 2px}
+.lead{color:var(--mute);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.tag{font-size:12px;font-weight:500;padding:2px 8px;border-radius:99px;background:#222831;color:var(--mute);white-space:nowrap}
+.tag.ok{background:#16352d;color:var(--acc)}.tag.warn{background:#3a2c17;color:var(--warn)}.tag.bad{background:#3a1c1c;color:var(--bad)}
+.btn{display:block;width:100%;padding:12px;border-radius:10px;border:0;background:var(--acc);color:#06261e;font:600 16px inherit;font-family:inherit;margin-top:6px}
+.btn.ghost{background:#222831;color:var(--ink)}
+.btns{display:flex;gap:8px}.btns .btn{flex:1}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.num{background:#11151a;border-radius:10px;padding:8px}
+.num .l{font-size:12px;color:var(--mute)}.num .x{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.sub{font-size:13px;color:var(--mute);margin:12px 0 6px}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--mute);margin-top:8px;font-variant-numeric:tabular-nums}
+.diag{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px}
+.diag .k{color:var(--mute)}.ok{color:var(--acc)}.mid{color:var(--warn)}.no{color:var(--bad)}
+.note{font-size:13px;color:var(--warn);margin-top:8px}
+canvas{display:block;width:100%;background:#11151a;border-radius:10px}
+#log{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--mute);max-height:140px;overflow:auto;white-space:pre-wrap}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2c333d;color:var(--ink);padding:8px 14px;border-radius:99px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<h1>感測器實驗室</h1>
+<p class="lead">陀螺儀、動作偵測、GPS。請用 Safari 直接開這個網址，按下按鈕後允許權限。</p>
+
+<section class="card">
+  <h2>環境診斷</h2>
+  <div class="diag" id="diag"></div>
+  <div class="note" id="diagNote"></div>
+</section>
+
+<section class="card">
+  <h2>陀螺儀 <span class="tag" id="oTag">尚未啟用</span></h2>
+  <button class="btn" id="oBtn">啟用動作與方向</button>
+  <div class="nums" style="margin-top:10px">
+    <div class="num"><div class="l">前後傾 β</div><div class="x" id="oB">–</div></div>
+    <div class="num"><div class="l">左右傾 γ</div><div class="x" id="oG">–</div></div>
+    <div class="num"><div class="l">方位 α</div><div class="x" id="oA">–</div></div>
+  </div>
+  <div class="sub">傾斜滾球（中間的圈是穩手挑戰區）</div>
+  <canvas id="ball" height="240"></canvas>
+  <div class="btns"><button class="btn ghost" id="zeroBtn">以目前角度歸零</button></div>
+  <div class="sub">指南針</div>
+  <canvas id="compass" height="180"></canvas>
+  <div class="row"><span id="head">方位 –</span><span id="hz">事件頻率 –</span></div>
+</section>
+
+<section class="card">
+  <h2>動作偵測 <span class="tag" id="mTag">先啟用上方感測</span></h2>
+  <div class="nums">
+    <div class="num"><div class="l">手機姿態</div><div class="x" id="dPose">–</div></div>
+    <div class="num"><div class="l">搖一搖</div><div class="x" id="dShake">0</div></div>
+    <div class="num"><div class="l">計步</div><div class="x" id="dSteps">0</div></div>
+    <div class="num"><div class="l">翻面次數</div><div class="x" id="dFlip">0</div></div>
+    <div class="num"><div class="l">騰空時間</div><div class="x" id="dAir">–</div></div>
+    <div class="num"><div class="l">拋高估計</div><div class="x" id="dHigh">–</div></div>
+  </div>
+  <div class="sub">加速度強度（扣掉重力）</div>
+  <canvas id="shake" height="90"></canvas>
+  <div class="row"><span id="accTxt">x – y – z –</span><span id="peak">最大衝擊 –</span></div>
+  <div class="sub">穩手挑戰：把球留在中心圈裡</div>
+  <div class="row" style="margin-top:0;font-size:15px;color:var(--ink)"><span>目前 <b id="gNow">0.0</b> 秒</span><span>最佳 <b id="gBest">0.0</b> 秒</span></div>
+  <div class="btns"><button class="btn ghost" id="resetBtn">計數歸零</button></div>
+  <p class="lead" style="margin:8px 0 0">騰空量測：把手機往床上輕拋，落下後會顯示騰空秒數與估計高度。</p>
+</section>
+
+<section class="card">
+  <h2>GPS <span class="tag" id="gTag">尚未啟用</span></h2>
+  <div class="btns"><button class="btn" id="gBtn">開始定位</button><button class="btn ghost" id="gStop">停止</button></div>
+  <div class="nums" style="margin-top:10px">
+    <div class="num"><div class="l">緯度</div><div class="x" id="gLat" style="font-size:15px">–</div></div>
+    <div class="num"><div class="l">經度</div><div class="x" id="gLon" style="font-size:15px">–</div></div>
+    <div class="num"><div class="l">精度</div><div class="x" id="gAcc">–</div></div>
+    <div class="num"><div class="l">海拔</div><div class="x" id="gAlt">–</div></div>
+    <div class="num"><div class="l">速度</div><div class="x" id="gSpd">–</div></div>
+    <div class="num"><div class="l">總距離</div><div class="x" id="gDist">0 m</div></div>
+  </div>
+  <div class="sub">軌跡（藍圈是目前精度範圍）</div>
+  <canvas id="track" height="260"></canvas>
+  <div class="row"><span id="gPts">0 個點</span><span id="gTime">–</span></div>
+  <div class="btns"><button class="btn ghost" id="gpxBtn">匯出 GPX</button><button class="btn ghost" id="gClear">清除軌跡</button></div>
+  <div class="btns"><button class="btn ghost" id="wakeBtn">螢幕常亮：關</button></div>
+</section>
+
+<section class="card">
+  <h2>紀錄</h2>
+  <div id="log"></div>
+</section>
+<div id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const log=m=>{const t=new Date().toLocaleTimeString("zh-TW",{hour12:false});$("log").textContent=`${t} ${m}\n`+$("log").textContent};
+let toastT;const toast=m=>{$("toast").textContent=m;$("toast").classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>$("toast").classList.remove("on"),2200)};
+const setTag=(id,txt,cls)=>{const t=$(id);t.textContent=txt;t.className="tag"+(cls?" "+cls:"")};
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* 畫布尺寸 */
+function fit(c){const r=window.devicePixelRatio||1,w=c.clientWidth,h=+c.getAttribute("height");c.width=w*r;c.height=h*r;c.style.height=h+"px";const x=c.getContext("2d");x.setTransform(r,0,0,r,0,0);return{x,w,h}}
+let B,C,S,T;function fitAll(){B=fit($("ball"));C=fit($("compass"));S=fit($("shake"));T=fit($("track"));drawTrack()}
+addEventListener("resize",fitAll);
+
+/* ---------- 環境診斷 ---------- */
+function inIframe(){try{return window.self!==window.top}catch(e){return true}}
+function diag(){
+  const yes=(b,a="支援",n="不支援")=>b?`<span class="ok">${a}</span>`:`<span class="no">${n}</span>`;
+  const pol=f=>{const p=document.permissionsPolicy||document.featurePolicy;if(!p||!p.allowsFeature)return'<span class="mid">無法判斷</span>';return yes(p.allowsFeature(f),"允許","被擋")};
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const rows=[
+    ["裝置",ios?"iOS / iPadOS":(/Android/.test(navigator.userAgent)?"Android":"其他")],
+    ["HTTPS 安全環境",yes(window.isSecureContext,"是","否")],
+    ["嵌在 iframe 裡",inIframe()?'<span class="mid">是</span>':'<span class="ok">否</span>'],
+    ["DeviceOrientation API",yes("DeviceOrientationEvent" in window)],
+    ["DeviceMotion API",yes("DeviceMotionEvent" in window)],
+    ["需要按鈕授權（iOS）",typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"?'<span class="mid">需要</span>':"不需要"],
+    ["Geolocation API",yes("geolocation" in navigator)],
+    ["Wake Lock API",yes("wakeLock" in navigator)],
+    ["權限政策：陀螺儀",pol("gyroscope")],
+    ["權限政策：加速度計",pol("accelerometer")],
+    ["權限政策：定位",pol("geolocation")]
+  ];
+  $("diag").innerHTML=rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${v}</div>`).join("");
+  const n=[];
+  if(!window.isSecureContext)n.push("不是 HTTPS，感測器一定讀不到。");
+  if(inIframe())n.push("頁面被嵌在別的網頁裡，外層可能擋掉感測器。讀不到的話，請直接在 Safari 開這個網址。");
+  $("diagNote").textContent=n.join(" ");
+}
+
+/* ---------- 陀螺儀 + 動作 ---------- */
+let ori={a:null,b:null,g:null,head:null},zero=ls.get("sl-zero",{b:0,g:0});
+let lin={x:0,y:0,z:0},grav={x:0,y:0,z:9.8},peak=0,hist=new Array(120).fill(0),evN=0,motionOn=false;
+let ball={x:0,y:0,vx:0,vy:0};
+
+async function enableMotion(){
+  try{
+    if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){
+      const r=await DeviceOrientationEvent.requestPermission();
+      if(r!=="granted"){setTag("oTag","被拒絕","bad");log("動作與方向：被拒絕（"+r+"）");toast("權限被拒絕，見下方說明");return}
+      if(typeof DeviceMotionEvent.requestPermission==="function"){try{await DeviceMotionEvent.requestPermission()}catch(e){}}
+    }
+  }catch(e){setTag("oTag","被拒絕","bad");log("授權失敗："+e.message);return}
+  addEventListener("deviceorientation",onOri);
+  addEventListener("devicemotion",onMotion);
+  motionOn=true;setTag("oTag","等待資料…","warn");setTag("mTag","等待資料…","warn");log("已要求動作與方向");
+  setTimeout(()=>{if(ori.b==null){setTag("oTag","收不到資料","bad");log("2 秒內沒有收到任何方向事件，可能被瀏覽器或外層頁面擋掉")}},2000);
+}
+function onOri(e){
+  if(e.beta==null)return;
+  ori.a=e.alpha;ori.b=e.beta;ori.g=e.gamma;
+  ori.head=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?(360-e.alpha)%360:null);
+  setTag("oTag","讀取中","ok");
+}
+let lastStep=0,stepHi=false,shakeN=0,lastShake=0,flipN=0,faceDown=false,airStart=0,inAir=false;
+let stats=ls.get("sl-stats",{shake:0,steps:0,flip:0});
+function onMotion(e){
+  evN++;
+  const ag=e.accelerationIncludingGravity,a=e.acceleration;
+  if(ag&&ag.x!=null){
+    grav.x=grav.x*.9+ag.x*.1;grav.y=grav.y*.9+ag.y*.1;grav.z=grav.z*.9+ag.z*.1;
+    if(a&&a.x!=null){lin={x:a.x,y:a.y,z:a.z}}else{lin={x:ag.x-grav.x,y:ag.y-grav.y,z:ag.z-grav.z}}
+    const tot=Math.hypot(ag.x,ag.y,ag.z),m=Math.hypot(lin.x,lin.y,lin.z),now=performance.now();
+    peak=Math.max(peak,m);hist.push(m);hist.shift();
+    setTag("mTag","讀取中","ok");
+    // 搖一搖
+    if(m>14&&now-lastShake>400){stats.shake++;lastShake=now;toast("搖！");save()}
+    // 計步：總加速度上穿 11.5、下穿 9.5
+    if(!stepHi&&tot>11.5&&now-lastStep>300){stepHi=true;stats.steps++;lastStep=now;save()}
+    if(stepHi&&tot<9.5)stepHi=false;
+    // 騰空：總加速度接近 0
+    if(tot<2.5&&!inAir){inAir=true;airStart=now}
+    if(inAir&&tot>6){inAir=false;const t=(now-airStart)/1000;if(t>.12&&t<3){const h=9.8*(t/2)**2/2;$("dAir").textContent=t.toFixed(2)+" s";$("dHigh").textContent=(h*100).toFixed(0)+" cm";log(`騰空 ${t.toFixed(2)} 秒，約 ${(h*100).toFixed(0)} 公分`)}}
+    // 翻面與姿態（以 iOS 慣例：平放朝上時 z≈-9.8）
+    const gz=grav.z,gx=grav.x,gy=grav.y,iosSign=/iPhone|iPad|iPod/.test(navigator.userAgent)?-1:1;
+    const up=gz*iosSign;
+    let pose="傾斜";
+    if(up>8)pose="平放";else if(up<-8)pose="朝下";else if(Math.abs(gy)>7)pose=gy*iosSign<0?"直拿":"倒拿";else if(Math.abs(gx)>7)pose="橫拿";
+    $("dPose").textContent=pose;
+    if(up<-8&&!faceDown){faceDown=true;stats.flip++;save()}
+    if(up>4)faceDown=false;
+  }
+}
+function save(){ls.set("sl-stats",stats);$("dShake").textContent=stats.shake;$("dSteps").textContent=stats.steps;$("dFlip").textContent=stats.flip}
+
+/* 穩手挑戰 */
+let inZone=0,best=ls.get("sl-best",0);$("gBest").textContent=best.toFixed(1);
+
+let lastT=performance.now(),hzT=performance.now();
+function frame(t){
+  const dt=Math.min(.05,(t-lastT)/1000);lastT=t;
+  // 數值
+  if(ori.b!=null){
+    $("oB").textContent=(ori.b-zero.b).toFixed(1)+"°";$("oG").textContent=(ori.g-zero.g).toFixed(1)+"°";
+    $("oA").textContent=ori.a!=null?ori.a.toFixed(0)+"°":"–";
+    $("head").textContent=ori.head!=null?"方位 "+ori.head.toFixed(0)+"° "+dirName(ori.head):"方位：此裝置沒有提供";
+  }
+  if(t-hzT>1000){$("hz").textContent="事件頻率 "+Math.round(evN*1000/(t-hzT))+" Hz";evN=0;hzT=t}
+  $("accTxt").textContent=`x ${lin.x.toFixed(1)} y ${lin.y.toFixed(1)} z ${lin.z.toFixed(1)}`;
+  $("peak").textContent="最大衝擊 "+peak.toFixed(1)+" m/s²";
+  drawBall(dt);drawCompass();drawShake();
+  requestAnimationFrame(frame);
+}
+function dirName(h){return["北","東北","東","東南","南","西南","西","西北"][Math.round(h/45)%8]}
+function drawBall(dt){
+  const {x,w,h}=B,R=14,cx=w/2,cy=h/2,zone=34;
+  if(ori.b!=null){
+    const gb=Math.max(-45,Math.min(45,ori.b-zero.b)),gg=Math.max(-45,Math.min(45,ori.g-zero.g));
+    ball.vx+=gg*dt*40;ball.vy+=gb*dt*40;ball.vx*=.96;ball.vy*=.96;
+    ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+    const mx=w/2-R,my=h/2-R;
+    if(Math.abs(ball.x)>mx){ball.x=Math.sign(ball.x)*mx;ball.vx*=-.5}
+    if(Math.abs(ball.y)>my){ball.y=Math.sign(ball.y)*my;ball.vy*=-.5}
+    if(Math.hypot(ball.x,ball.y)<zone-R/2){inZone+=dt;if(inZone>best){best=inZone;ls.set("sl-best",best);$("gBest").textContent=best.toFixed(1)}}else inZone=0;
+    $("gNow").textContent=inZone.toFixed(1);
+  }
+  x.clearRect(0,0,w,h);
+  x.strokeStyle="#2a3039";x.lineWidth=1;
+  for(let i=1;i<4;i++){x.beginPath();x.moveTo(w*i/4,0);x.lineTo(w*i/4,h);x.stroke();x.beginPath();x.moveTo(0,h*i/4);x.lineTo(w,h*i/4);x.stroke()}
+  x.strokeStyle=inZone>0?"#5fd1b3":"#3a4350";x.lineWidth=2;x.beginPath();x.arc(cx,cy,zone,0,7);x.stroke();
+  x.fillStyle="#5fd1b3";x.beginPath();x.arc(cx+ball.x,cy+ball.y,R,0,7);x.fill();
+}
+function drawCompass(){
+  const {x,w,h}=C,cx=w/2,cy=h/2,r=Math.min(w,h)/2-14;
+  x.clearRect(0,0,w,h);
+  x.strokeStyle="#2a3039";x.lineWidth=2;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();
+  const hd=ori.head!=null?ori.head:0;
+  x.save();x.translate(cx,cy);x.rotate(-hd*Math.PI/180);
+  x.fillStyle="#8a94a3";x.font="13px sans-serif";x.textAlign="center";x.textBaseline="middle";
+  [["N",0],["E",90],["S",180],["W",270]].forEach(([l,d])=>{const a=d*Math.PI/180;x.fillStyle=l==="N"?"#ef6b6b":"#8a94a3";x.fillText(l,Math.sin(a)*(r-14),-Math.cos(a)*(r-14))});
+  x.restore();
+  x.fillStyle="#5fd1b3";x.beginPath();x.moveTo(cx,cy-r+24);x.lineTo(cx-8,cy);x.lineTo(cx+8,cy);x.fill();
+  if(ori.head==null){x.fillStyle="#8a94a3";x.font="12px sans-serif";x.textAlign="center";x.fillText("等待方位資料",cx,cy+r/2)}
+}
+function drawShake(){
+  const {x,w,h}=S;x.clearRect(0,0,w,h);
+  x.strokeStyle="#f0b35a";x.lineWidth=2;x.beginPath();
+  hist.forEach((v,i)=>{const px=i/(hist.length-1)*w,py=h-Math.min(1,v/20)*(h-6)-3;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
+}
+
+/* ---------- GPS ---------- */
+let watch=null,pts=ls.get("sl-track",[]),last=null;
+function hav(a,b){const R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;const s=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
+function dist(){let d=0;for(let i=1;i<pts.length;i++)d+=hav(pts[i-1],pts[i]);return d}
+function startGPS(){
+  if(!("geolocation" in navigator)){toast("不支援定位");return}
+  if(watch!=null)return;
+  setTag("gTag","等待定位…","warn");log("開始定位");
+  watch=navigator.geolocation.watchPosition(p=>{
+    const c=p.coords;last={lat:c.latitude,lon:c.longitude,acc:c.accuracy,alt:c.altitude,t:p.timestamp};
+    setTag("gTag","定位中","ok");
+    $("gLat").textContent=c.latitude.toFixed(6);$("gLon").textContent=c.longitude.toFixed(6);
+    $("gAcc").textContent="±"+c.accuracy.toFixed(0)+" m";
+    $("gAlt").textContent=c.altitude!=null?c.altitude.toFixed(0)+" m":"–";
+    $("gSpd").textContent=c.speed!=null&&c.speed>=0?(c.speed*3.6).toFixed(1)+" km/h":"–";
+    const prev=pts[pts.length-1];
+    if(c.accuracy<=50&&(!prev||hav(prev,last)>=Math.max(3,c.accuracy/3))){pts.push(last);ls.set("sl-track",pts)}
+    updTrackInfo();drawTrack();
+  },err=>{
+    const m={1:"被拒絕",2:"無法取得位置",3:"逾時"}[err.code]||err.message;
+    setTag("gTag",m,"bad");log("定位錯誤："+m);
+    if(err.code===1)toast("定位被拒絕，見下方說明");
+    if(err.code===1){navigator.geolocation.clearWatch(watch);watch=null}
+  },{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+}
+function stopGPS(){if(watch!=null){navigator.geolocation.clearWatch(watch);watch=null;setTag("gTag","已停止");log("停止定位")}}
+function updTrackInfo(){
+  const d=dist();$("gDist").textContent=d<1000?d.toFixed(0)+" m":(d/1000).toFixed(2)+" km";
+  $("gPts").textContent=pts.length+" 個點";
+  if(pts.length>1){const s=(pts[pts.length-1].t-pts[0].t)/1000;$("gTime").textContent="經過 "+Math.floor(s/60)+" 分 "+Math.round(s%60)+" 秒"}else $("gTime").textContent="–";
+}
+function drawTrack(){
+  if(!T)return;const {x,w,h}=T;x.clearRect(0,0,w,h);
+  const all=pts.slice();if(last)all.push(last);
+  if(!all.length){x.fillStyle="#8a94a3";x.font="13px sans-serif";x.textAlign="center";x.fillText("還沒有軌跡，按「開始定位」後走一走",w/2,h/2);return}
+  const o=all[0],k=Math.cos(o.lat*Math.PI/180),m=111320;
+  const xy=p=>({x:(p.lon-o.lon)*m*k,y:-(p.lat-o.lat)*m});
+  const P=all.map(xy);let minx=Math.min(...P.map(p=>p.x)),maxx=Math.max(...P.map(p=>p.x)),miny=Math.min(...P.map(p=>p.y)),maxy=Math.max(...P.map(p=>p.y));
+  const span=Math.max(maxx-minx,maxy-miny,(last?last.acc*2:0),40),sc=(Math.min(w,h)-30)/span,ox=w/2-(minx+maxx)/2*sc,oy=h/2-(miny+maxy)/2*sc;
+  const S2=p=>({x:ox+p.x*sc,y:oy+p.y*sc});
+  // 比例尺
+  const bar=Math.pow(10,Math.floor(Math.log10(span/3)));x.strokeStyle="#8a94a3";x.lineWidth=2;x.beginPath();x.moveTo(12,h-12);x.lineTo(12+bar*sc,h-12);x.stroke();
+  x.fillStyle="#8a94a3";x.font="11px sans-serif";x.textAlign="left";x.fillText(bar>=1000?bar/1000+" km":bar+" m",12,h-18);
+  const tp=pts.map(xy).map(S2);
+  if(tp.length>1){x.strokeStyle="#5fd1b3";x.lineWidth=3;x.lineJoin="round";x.beginPath();tp.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));x.stroke()}
+  if(tp.length){x.fillStyle="#f0b35a";x.beginPath();x.arc(tp[0].x,tp[0].y,5,0,7);x.fill()}
+  if(last){const p=S2(xy(last));x.fillStyle="rgba(90,150,255,.18)";x.strokeStyle="rgba(90,150,255,.6)";x.lineWidth=1;x.beginPath();x.arc(p.x,p.y,Math.max(6,last.acc*sc),0,7);x.fill();x.stroke();x.fillStyle="#5a96ff";x.beginPath();x.arc(p.x,p.y,6,0,7);x.fill()}
+}
+function exportGPX(){
+  if(!pts.length){toast("還沒有軌跡");return}
+  const seg=pts.map(p=>`<trkpt lat="${p.lat}" lon="${p.lon}">${p.alt!=null?`<ele>${p.alt.toFixed(1)}</ele>`:""}<time>${new Date(p.t).toISOString()}</time></trkpt>`).join("\n");
+  const gpx=`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="感測器實驗室" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>感測器實驗室軌跡</name><trkseg>\n${seg}\n</trkseg></trk>\n</gpx>`;
+  const name="track-"+new Date().toISOString().slice(0,16).replace(/[:T]/g,"")+".gpx";
+  const file=new File([gpx],name,{type:"application/gpx+xml"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:name}).catch(()=>{})}
+  else{const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+  log("匯出 GPX："+pts.length+" 個點");
+}
+
+/* ---------- 螢幕常亮 ---------- */
+let wake=null,wantWake=false;
+async function toggleWake(){
+  if(wake){wantWake=false;await wake.release();return}
+  if(!("wakeLock" in navigator)){toast("這個瀏覽器不支援");return}
+  try{wake=await navigator.wakeLock.request("screen");wantWake=true;$("wakeBtn").textContent="螢幕常亮：開";wake.addEventListener("release",()=>{wake=null;$("wakeBtn").textContent="螢幕常亮：關"});log("螢幕常亮已開啟")}
+  catch(e){log("螢幕常亮失敗："+e.message);toast("螢幕常亮失敗")}
+}
+document.addEventListener("visibilitychange",async()=>{if(document.visibilityState==="visible"&&wantWake&&!wake){try{wake=await navigator.wakeLock.request("screen");$("wakeBtn").textContent="螢幕常亮：開"}catch(e){}}});
+
+/* ---------- 綁定 ---------- */
+$("oBtn").onclick=enableMotion;
+$("zeroBtn").onclick=()=>{if(ori.b==null){toast("先啟用感測");return}zero={b:ori.b,g:ori.g};ls.set("sl-zero",zero);ball={x:0,y:0,vx:0,vy:0};toast("已歸零")};
+$("resetBtn").onclick=()=>{stats={shake:0,steps:0,flip:0};peak=0;save();$("dAir").textContent="–";$("dHigh").textContent="–";toast("已歸零")};
+$("gBtn").onclick=startGPS;$("gStop").onclick=stopGPS;
+$("gpxBtn").onclick=exportGPX;
+$("gClear").onclick=()=>{pts=[];ls.set("sl-track",pts);updTrackInfo();drawTrack();toast("已清除")};
+$("wakeBtn").onclick=toggleWake;
+
+diag();save();fitAll();updTrackInfo();requestAnimationFrame(frame);log("頁面載入完成");
+</script>
+</body>
+</html>
