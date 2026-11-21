@@ -6,133 +6,637 @@
 <meta name="theme-color" content="#0f1216">
 <title>感測器實驗室</title>
 <style>
-:root{--bg:#0f1216;--card:#181c22;--line:#2a3039;--ink:#e8ecf1;--mute:#8a94a3;--acc:#5fd1b3;--warn:#f0b35a;--bad:#ef6b6b}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;padding:16px 14px calc(40px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;-webkit-user-select:none;user-select:none}
-h1{font-size:22px;margin:4px 0 2px}
-.lead{color:var(--mute);font-size:13px;margin-bottom:14px}
+:root{--bg:#0f1216;--card:#181c22;--line:#2a3039;--ink:#e8ecf1;--mute:#8a94a3;--acc:#5fd1b3;--warn:#f0b35a;--bad:#ef6b6b;--ff:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;--px:max(14px,env(safe-area-inset-left));--pxr:max(14px,env(safe-area-inset-right))}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--ff);padding:12px var(--pxr) calc(48px + env(safe-area-inset-bottom)) var(--px);max-width:640px;margin:0 auto;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:env(safe-area-inset-top)}
+h1{font-size:22px;margin:2px 0}
+.lead{color:var(--mute);font-size:13px;margin:0 0 4px}
+.pill{flex:0 0 auto;border:1px solid var(--line);background:#181c22;color:var(--ink);font:600 14px/1 var(--ff);padding:10px 12px;border-radius:99px;min-height:40px}
+.pill.on{background:#16352d;border-color:var(--acc);color:var(--acc)}
+.pill:disabled{opacity:.45}
+/* 分頁列 */
+#tabbar{position:sticky;top:0;z-index:20;margin:6px calc(-1 * var(--pxr)) 12px calc(-1 * var(--px));padding:calc(6px + env(safe-area-inset-top)) 0 8px;background:rgba(15,18,22,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+#tabs{position:relative;display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;padding:0 var(--pxr) 0 var(--px);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 26px),transparent)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;min-width:62px;min-height:56px;padding:6px 8px 5px;border-radius:12px;border:1px solid transparent;background:#181c22;color:var(--ink);font:500 13px/1.2 var(--ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+.tab .e{font-size:22px;line-height:1}
+.tab.on{background:#16352d;border-color:var(--acc);color:var(--acc)}
+.tab.off{color:var(--mute)}
+.tab.off .e{filter:grayscale(1);opacity:.45}
+.tab.off.on{background:#222831;border-color:#4a5361;color:var(--ink)}
+.tab.unsup .l::after{content:" !";color:var(--warn)}
+.tsep{flex:0 0 auto;align-self:center;font-size:11px;color:var(--mute);writing-mode:vertical-rl;letter-spacing:2px;padding:0 2px;border-left:1px solid var(--line)}
+.panel{display:none}.panel.on{display:block;animation:fade .18s ease-out}
+@keyframes fade{from{opacity:.35}to{opacity:1}}
+.panel.unsup>.card{display:none}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
-h2{font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-.tag{font-size:12px;font-weight:500;padding:2px 8px;border-radius:99px;background:#222831;color:var(--mute);white-space:nowrap}
+h2{font-size:18px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.tag{font-size:12px;font-weight:500;padding:3px 9px;border-radius:99px;background:#222831;color:var(--mute);white-space:nowrap}
 .tag.ok{background:#16352d;color:var(--acc)}.tag.warn{background:#3a2c17;color:var(--warn)}.tag.bad{background:#3a1c1c;color:var(--bad)}
-.btn{display:block;width:100%;padding:12px;border-radius:10px;border:0;background:var(--acc);color:#06261e;font:600 16px inherit;font-family:inherit;margin-top:6px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:12px;border-radius:12px;border:0;background:var(--acc);color:#06261e;font:600 16px/1.2 var(--ff);margin-top:8px;text-decoration:none;text-align:center}
 .btn.ghost{background:#222831;color:var(--ink)}
+.btn.rec{background:var(--bad);color:#2a0b0b}
+.btn:disabled{opacity:.4}
+.btn:active{filter:brightness(1.15)}
 .btns{display:flex;gap:8px}.btns .btn{flex:1}
+.mini{border:0;background:#222831;color:var(--mute);font:500 13px var(--ff);padding:6px 12px;border-radius:99px;min-height:32px}
 .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.num{background:#11151a;border-radius:10px;padding:8px}
-.num .l{font-size:12px;color:var(--mute)}.num .x{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
-.sub{font-size:13px;color:var(--mute);margin:12px 0 6px}
+.nums.two{grid-template-columns:repeat(2,1fr)}
+.num{background:#11151a;border-radius:10px;padding:8px 10px;min-width:0}
+.num .l{font-size:12px;color:var(--mute)}.num .x{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:13px;color:var(--mute);margin:14px 0 6px}
 .row{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--mute);margin-top:8px;font-variant-numeric:tabular-nums}
-.diag{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px}
-.diag .k{color:var(--mute)}.ok{color:var(--acc)}.mid{color:var(--warn)}.no{color:var(--bad)}
+.row.big{font-size:16px;color:var(--ink)}
+.diag{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:14px}
+.diag .k{color:var(--mute)}.diag .v{text-align:right}
+.ok{color:var(--acc)}.mid{color:var(--warn)}.no{color:var(--bad)}
 .note{font-size:13px;color:var(--warn);margin-top:8px}
+.hint{font-size:13px;color:var(--mute);margin-top:10px}
+.hint b{color:var(--ink);font-weight:600}
 canvas{display:block;width:100%;background:#11151a;border-radius:10px}
-#log{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--mute);max-height:140px;overflow:auto;white-space:pre-wrap}
-#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2c333d;color:var(--ink);padding:8px 14px;border-radius:99px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
+#log{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--mute);max-height:220px;overflow:auto;white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2c333d;color:var(--ink);padding:10px 16px;border-radius:99px;font-size:15px;opacity:0;transition:.25s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
 #toast.on{opacity:1}
+.err{background:#2a1717;border:1px solid #5a2a2a;color:#ffd6d6;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
+.err b{color:#fff}.err ol{padding-left:22px;margin-top:4px}.err li{margin:4px 0}
+.info{background:#11151a;border-radius:10px;padding:10px 12px;font-size:14px;color:var(--mute);margin-top:10px}
+.info b{color:var(--ink)}
+.out{background:#11151a;border-radius:10px;padding:10px 12px;min-height:46px;font-size:17px;word-break:break-all}
+.out.dim{color:var(--mute);font-style:italic}
+.sel{-webkit-user-select:text;user-select:text}
+.big{font-size:46px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:6px}
+.big small{font-size:16px;font-weight:500;color:var(--mute)}
+.meter{height:14px;background:#11151a;border-radius:99px;overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;width:0;background:var(--acc);border-radius:99px;transition:width .05s linear}
+textarea,input[type=text],select{width:100%;background:#11151a;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:16px/1.5 var(--ff);-webkit-user-select:text;user-select:text;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--mute) 50%),linear-gradient(135deg,var(--mute) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:32px}
+input[type=range]{width:100%;accent-color:var(--acc);height:34px}
+label.f{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
+label.f b{color:var(--ink)}
+label.chk{display:flex;align-items:center;gap:10px;font-size:15px;margin-top:10px;min-height:40px}
+label.chk input{width:22px;height:22px;accent-color:var(--acc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);background:#11151a;color:var(--ink);font:14px var(--ff);padding:8px 12px;border-radius:99px;min-height:38px}
+/* 總覽 */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:#11151a;border:1px solid var(--line);border-radius:12px;padding:10px 4px;color:var(--ink);font:inherit;text-align:center;min-height:84px}
+.tile .e{font-size:24px;display:block;line-height:1.2}.tile .n{font-size:14px;font-weight:600;display:block}.tile .s{font-size:11px;display:block}
+.tile.ok .s{color:var(--acc)}.tile.unsup .s{color:var(--warn)}.tile.off{opacity:.55}.tile.off .s{color:var(--mute)}.tile.off .e{filter:grayscale(1)}
+/* 反灰說明 */
+.offcard{background:var(--card);border:1px dashed #3a4350;border-radius:14px;padding:18px 16px;margin-bottom:14px}
+.offcard .e{font-size:40px;filter:grayscale(1);opacity:.6;line-height:1.2}
+.offcard.warnbox{border-color:#6a4b1f}.offcard.warnbox .e{filter:none;opacity:1}
+.offcard h2{margin:6px 0}
+.offcard .lock{font-size:16px;color:var(--warn);font-weight:600;margin-bottom:10px}
+.offcard dl{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:15px}
+.offcard dt{color:var(--mute);white-space:nowrap}
+.offcard .det{font-size:13px;color:var(--mute);margin-top:12px}
+/* 相機 */
+.seg{display:flex;background:#11151a;border-radius:12px;padding:3px;gap:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:transparent;color:var(--mute);font:600 15px var(--ff);padding:8px 4px;border-radius:9px;min-height:44px}
+.seg button.on{background:#2a313b;color:var(--ink)}
+.vwrap{position:relative;background:#000;border-radius:12px;overflow:hidden;min-height:180px}
+video{display:block;width:100%;max-height:58vh;object-fit:contain;background:#000}
+video.mirror{transform:scaleX(-1)}
+.vph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:15px;text-align:center;padding:16px}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+.flash.on{opacity:.85;transition:none}
+.swatch{width:100%;height:34px;border-radius:8px;margin-top:4px;background:#222;border:1px solid var(--line)}
+.photos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.photo{background:#11151a;border-radius:10px;overflow:hidden}
+.photo img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}
+.photo .btns{padding:0 6px 6px;gap:6px}.photo .btn{min-height:40px;font-size:14px;margin-top:6px;padding:6px}
+.empty{color:var(--mute);font-size:14px;text-align:center;padding:14px 6px}
+/* 麥克風 */
+.cents{position:relative;height:14px;background:linear-gradient(90deg,#3a1c1c,#16352d 45%,#16352d 55%,#3a1c1c);border-radius:99px;margin-top:12px}
+.cents i{position:absolute;top:-3px;width:6px;height:20px;border-radius:3px;background:var(--ink);left:50%;transform:translateX(-50%);transition:left .1s}
+.clip{background:#11151a;border-radius:10px;padding:10px;margin-top:10px}
+.clip .t{font-size:14px;color:var(--mute);margin-bottom:6px}
+.clip audio{width:100%}
+/* 觸控 */
+#touchCv{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* 語音 */
+.cmds{padding-left:20px;font-size:15px}.cmds li{margin:5px 0}
+.fin{padding:4px 0;border-bottom:1px solid #222831}.fin:last-child{border:0}
+.fin .c{font-size:13px;color:var(--acc)}
+/* 方向 */
+.oriStage{height:230px;display:flex;align-items:center;justify-content:center;background:#11151a;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.phone{width:92px;height:176px;border:4px solid var(--acc);border-radius:20px;position:relative;transition:transform .45s cubic-bezier(.3,1.3,.5,1);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--acc)}
+.phone .cam{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:30px;height:8px;border-radius:99px;background:var(--acc)}
+.phone .arrow{font-size:28px;line-height:1}
+/* 手把 */
+.pad{background:#11151a;border-radius:12px;padding:12px;margin-top:10px}
+.padName{font-size:13px;color:var(--mute);margin-bottom:10px;word-break:break-all}
+.sticks{display:flex;gap:14px;justify-content:center;margin-bottom:10px}
+.stick{width:110px;text-align:center;font-size:12px;color:var(--mute)}
+.stick .box{position:relative;width:110px;height:110px;border-radius:50%;border:2px solid var(--line);margin-bottom:4px}
+.stick .box i{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--acc);left:50%;top:50%;transform:translate(-50%,-50%)}
+.pbtns{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pb{position:relative;height:42px;border-radius:9px;background:#222831;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.pb i{position:absolute;left:0;right:0;bottom:0;height:0;background:rgba(95,209,179,.35)}
+.pb span{position:relative}
+.pb.on{background:#16352d;color:var(--acc);outline:1px solid var(--acc)}
+.axes{margin-top:10px;display:grid;gap:4px}
+.ax{display:grid;grid-template-columns:44px 1fr 48px;gap:8px;align-items:center;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+.axbar{position:relative;height:8px;background:#222831;border-radius:99px}
+.axbar i{position:absolute;top:0;bottom:0;left:50%;width:0;background:var(--acc);border-radius:99px}
+.empty ol{text-align:left;padding-left:22px;margin-top:10px;font-size:14px}.empty li{margin:5px 0}
+.empty .e{font-size:44px;display:block}
+/* Face ID */
+.result{text-align:center;padding:16px;border-radius:12px;margin-top:10px;font-size:18px;font-weight:700}
+.result.pass{background:#16352d;color:var(--acc)}.result.fail{background:#3a1c1c;color:var(--bad)}
+.result small{display:block;font-size:13px;font-weight:500;color:var(--mute);margin-top:4px}
 </style>
 </head>
 <body>
-<h1>感測器實驗室</h1>
-<p class="lead">陀螺儀、動作偵測、GPS。請用 Safari 直接開這個網址，按下按鈕後允許權限。</p>
-
-<section class="card">
-  <h2>環境診斷</h2>
-  <div class="diag" id="diag"></div>
-  <div class="note" id="diagNote"></div>
-</section>
-
-<section class="card">
-  <h2>陀螺儀 <span class="tag" id="oTag">尚未啟用</span></h2>
-  <button class="btn" id="oBtn">啟用動作與方向</button>
-  <div class="nums" style="margin-top:10px">
-    <div class="num"><div class="l">前後傾 β</div><div class="x" id="oB">–</div></div>
-    <div class="num"><div class="l">左右傾 γ</div><div class="x" id="oG">–</div></div>
-    <div class="num"><div class="l">方位 α</div><div class="x" id="oA">–</div></div>
+<header class="top">
+  <div>
+    <h1>感測器實驗室</h1>
+    <p class="lead">一次看一種感測器，分頁列可左右滑。灰色的是 iPhone 有、但網頁拿不到的。</p>
   </div>
-  <div class="sub">傾斜滾球（中間的圈是穩手挑戰區）</div>
-  <canvas id="ball" height="240"></canvas>
-  <div class="btns"><button class="btn ghost" id="zeroBtn">以目前角度歸零</button></div>
-  <div class="sub">指南針</div>
-  <canvas id="compass" height="180"></canvas>
-  <div class="row"><span id="head">方位 –</span><span id="hz">事件頻率 –</span></div>
-</section>
+  <button class="pill" id="wakeBtn" aria-pressed="false">💡 常亮：關</button>
+</header>
 
-<section class="card">
-  <h2>動作偵測 <span class="tag" id="mTag">先啟用上方感測</span></h2>
-  <div class="nums">
-    <div class="num"><div class="l">手機姿態</div><div class="x" id="dPose">–</div></div>
-    <div class="num"><div class="l">搖一搖</div><div class="x" id="dShake">0</div></div>
-    <div class="num"><div class="l">計步</div><div class="x" id="dSteps">0</div></div>
-    <div class="num"><div class="l">翻面次數</div><div class="x" id="dFlip">0</div></div>
-    <div class="num"><div class="l">騰空時間</div><div class="x" id="dAir">–</div></div>
-    <div class="num"><div class="l">拋高估計</div><div class="x" id="dHigh">–</div></div>
+<nav id="tabbar"><div id="tabs" role="tablist" aria-label="感測器分頁"></div></nav>
+
+<main id="panels">
+
+<!-- 總覽 -->
+<section class="panel" data-k="home">
+  <div class="card">
+    <h2>這台裝置能用什麼 <span class="tag" id="sumTag">–</span></h2>
+    <div class="tiles" id="tiles"></div>
+    <p class="hint"><b>可以用</b>：點進去就能玩。<b>網頁拿不到</b>：iPhone 有這個硬體，但 Safari 不開放。<b>此瀏覽器不支援</b>：換成 Safari 通常就有。右上角的 💡 可以讓螢幕不自動變暗。</p>
   </div>
-  <div class="sub">加速度強度（扣掉重力）</div>
-  <canvas id="shake" height="90"></canvas>
-  <div class="row"><span id="accTxt">x – y – z –</span><span id="peak">最大衝擊 –</span></div>
-  <div class="sub">穩手挑戰：把球留在中心圈裡</div>
-  <div class="row" style="margin-top:0;font-size:15px;color:var(--ink)"><span>目前 <b id="gNow">0.0</b> 秒</span><span>最佳 <b id="gBest">0.0</b> 秒</span></div>
-  <div class="btns"><button class="btn ghost" id="resetBtn">計數歸零</button></div>
-  <p class="lead" style="margin:8px 0 0">騰空量測：把手機往床上輕拋，落下後會顯示騰空秒數與估計高度。</p>
-</section>
-
-<section class="card">
-  <h2>GPS <span class="tag" id="gTag">尚未啟用</span></h2>
-  <div class="btns"><button class="btn" id="gBtn">開始定位</button><button class="btn ghost" id="gStop">停止</button></div>
-  <div class="nums" style="margin-top:10px">
-    <div class="num"><div class="l">緯度</div><div class="x" id="gLat" style="font-size:15px">–</div></div>
-    <div class="num"><div class="l">經度</div><div class="x" id="gLon" style="font-size:15px">–</div></div>
-    <div class="num"><div class="l">精度</div><div class="x" id="gAcc">–</div></div>
-    <div class="num"><div class="l">海拔</div><div class="x" id="gAlt">–</div></div>
-    <div class="num"><div class="l">速度</div><div class="x" id="gSpd">–</div></div>
-    <div class="num"><div class="l">總距離</div><div class="x" id="gDist">0 m</div></div>
+  <div class="card">
+    <h2>環境診斷</h2>
+    <div class="diag" id="diag"></div>
+    <div class="note" id="diagNote"></div>
   </div>
-  <div class="sub">軌跡（藍圈是目前精度範圍）</div>
-  <canvas id="track" height="260"></canvas>
-  <div class="row"><span id="gPts">0 個點</span><span id="gTime">–</span></div>
-  <div class="btns"><button class="btn ghost" id="gpxBtn">匯出 GPX</button><button class="btn ghost" id="gClear">清除軌跡</button></div>
-  <div class="btns"><button class="btn ghost" id="wakeBtn">螢幕常亮：關</button></div>
+  <div class="card">
+    <h2>紀錄 <button class="mini" id="logClear">清除</button></h2>
+    <div id="log"></div>
+  </div>
 </section>
 
-<section class="card">
-  <h2>紀錄</h2>
-  <div id="log"></div>
+<!-- 陀螺儀 -->
+<section class="panel" data-k="gyro">
+  <div class="card">
+    <h2>陀螺儀 <span class="tag" id="oTag">尚未啟用</span></h2>
+    <button class="btn motionBtn" id="oBtn">啟用動作與方向</button>
+    <div class="err" id="oErr" hidden></div>
+    <div class="nums" style="margin-top:10px">
+      <div class="num"><div class="l">前後傾 β</div><div class="x" id="oB">–</div></div>
+      <div class="num"><div class="l">左右傾 γ</div><div class="x" id="oG">–</div></div>
+      <div class="num"><div class="l">方位 α</div><div class="x" id="oA">–</div></div>
+    </div>
+    <div class="sub">傾斜滾球（中間的圈是穩手挑戰區）</div>
+    <canvas id="ball" height="240"></canvas>
+    <div class="row big"><span>穩手挑戰 目前 <b id="gNow">0.0</b> 秒</span><span>最佳 <b id="gBest">0.0</b> 秒</span></div>
+    <div class="btns"><button class="btn ghost" id="zeroBtn">以目前角度歸零</button></div>
+  </div>
+  <div class="card">
+    <h2>指南針</h2>
+    <canvas id="compass" height="180"></canvas>
+    <div class="row"><span id="head">方位 –</span><span id="hz">事件頻率 –</span></div>
+  </div>
 </section>
+
+<!-- 動作 -->
+<section class="panel" data-k="motion">
+  <div class="card">
+    <h2>動作偵測 <span class="tag" id="mTag">尚未啟用</span></h2>
+    <button class="btn motionBtn" id="mBtn">啟用動作與方向</button>
+    <div class="err" id="mErr" hidden></div>
+    <div class="nums" style="margin-top:10px">
+      <div class="num"><div class="l">手機姿態</div><div class="x" id="dPose">–</div></div>
+      <div class="num"><div class="l">搖一搖</div><div class="x" id="dShake">0</div></div>
+      <div class="num"><div class="l">計步</div><div class="x" id="dSteps">0</div></div>
+      <div class="num"><div class="l">翻面次數</div><div class="x" id="dFlip">0</div></div>
+      <div class="num"><div class="l">騰空時間</div><div class="x" id="dAir">–</div></div>
+      <div class="num"><div class="l">拋高估計</div><div class="x" id="dHigh">–</div></div>
+    </div>
+    <div class="sub">加速度強度（扣掉重力）</div>
+    <canvas id="shake" height="90"></canvas>
+    <div class="row"><span id="accTxt">x – y – z –</span><span id="peak">最大衝擊 –</span></div>
+    <div class="btns"><button class="btn ghost" id="resetBtn">計數歸零</button></div>
+    <p class="hint">騰空量測：把手機往床上輕拋，落下後會顯示騰空秒數與估計高度。穩手挑戰在「🧭 陀螺儀」分頁。</p>
+  </div>
+</section>
+
+<!-- GPS -->
+<section class="panel" data-k="gps">
+  <div class="card">
+    <h2>GPS <span class="tag" id="gTag">尚未啟用</span></h2>
+    <div class="btns"><button class="btn" id="gBtn">開始定位</button><button class="btn ghost" id="gStop">停止</button></div>
+    <div class="err" id="gErr" hidden></div>
+    <div class="nums" style="margin-top:10px">
+      <div class="num"><div class="l">緯度</div><div class="x" id="gLat" style="font-size:15px">–</div></div>
+      <div class="num"><div class="l">經度</div><div class="x" id="gLon" style="font-size:15px">–</div></div>
+      <div class="num"><div class="l">精度</div><div class="x" id="gAcc">–</div></div>
+      <div class="num"><div class="l">海拔</div><div class="x" id="gAlt">–</div></div>
+      <div class="num"><div class="l">速度</div><div class="x" id="gSpd">–</div></div>
+      <div class="num"><div class="l">總距離</div><div class="x" id="gDist">0 m</div></div>
+    </div>
+    <div class="sub">軌跡（藍圈是目前精度範圍）</div>
+    <canvas id="track" height="260"></canvas>
+    <div class="row"><span id="gPts">0 個點</span><span id="gTime">–</span></div>
+    <div class="btns"><button class="btn ghost" id="gpxBtn">匯出 GPX</button><button class="btn ghost" id="gClear">清除軌跡</button></div>
+    <p class="hint">切到別的分頁時定位會繼續記軌跡；但鎖螢幕或切到別的 App，iOS 會暫停網頁定位。走路記軌跡時建議打開右上角的 💡 常亮。</p>
+  </div>
+</section>
+
+<!-- 相機 -->
+<section class="panel" data-k="camera">
+  <div class="card">
+    <h2>相機 <span class="tag" id="camTag">尚未開啟</span></h2>
+    <div class="seg" id="camSeg">
+      <button data-m="view" class="on">📷 拍照</button>
+      <button data-m="heart">❤️ 測心跳</button>
+      <button data-m="qr" id="qrSeg" hidden>🔳 掃 QR</button>
+    </div>
+    <div class="vwrap"><video id="camVideo" playsinline muted autoplay></video><div class="flash" id="flash"></div><div class="vph" id="camPh">按下「開啟相機」</div></div>
+    <div class="btns"><button class="btn" id="camBtn">開啟相機</button><button class="btn ghost" id="flipBtn">🔄 前／後鏡頭</button></div>
+    <div class="btns"><button class="btn ghost" id="shotBtn" disabled>📸 拍照</button><button class="btn ghost" id="torchBtn" hidden>🔦 閃光燈：關</button></div>
+    <div class="err" id="camErr" hidden></div>
+
+    <div id="camView">
+      <div class="nums two" style="margin-top:12px">
+        <div class="num"><div class="l">畫面平均亮度</div><div class="x" id="camLum">–</div><div class="meter"><i id="camLumBar"></i></div></div>
+        <div class="num"><div class="l">平均顏色 <span id="camHex"></span></div><div class="x" id="camColor" style="font-size:16px">–</div><div class="swatch" id="camSw"></div></div>
+      </div>
+    </div>
+
+    <div id="hrBox" hidden>
+      <div class="info">❤️ 用食指指腹<b>輕輕蓋住後鏡頭</b>（主鏡頭和旁邊都蓋滿），保持不動 10 秒。iPhone 網頁<b>開不了閃光燈</b>，請在<b>明亮的燈下或窗邊</b>做，讓光穿過手指；也可以請別人用手電筒從指甲那面照。結果只供好玩，不是醫療量測。</div>
+      <div class="big"><span id="hrBpm">–</span><small> 次／分</small></div>
+      <div class="row" style="justify-content:center;font-size:14px" id="hrStat">等待開啟相機</div>
+      <canvas id="hrWave" height="120" style="margin-top:8px"></canvas>
+      <div class="row"><span id="hrRed">紅色亮度 –</span><span id="hrDur">–</span></div>
+    </div>
+
+    <div id="qrBox" hidden>
+      <div class="sub">掃到的內容</div>
+      <div class="out sel" id="qrOut">把 QR Code 放進畫面裡…</div>
+      <div class="btns"><button class="btn ghost" id="qrCopy">複製</button><a class="btn ghost" id="qrOpen" hidden target="_blank" rel="noopener noreferrer">開啟連結</a></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>拍下的照片 <span class="tag" id="phCount">0 張</span></h2>
+    <div class="photos" id="photos"><div class="empty" style="grid-column:1/-1">還沒有照片</div></div>
+    <p class="hint">按「分享」再選「<b>儲存影像</b>」就會存進照片 App。照片只暫存在這頁的記憶體，重新整理就沒了。離開相機分頁時鏡頭會自動關掉。</p>
+  </div>
+</section>
+
+<!-- 麥克風 -->
+<section class="panel" data-k="mic">
+  <div class="card">
+    <h2>麥克風 <span class="tag" id="micTag">尚未開啟</span></h2>
+    <button class="btn" id="micBtn">🎤 開始收音</button>
+    <div class="err" id="micErr" hidden></div>
+    <div class="big"><span id="dbNow">–</span><small> dBFS</small></div>
+    <div class="meter"><i id="dbBar"></i></div>
+    <div class="row"><span id="dbWord">–</span><span id="dbMax">最大 –</span></div>
+    <p class="hint">dBFS 是相對於麥克風「滿格」的數字：0 最大、越負越小聲。<b>沒有校正過，不是噪音計的 dB SPL</b>，只適合比較「比剛剛大聲多少」（每 +6 約等於音壓變兩倍）。</p>
+  </div>
+  <div class="card">
+    <h2>音高</h2>
+    <div class="nums">
+      <div class="num"><div class="l">頻率</div><div class="x" id="pFreq">–</div></div>
+      <div class="num"><div class="l">最近的音</div><div class="x" id="pNote">–</div></div>
+      <div class="num"><div class="l">唱名</div><div class="x" id="pSol">–</div></div>
+    </div>
+    <div class="cents"><i id="pDot"></i></div>
+    <div class="row"><span>♭ 偏低</span><span id="pCents">準不準</span><span>偏高 ♯</span></div>
+    <p class="hint">對著手機哼一個長音或彈樂器試試，以 A4 = 440 Hz 計算。</p>
+  </div>
+  <div class="card">
+    <h2>頻譜</h2>
+    <div class="sub" style="margin-top:0">即時頻譜（橫軸是對數頻率）</div>
+    <canvas id="spec" height="120"></canvas>
+    <div class="sub">頻譜圖（時間往左捲，越亮越大聲）</div>
+    <canvas id="wf" height="150"></canvas>
+  </div>
+  <div class="card">
+    <h2>錄音 <span class="tag" id="recTag">–</span></h2>
+    <button class="btn" id="recBtn">● 開始錄音</button>
+    <div id="clips"></div>
+    <p class="hint">要先「開始收音」才能錄。iPhone 的錄音格式是 m4a（audio/mp4）。回放太小聲的話，先按上面的「停止收音」再播放。離開這個分頁時麥克風會關掉，錄到一半會自動存起來。</p>
+  </div>
+</section>
+
+<!-- 觸控 -->
+<section class="panel" data-k="touch">
+  <div class="card">
+    <h2>多點觸控 <span class="tag" id="tTag">0 指</span></h2>
+    <div class="nums">
+      <div class="num"><div class="l">目前手指</div><div class="x" id="tNow">0</div></div>
+      <div class="num"><div class="l">最多同時</div><div class="x" id="tMax">0</div></div>
+      <div class="num"><div class="l">歷史紀錄</div><div class="x" id="tBest">0</div></div>
+      <div class="num"><div class="l">兩指縮放</div><div class="x" id="tScale">–</div></div>
+      <div class="num"><div class="l">兩指旋轉</div><div class="x" id="tRot">–</div></div>
+      <div class="num"><div class="l">兩指距離</div><div class="x" id="tDist">–</div></div>
+    </div>
+    <canvas id="touchCv" height="400" style="margin-top:10px"></canvas>
+    <div class="row"><span id="tList">把手指放上畫布</span></div>
+    <div class="btns"><button class="btn ghost" id="tClear">清除軌跡與計數</button></div>
+    <p class="hint">這塊畫布會擋掉頁面捲動和縮放，要捲頁面請滑畫布外面。iPhone 通常最多同時認得 5 指。</p>
+  </div>
+</section>
+
+<!-- 語音辨識 -->
+<section class="panel" data-k="speech">
+  <div class="card">
+    <h2>語音辨識 <span class="tag" id="srTag">尚未開始</span></h2>
+    <button class="btn" id="srBtn">🎙 開始聽（中文）</button>
+    <div class="err" id="srErr" hidden></div>
+    <div class="sub">即時（還在猜）</div>
+    <div class="out dim" id="srInterim">…</div>
+    <div class="sub">最終結果</div>
+    <div class="out sel" id="srFinal"><span class="dim" style="color:var(--mute)">（還沒有）</span></div>
+  </div>
+  <div class="card">
+    <h2>語音指令</h2>
+    <ul class="cmds">
+      <li>「<b>切到相機</b>」「打開麥克風」「去 GPS」：切換分頁</li>
+      <li>「<b>拍照</b>」：自動開相機拍一張</li>
+      <li>「<b>現在幾點</b>」：唸出時間</li>
+      <li>「<b>清除</b>」：清掉辨識結果</li>
+      <li>「<b>停止</b>」：停止聆聽</li>
+    </ul>
+    <p class="hint">切到別的分頁時辨識會自動停止，麥克風不會一直開著。iPhone 網頁的語音辨識是借用系統的聽寫功能，需要網路。</p>
+  </div>
+</section>
+
+<!-- 語音朗讀 -->
+<section class="panel" data-k="tts">
+  <div class="card">
+    <h2>語音朗讀 <span class="tag" id="ttsTag">待命</span></h2>
+    <textarea id="ttsText" rows="4">你好，我是 iPhone 的語音朗讀。這段文字是由網頁的 speechSynthesis 唸出來的。</textarea>
+    <div class="chips" id="ttsChips"></div>
+    <label class="f">聲音 <span id="ttsCount"></span></label>
+    <select id="ttsVoice"><option>載入中…</option></select>
+    <label class="f">語速 <b id="ttsRateV">1.0</b></label>
+    <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1">
+    <label class="f">音高 <b id="ttsPitchV">1.0</b></label>
+    <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1">
+    <div class="btns"><button class="btn" id="ttsPlay">▶ 朗讀</button><button class="btn ghost" id="ttsPause">⏸ 暫停</button><button class="btn ghost" id="ttsStop">■ 停止</button></div>
+    <p class="hint">沒聲音的話，先確認沒開靜音模式、音量有開。想要更自然的中文聲音：「設定」→「輔助使用」→「朗讀內容」→「聲音」→「中文」裡下載「加強版」或「高品質」，重開 Safari 後就會出現在清單裡。</p>
+  </div>
+</section>
+
+<!-- 螢幕方向 -->
+<section class="panel" data-k="orient">
+  <div class="card">
+    <h2>螢幕方向 <span class="tag" id="orTag">–</span></h2>
+    <div class="oriStage"><div class="phone" id="phone"><i class="cam"></i><span class="arrow">↑</span></div></div>
+    <div class="nums">
+      <div class="num"><div class="l">方向</div><div class="x" id="orType" style="font-size:16px">–</div></div>
+      <div class="num"><div class="l">角度</div><div class="x" id="orAng">–</div></div>
+      <div class="num"><div class="l">視窗大小</div><div class="x" id="orWin" style="font-size:16px">–</div></div>
+    </div>
+    <div class="sub">原始值</div>
+    <div class="diag" id="orRaw"></div>
+    <p class="hint">把手機轉成橫的看看，示意圖會跟著轉。沒反應的話，從右上角往下滑出控制中心，把「<b>直向鎖定</b>」關掉。</p>
+  </div>
+</section>
+
+<!-- 手把 -->
+<section class="panel" data-k="pad">
+  <div class="card">
+    <h2>遊戲手把 <span class="tag" id="padTag">未連接</span></h2>
+    <div id="padEmpty" class="empty">
+      <span class="e">🎮</span><b style="font-size:17px;color:var(--ink)">請連接手把並按任一鍵</b>
+      <ol>
+        <li>讓手把進入配對模式（Xbox：長按配對鍵；PS5：同時按住 PS 鍵和「建立」鍵；PS4：PS 鍵＋SHARE 鍵）</li>
+        <li>iPhone「設定」→「藍牙」，點選手把完成配對</li>
+        <li>回到這頁，按手把上任意一個鍵（瀏覽器要等你按過鍵才讓網頁看到手把）</li>
+      </ol>
+    </div>
+    <div id="pads"></div>
+  </div>
+</section>
+
+<!-- Face ID -->
+<section class="panel" data-k="faceid">
+  <div class="card">
+    <h2>Face ID 通行金鑰 <span class="tag" id="fidTag">示範</span></h2>
+    <div class="info"><b>⚠️ 這只是示範。</b>網頁從頭到尾<b>讀不到任何臉部資料</b>：Face ID 是 iPhone 自己比對的，網頁只會收到「驗證成功」和一段數位簽章。這裡用 WebAuthn 建立一把綁在這個網站的通行金鑰，再用它驗證。（Touch ID 機型會改成指紋。）</div>
+    <button class="btn" id="fidNew">① 建立通行金鑰</button>
+    <button class="btn" id="fidGo">② 用 Face ID 驗證</button>
+    <div id="fidRes" class="result" hidden></div>
+    <div class="err" id="fidErr" hidden></div>
+    <div class="sub">目前狀態</div>
+    <div class="diag" id="fidInfo"></div>
+    <div class="btns"><button class="btn ghost" id="fidForget">忘記這個憑證</button></div>
+    <p class="hint">金鑰會存進 iCloud 鑰匙圈。不想留著：打開「密碼」App（iOS 17 以前是「設定」→「密碼」），找 <b id="fidHost">這個網站</b> 刪除。這個示範沒有伺服器，所以不會真的檢查簽章，正式網站會在伺服器端驗證。</p>
+  </div>
+</section>
+
+<!-- 分享 -->
+<section class="panel" data-k="share">
+  <div class="card">
+    <h2>分享 <span class="tag" id="shTag">–</span></h2>
+    <label class="f" style="margin-top:0">要分享的文字</label>
+    <textarea id="shText" rows="2">我在玩感測器實驗室，用網頁讀 iPhone 的各種感測器！</textarea>
+    <label class="chk"><input type="checkbox" id="shUrl" checked> 附上這頁的網址</label>
+    <button class="btn" id="shBtn">📤 打開分享選單</button>
+    <div class="err" id="shErr" hidden></div>
+  </div>
+  <div class="card">
+    <h2>剪貼簿 <span class="tag" id="cbTag">–</span></h2>
+    <label class="f" style="margin-top:0">要寫入的文字</label>
+    <input type="text" id="cbIn" value="來自感測器實驗室的文字 👋">
+    <div class="btns"><button class="btn" id="cbW">寫入剪貼簿</button><button class="btn ghost" id="cbR">讀取剪貼簿</button></div>
+    <div class="sub">讀到的內容</div>
+    <div class="out sel" id="cbOut"><span style="color:var(--mute)">（還沒讀）</span></div>
+    <div class="err" id="cbErr" hidden></div>
+    <p class="hint">讀取時 iPhone 會在按鈕旁跳出「<b>貼上</b>」小泡泡，點它才會真的把內容交給網頁，這是 iOS 保護隱私的設計。</p>
+  </div>
+</section>
+
+</main>
 <div id="toast"></div>
 
 <script>
 const $=id=>document.getElementById(id);
+const UA=navigator.userAgent;
+const IOS=/iPhone|iPad|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const CHROME_IOS=/CriOS/.test(UA),OTHER_IOS=/FxiOS|EdgiOS|OPiOS/.test(UA);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const log=m=>{const t=new Date().toLocaleTimeString("zh-TW",{hour12:false});$("log").textContent=`${t} ${m}\n`+$("log").textContent};
 let toastT;const toast=m=>{$("toast").textContent=m;$("toast").classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>$("toast").classList.remove("on"),2200)};
 const setTag=(id,txt,cls)=>{const t=$(id);t.textContent=txt;t.className="tag"+(cls?" "+cls:"")};
-const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const median=a=>{const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+const stamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`};
 
-/* 畫布尺寸 */
+/* ---------- 錯誤說明 ---------- */
+const BROWSER=CHROME_IOS?"Chrome":"Safari";
+function fixSteps(kind){
+  const S={camera:"相機",mic:"麥克風",loc:"位置"}[kind];
+  if(kind==="motion"){
+    return CHROME_IOS?["關掉這個分頁，重新打開網址後再按「啟用動作與方向」，跳出詢問時選「允許」","還是沒有詢問：iOS 上的 Chrome 不一定會轉交動作權限，請改用 Safari 開這頁"]
+      :["關掉這個分頁，重新打開網址後再按一次按鈕，跳出詢問時選「允許」","還是不會詢問：「設定」→（iOS 18 起先點「App」）→「Safari」→「進階」→「網站資料」，刪除 github.io 的資料後重來"];
+  }
+  if(CHROME_IOS){
+    const a=[`打開 iPhone「設定」→（iOS 18 起先點「App」）→「Chrome」，把「${S}」打開`];
+    if(kind==="loc")a.push("並確認「設定」→「隱私權與安全性」→「定位服務」已開啟，Chrome 設成「使用 App 期間」");
+    a.push("回到 Chrome 重新整理這頁，再按一次按鈕，詢問時選「允許」");return a;
+  }
+  const a=[`點網址列左邊的「大小」按鈕（ᴀA 圖示）→「網站設定」→「${S}」改成「允許」或「詢問」`,"重新整理這頁，再按一次按鈕"];
+  if(kind==="loc")a.push("還是不行：「設定」→「隱私權與安全性」→「定位服務」要打開，裡面的「Safari 網站」設成「使用 App 期間」並打開「精確位置」");
+  else a.push(`還是不行：「設定」→（iOS 18 起先點「App」）→「Safari」→「${S}」選「允許」或「詢問」`);
+  return a;
+}
+function showErr(id,title,steps,extra){
+  const el=$(id);el.hidden=false;
+  el.innerHTML=`<b>${esc(title)}</b>`+(steps&&steps.length?`<div style="margin-top:6px">iPhone 上這樣修：</div><ol>${steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`:"")+(extra?`<div style="margin-top:6px">${esc(extra)}</div>`:"");
+}
+function hideErr(id){const el=$(id);el.hidden=true;el.innerHTML=""}
+function mediaErr(e,kind,box){
+  const S=kind==="camera"?"相機":"麥克風",n=e&&e.name;
+  if(n==="NotAllowedError"||n==="PermissionDeniedError"||n==="SecurityError")showErr(box,`${S}權限被拒絕`,fixSteps(kind));
+  else if(n==="NotFoundError"||n==="OverconstrainedError"||n==="DevicesNotFoundError")showErr(box,`找不到可用的${S}`,[],kind==="camera"?"試試按「前／後鏡頭」換一顆。":"");
+  else if(n==="NotReadableError"||n==="TrackStartError"||n==="AbortError")showErr(box,`${S}正被別的 App 使用`,["結束通話、錄影或其他正在用"+S+"的 App","回到這頁再按一次按鈕"]);
+  else showErr(box,`${S}開啟失敗：${(e&&e.message)||n||"未知錯誤"}`,[]);
+}
+
+/* ---------- 分頁定義 ---------- */
+const hasGUM=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
+const TABS=[
+  {k:"home",i:"🏠",n:"總覽"},
+  {k:"gyro",i:"🧭",n:"陀螺儀",need:()=>"DeviceOrientationEvent" in window||"這個瀏覽器沒有 DeviceOrientation API，讀不到手機的傾斜角度。"},
+  {k:"motion",i:"🏃",n:"動作",need:()=>"DeviceMotionEvent" in window||"這個瀏覽器沒有 DeviceMotion API，讀不到加速度。"},
+  {k:"gps",i:"📍",n:"GPS",need:()=>"geolocation" in navigator||"這個瀏覽器沒有 Geolocation API。"},
+  {k:"camera",i:"📷",n:"相機",need:()=>hasGUM()||(window.isSecureContext?"這個瀏覽器沒有開放相機（getUserMedia）。":"不是 HTTPS 安全連線，瀏覽器不給網頁用相機。")},
+  {k:"mic",i:"🎤",n:"麥克風",need:()=>(hasGUM()&&!!(window.AudioContext||window.webkitAudioContext))||(window.isSecureContext?"這個瀏覽器沒有開放麥克風（getUserMedia／Web Audio）。":"不是 HTTPS 安全連線，瀏覽器不給網頁用麥克風。")},
+  {k:"touch",i:"👆",n:"觸控",need:()=>"PointerEvent" in window||"這個瀏覽器沒有 Pointer Events。"},
+  {k:"speech",i:"🗣️",n:"語音辨識",need:()=>!!SRC||(IOS&&(CHROME_IOS||OTHER_IOS)?"iOS 上的 Chrome 等第三方瀏覽器常常沒有開放語音辨識（SpeechRecognition）。請改用 Safari 開這頁。":"這個瀏覽器沒有語音辨識（SpeechRecognition）。")},
+  {k:"tts",i:"🔊",n:"朗讀",need:()=>("speechSynthesis" in window&&"SpeechSynthesisUtterance" in window)||"這個瀏覽器沒有語音朗讀（speechSynthesis）。"},
+  {k:"orient",i:"🔄",n:"方向",need:()=>!!(screen.orientation||"orientation" in window)||"這個瀏覽器沒有 screen.orientation（iOS 16.4 以上的 Safari 才有）。"},
+  {k:"pad",i:"🎮",n:"手把",need:()=>"getGamepads" in navigator||"這個瀏覽器沒有 Gamepad API。"},
+  {k:"faceid",i:"🔐",n:"Face ID",need:()=>(!!window.PublicKeyCredential&&!!navigator.credentials)||(window.isSecureContext?"這個瀏覽器沒有 WebAuthn（通行金鑰）。":"不是 HTTPS 安全連線，通行金鑰只能在 HTTPS 網站使用。")},
+  {k:"share",i:"📤",n:"分享",need:()=>!!(navigator.share||navigator.clipboard)||"這個瀏覽器沒有分享選單，也沒有剪貼簿 API。"}
+];
+const OFF=[
+  {k:"baro",i:"🌡️",n:"氣壓計",hw:"iPhone 6 之後都有氣壓計，「健康」App 的爬樓層數、海拔變化就是靠它。",web:"Safari 沒有任何讀氣壓的網頁 API（W3C 也還沒有這個標準）。",app:"原生 App 用 Core Motion 的 CMAltimeter 就能讀到氣壓與相對高度。",det:()=>false},
+  {k:"light",i:"🔆",n:"環境光",hw:"螢幕上方有環境光感測器，「自動亮度」和原彩顯示都靠它。",web:"W3C 有 Ambient Light Sensor 草案，但 Safari 沒有實作。",app:"這顆連一般原生 App 也沒有公開 API，只有經 Apple 核准的研究用 SensorKit 拿得到。",det:()=>"AmbientLightSensor" in window},
+  {k:"prox",i:"📏",n:"距離感測",hw:"講電話時把手機貼到耳朵，螢幕自動關掉，就是距離感測器。",web:"網頁沒有對應的 API（以前的 Proximity 事件已被各家瀏覽器拿掉）。",app:"原生 App 打開 UIDevice 的 isProximityMonitoringEnabled 就能知道有沒有東西靠近。",det:()=>"ProximitySensor" in window},
+  {k:"lidar",i:"📡",n:"LiDAR",hw:"Pro 系列 iPhone 的後鏡頭旁有 LiDAR，可以量深度、做 3D 掃描。",web:"iPhone 的 Safari 沒有開放 WebXR 深度資料，網頁拿不到。",app:"原生 App 用 ARKit 的 sceneDepth 或 AVFoundation 的深度資料就拿得到。",det:()=>false},
+  {k:"vib",i:"📳",n:"震動",hw:"iPhone 有 Taptic Engine，按鍵回饋、通知震動都是它。",web:"Safari 沒有實作 navigator.vibrate()（Android 的 Chrome 有）。",app:"原生 App 用 UIFeedbackGenerator 或 Core Haptics 可以做出各種觸感。",det:()=>"vibrate" in navigator},
+  {k:"torch",i:"🔦",n:"閃光燈",hw:"後鏡頭旁的 LED，也就是控制中心的手電筒。",web:"iPhone 的 Safari 不讓網頁開閃光燈（相機的 torch 設定沒有開放）。相機分頁開鏡頭時會再偵測一次，哪天支援了會自動出現開關。",app:"原生 App 用 AVCaptureDevice 的 torchMode 就能開關手電筒。",det:()=>false},
+  {k:"nfc",i:"💳",n:"NFC",hw:"iPhone 有 NFC，Apple Pay、悠遊卡感應都用它。",web:"Web NFC 只有 Android 的 Chrome 有，Safari 沒有。",app:"原生 App 用 Core NFC 可以讀寫 NFC 標籤。",det:()=>"NDEFReader" in window},
+  {k:"bt",i:"🔵",n:"藍牙裝置",hw:"iPhone 當然有藍牙。",web:"Safari 不支援 Web Bluetooth（Apple 以隱私與指紋追蹤疑慮拒絕實作）。遊戲手把是例外：它是先由系統配對，再透過 Gamepad API 給網頁用。",app:"原生 App 用 Core Bluetooth 可以掃描、連線 BLE 裝置。",det:()=>"bluetooth" in navigator},
+  {k:"bat",i:"🔋",n:"電池",hw:"電量和是否在充電，系統當然知道。",web:"Safari 不支援 Battery Status API（這個 API 曾被拿來追蹤使用者）。",app:"原生 App 用 UIDevice 的 batteryLevel、batteryState 就能讀。",det:()=>"getBattery" in navigator},
+  {k:"net",i:"🌐",n:"網路狀態",hw:"系統知道你現在用 Wi-Fi 還是行動網路、訊號多強。",web:"Safari 不支援 Network Information API（navigator.connection），網頁只能用 navigator.onLine 知道「有沒有連線」。",app:"原生 App 用 Network 框架的 NWPathMonitor 可以知道連線類型、是不是計量網路。",det:()=>"connection" in navigator}
+];
+OFF.forEach(o=>{o.st="off";TABS.push(o)});
+const TAB={};TABS.forEach(t=>{TAB[t.k]=t;if(!t.st)t.st="ok"});
+
+function buildTabs(){
+  const bar=$("tabs");let sep=false;
+  TABS.forEach(t=>{
+    if(t.st==="off"&&!sep){sep=true;const s=document.createElement("span");s.className="tsep";s.textContent="網頁拿不到";bar.append(s)}
+    const b=document.createElement("button");b.className="tab"+(t.st==="off"?" off":"");b.dataset.k=t.k;b.setAttribute("role","tab");
+    b.innerHTML=`<span class="e">${t.i}</span><span class="l">${esc(t.n)}</span>`;
+    b.onclick=()=>show(t.k);bar.append(b);t.btn=b;
+  });
+  OFF.forEach(o=>{
+    const p=document.createElement("section");p.className="panel";p.dataset.k=o.k;
+    const c=document.createElement("div");c.className="offcard";
+    c.innerHTML=`<div class="e">${o.i}</div><h2></h2><p class="lock">iPhone 有這個硬體，但 Safari 沒有開放給網頁</p><dl><dt>硬體</dt><dd class="a"></dd><dt>網頁</dt><dd class="b"></dd><dt>原生 App</dt><dd class="c"></dd></dl><p class="det"></p>`;
+    c.querySelector("h2").textContent=o.n;c.querySelector(".a").textContent=o.hw;c.querySelector(".b").textContent=o.web;c.querySelector(".c").textContent=o.app+" 所以要原生 App 才拿得到。";
+    let d="";try{if(o.det())d="附註：你現在用的瀏覽器其實有這個 API（大概不是 iPhone 的 Safari），但這頁以 iPhone 為主，沒有實作。"}catch(e){}
+    if(o.k==="net")d=`網頁唯一能知道的：目前${navigator.onLine?"有連線":"沒有連線"}。`+(d?" "+d:"");
+    c.querySelector(".det").textContent=d;if(o.k==="net")c.querySelector(".det").id="netNow";
+    p.append(c);$("panels").append(p);
+  });
+}
+function markUnsup(k,why){
+  const t=TAB[k];if(!t||t.st==="unsup")return;
+  t.st="unsup";t.why=why;t.btn.classList.add("off","unsup");
+  const p=document.querySelector(`.panel[data-k="${k}"]`);p.classList.add("unsup");
+  const c=document.createElement("div");c.className="offcard warnbox";
+  c.innerHTML=`<div class="e">⚠️</div><h2></h2><p class="lock">這個瀏覽器目前用不了</p><p style="font-size:15px"></p><p class="det"></p>`;
+  c.querySelector("h2").textContent=t.i+" "+t.n;c.querySelector("p:nth-of-type(2)").textContent=why;
+  c.querySelector(".det").textContent=IOS&&!CHROME_IOS&&!OTHER_IOS?"":"建議：用 iPhone 內建的 Safari 直接打開這個網址。";
+  p.prepend(c);renderTiles();
+}
+function checkNeeds(){TABS.forEach(t=>{if(t.need){let r;try{r=t.need()}catch(e){r="偵測時發生錯誤："+e.message}if(r!==true)markUnsup(t.k,r)}})}
+function renderTiles(){
+  const el=$("tiles");if(!el)return;el.innerHTML="";let ok=0;
+  TABS.filter(t=>t.k!=="home").forEach(t=>{
+    const b=document.createElement("button");b.className="tile "+t.st;
+    b.innerHTML=`<span class="e">${t.i}</span><span class="n">${esc(t.n)}</span><span class="s">${{ok:"可以用",unsup:"此瀏覽器不支援",off:"網頁拿不到"}[t.st]}</span>`;
+    b.onclick=()=>show(t.k);el.append(b);if(t.st==="ok")ok++;
+  });
+  setTag("sumTag",`可以用 ${ok} 項`,"ok");
+}
+
+/* ---------- 畫布尺寸 ---------- */
 // 原始高度記在 data-h，避免重算時讀到已放大的 canvas.height 而越拉越長
 function fit(c){if(!c.dataset.h)c.dataset.h=c.getAttribute("height");const r=window.devicePixelRatio||1,w=c.clientWidth,h=+c.dataset.h;c.width=Math.round(w*r);c.height=Math.round(h*r);c.style.height=h+"px";const x=c.getContext("2d");x.setTransform(r,0,0,r,0,0);return{x,w,h}}
-let B,C,S,T,lastW=0;function fitAll(){lastW=document.documentElement.clientWidth;B=fit($("ball"));C=fit($("compass"));S=fit($("shake"));T=fit($("track"));drawTrack()}
+const CV={};
+// 隱藏分頁裡的 canvas 寬度是 0，略過；切到該分頁時再 fit
+function fitIn(root){if(!root)return;root.querySelectorAll("canvas").forEach(c=>{if(c.clientWidth>0)CV[c.id]=fit(c)});drawTrack();drawHeart()}
+let lastW=0;function fitAll(){lastW=document.documentElement.clientWidth;fitIn(document.querySelector(".panel.on"))}
 // 手機捲動時網址列伸縮也會觸發 resize，只有寬度真的變了才重算
 addEventListener("resize",()=>{if(document.documentElement.clientWidth!==lastW)fitAll()});
+
+/* ---------- 分頁切換 ---------- */
+let cur=null;const ENTER={},LEAVE={};
+function show(k){
+  if(!TAB[k])k="home";
+  if(cur===k)return;
+  const first=cur==null;
+  if(cur&&LEAVE[cur]){try{LEAVE[cur]()}catch(e){log("停止 "+cur+" 失敗："+e.message)}}
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.dataset.k===k));
+  TABS.forEach(t=>{const on=t.k===k;t.btn.classList.toggle("on",on);t.btn.setAttribute("aria-selected",on)});
+  cur=k;ls.set("sl-tab",k);
+  try{history.replaceState(null,"","#"+k)}catch(e){}
+  fitAll();
+  if(TAB[k].st!=="unsup"&&ENTER[k]){try{ENTER[k]()}catch(e){log("進入 "+k+" 失敗："+e.message)}}
+  const bar=$("tabs"),b=TAB[k].btn;
+  const left=b.offsetLeft-(bar.clientWidth-b.offsetWidth)/2;
+  try{bar.scrollTo({left,behavior:first?"auto":"smooth"})}catch(e){bar.scrollLeft=left}
+  if(!first){const top=$("tabbar").offsetTop;if(window.scrollY>top)window.scrollTo(0,top)}
+}
 
 /* ---------- 環境診斷 ---------- */
 function inIframe(){try{return window.self!==window.top}catch(e){return true}}
 function diag(){
   const yes=(b,a="支援",n="不支援")=>b?`<span class="ok">${a}</span>`:`<span class="no">${n}</span>`;
   const pol=f=>{const p=document.permissionsPolicy||document.featurePolicy;if(!p||!p.allowsFeature)return'<span class="mid">無法判斷</span>';return yes(p.allowsFeature(f),"允許","被擋")};
-  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  const br=CHROME_IOS?"Chrome（iOS）":/FxiOS/.test(UA)?"Firefox（iOS）":/EdgiOS/.test(UA)?"Edge（iOS）":IOS?"Safari":(/Chrome/.test(UA)?"Chrome":"其他");
   const rows=[
-    ["裝置",ios?"iOS / iPadOS":(/Android/.test(navigator.userAgent)?"Android":"其他")],
+    ["裝置",IOS?"iOS / iPadOS":(/Android/.test(UA)?"Android":"其他")],
+    ["瀏覽器",br],
     ["HTTPS 安全環境",yes(window.isSecureContext,"是","否")],
     ["嵌在 iframe 裡",inIframe()?'<span class="mid">是</span>':'<span class="ok">否</span>'],
     ["DeviceOrientation API",yes("DeviceOrientationEvent" in window)],
     ["DeviceMotion API",yes("DeviceMotionEvent" in window)],
     ["需要按鈕授權（iOS）",typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"?'<span class="mid">需要</span>':"不需要"],
     ["Geolocation API",yes("geolocation" in navigator)],
+    ["相機／麥克風 getUserMedia",yes(hasGUM())],
+    ["錄音 MediaRecorder",yes(typeof MediaRecorder!=="undefined")],
+    ["語音辨識",yes(!!SRC)],
+    ["語音朗讀",yes("speechSynthesis" in window)],
+    ["screen.orientation",yes(!!screen.orientation)],
+    ["Gamepad API",yes("getGamepads" in navigator)],
+    ["WebAuthn 通行金鑰",yes(!!window.PublicKeyCredential)],
+    ["分享選單 navigator.share",yes(!!navigator.share)],
+    ["剪貼簿 API",yes(!!navigator.clipboard)],
+    ["QR 掃描 BarcodeDetector",yes("BarcodeDetector" in window)],
     ["Wake Lock API",yes("wakeLock" in navigator)],
     ["權限政策：陀螺儀",pol("gyroscope")],
     ["權限政策：加速度計",pol("accelerometer")],
-    ["權限政策：定位",pol("geolocation")]
+    ["權限政策：定位",pol("geolocation")],
+    ["權限政策：相機",pol("camera")],
+    ["權限政策：麥克風",pol("microphone")]
   ];
   $("diag").innerHTML=rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${v}</div>`).join("");
   const n=[];
@@ -143,29 +647,38 @@ function diag(){
 
 /* ---------- 陀螺儀 + 動作 ---------- */
 let ori={a:null,b:null,g:null,head:null},zero=ls.get("sl-zero",{b:0,g:0});
-let lin={x:0,y:0,z:0},grav={x:0,y:0,z:9.8},peak=0,hist=new Array(120).fill(0),evN=0,motionOn=false;
+let lin={x:0,y:0,z:0},grav={x:0,y:0,z:9.8},peak=0,hist=new Array(120).fill(0),evN=0,motionOn=false,motionAsking=false;
 let ball={x:0,y:0,vx:0,vy:0};
 
+function motionDenied(msg){
+  setTag("oTag","被拒絕","bad");setTag("mTag","被拒絕","bad");
+  showErr("oErr",msg,fixSteps("motion"));showErr("mErr",msg,fixSteps("motion"));
+}
+// iOS 的動作授權只要求一次，陀螺儀與動作分頁共用
 async function enableMotion(){
+  if(motionOn||motionAsking)return;
+  motionAsking=true;hideErr("oErr");hideErr("mErr");
   try{
     if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){
       const r=await DeviceOrientationEvent.requestPermission();
-      if(r!=="granted"){setTag("oTag","被拒絕","bad");log("動作與方向：被拒絕（"+r+"）");toast("權限被拒絕，見下方說明");return}
+      if(r!=="granted"){motionDenied("動作與方向權限被拒絕");log("動作與方向：被拒絕（"+r+"）");toast("權限被拒絕，見說明");return}
       if(typeof DeviceMotionEvent.requestPermission==="function"){try{await DeviceMotionEvent.requestPermission()}catch(e){}}
     }
-  }catch(e){setTag("oTag","被拒絕","bad");log("授權失敗："+e.message);return}
+  }catch(e){motionDenied("動作與方向授權失敗："+e.message);log("授權失敗："+e.message);return}
+  finally{motionAsking=false}
   addEventListener("deviceorientation",onOri);
   addEventListener("devicemotion",onMotion);
   motionOn=true;setTag("oTag","等待資料…","warn");setTag("mTag","等待資料…","warn");log("已要求動作與方向");
-  setTimeout(()=>{if(ori.b==null){setTag("oTag","收不到資料","bad");log("2 秒內沒有收到任何方向事件，可能被瀏覽器或外層頁面擋掉")}},2000);
+  document.querySelectorAll(".motionBtn").forEach(b=>b.hidden=true);
+  setTimeout(()=>{if(ori.b==null){setTag("oTag","收不到資料","bad");setTag("mTag","收不到資料","bad");log("2 秒內沒有收到任何方向事件，可能被瀏覽器或外層頁面擋掉");const s=["確認是用 Safari 直接開這個網址（不是在其他 App 裡面開）","若之前按過「不允許」：關掉分頁重開再按一次"];showErr("oErr","2 秒內沒收到任何方向資料",IOS?s:[],IOS?"":"電腦通常沒有陀螺儀，這是正常的。");showErr("mErr","2 秒內沒收到任何動作資料",IOS?s:[],IOS?"":"電腦通常沒有加速度計，這是正常的。");document.querySelectorAll(".motionBtn").forEach(b=>b.hidden=false);motionOn=false;removeEventListener("deviceorientation",onOri);removeEventListener("devicemotion",onMotion)}},2000);
 }
 function onOri(e){
   if(e.beta==null)return;
   ori.a=e.alpha;ori.b=e.beta;ori.g=e.gamma;
   ori.head=e.webkitCompassHeading!=null?e.webkitCompassHeading:(e.absolute&&e.alpha!=null?(360-e.alpha)%360:null);
-  setTag("oTag","讀取中","ok");
+  if($("oTag").textContent!=="讀取中"){setTag("oTag","讀取中","ok");hideErr("oErr")}
 }
-let lastStep=0,stepHi=false,shakeN=0,lastShake=0,flipN=0,faceDown=false,airStart=0,inAir=false;
+let lastStep=0,stepHi=false,lastShake=0,faceDown=false,airStart=0,inAir=false;
 let stats=ls.get("sl-stats",{shake:0,steps:0,flip:0});
 function onMotion(e){
   evN++;
@@ -175,9 +688,9 @@ function onMotion(e){
     if(a&&a.x!=null){lin={x:a.x,y:a.y,z:a.z}}else{lin={x:ag.x-grav.x,y:ag.y-grav.y,z:ag.z-grav.z}}
     const tot=Math.hypot(ag.x,ag.y,ag.z),m=Math.hypot(lin.x,lin.y,lin.z),now=performance.now();
     peak=Math.max(peak,m);hist.push(m);hist.shift();
-    setTag("mTag","讀取中","ok");
+    if($("mTag").textContent!=="讀取中"){setTag("mTag","讀取中","ok");hideErr("mErr")}
     // 搖一搖
-    if(m>14&&now-lastShake>400){stats.shake++;lastShake=now;toast("搖！");save()}
+    if(m>14&&now-lastShake>400){stats.shake++;lastShake=now;if(cur==="motion")toast("搖！");save()}
     // 計步：總加速度上穿 11.5、下穿 9.5
     if(!stepHi&&tot>11.5&&now-lastStep>300){stepHi=true;stats.steps++;lastStep=now;save()}
     if(stepHi&&tot<9.5)stepHi=false;
@@ -185,7 +698,7 @@ function onMotion(e){
     if(tot<2.5&&!inAir){inAir=true;airStart=now}
     if(inAir&&tot>6){inAir=false;const t=(now-airStart)/1000;if(t>.12&&t<3){const h=9.8*(t/2)**2/2;$("dAir").textContent=t.toFixed(2)+" s";$("dHigh").textContent=(h*100).toFixed(0)+" cm";log(`騰空 ${t.toFixed(2)} 秒，約 ${(h*100).toFixed(0)} 公分`)}}
     // 翻面與姿態（以 iOS 慣例：平放朝上時 z≈-9.8）
-    const gz=grav.z,gx=grav.x,gy=grav.y,iosSign=/iPhone|iPad|iPod/.test(navigator.userAgent)?-1:1;
+    const gz=grav.z,gx=grav.x,gy=grav.y,iosSign=IOS?-1:1;
     const up=gz*iosSign;
     let pose="傾斜";
     if(up>8)pose="平放";else if(up<-8)pose="朝下";else if(Math.abs(gy)>7)pose=gy*iosSign<0?"直拿":"倒拿";else if(Math.abs(gx)>7)pose="橫拿";
@@ -199,23 +712,9 @@ function save(){ls.set("sl-stats",stats);$("dShake").textContent=stats.shake;$("
 /* 穩手挑戰 */
 let inZone=0,best=ls.get("sl-best",0);$("gBest").textContent=best.toFixed(1);
 
-let lastT=performance.now(),hzT=performance.now();
-function frame(t){
-  const dt=Math.min(.05,(t-lastT)/1000);lastT=t;
-  // 數值
-  if(ori.b!=null){
-    $("oB").textContent=(ori.b-zero.b).toFixed(1)+"°";$("oG").textContent=(ori.g-zero.g).toFixed(1)+"°";
-    $("oA").textContent=ori.a!=null?ori.a.toFixed(0)+"°":"–";
-    $("head").textContent=ori.head!=null?"方位 "+ori.head.toFixed(0)+"° "+dirName(ori.head):"方位：此裝置沒有提供";
-  }
-  if(t-hzT>1000){$("hz").textContent="事件頻率 "+Math.round(evN*1000/(t-hzT))+" Hz";evN=0;hzT=t}
-  $("accTxt").textContent=`x ${lin.x.toFixed(1)} y ${lin.y.toFixed(1)} z ${lin.z.toFixed(1)}`;
-  $("peak").textContent="最大衝擊 "+peak.toFixed(1)+" m/s²";
-  drawBall(dt);drawCompass();drawShake();
-  requestAnimationFrame(frame);
-}
 function dirName(h){return["北","東北","東","東南","南","西南","西","西北"][Math.round(h/45)%8]}
 function drawBall(dt){
+  const B=CV.ball;if(!B||!B.w)return;
   const {x,w,h}=B,R=14,cx=w/2,cy=h/2,zone=34;
   if(ori.b!=null){
     const gb=Math.max(-45,Math.min(45,ori.b-zero.b)),gg=Math.max(-45,Math.min(45,ori.g-zero.g));
@@ -234,6 +733,7 @@ function drawBall(dt){
   x.fillStyle="#5fd1b3";x.beginPath();x.arc(cx+ball.x,cy+ball.y,R,0,7);x.fill();
 }
 function drawCompass(){
+  const C=CV.compass;if(!C||!C.w)return;
   const {x,w,h}=C,cx=w/2,cy=h/2,r=Math.min(w,h)/2-14;
   x.clearRect(0,0,w,h);
   x.strokeStyle="#2a3039";x.lineWidth=2;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();
@@ -246,6 +746,7 @@ function drawCompass(){
   if(ori.head==null){x.fillStyle="#8a94a3";x.font="12px sans-serif";x.textAlign="center";x.fillText("等待方位資料",cx,cy+r/2)}
 }
 function drawShake(){
+  const S=CV.shake;if(!S||!S.w)return;
   const {x,w,h}=S;x.clearRect(0,0,w,h);
   x.strokeStyle="#f0b35a";x.lineWidth=2;x.beginPath();
   hist.forEach((v,i)=>{const px=i/(hist.length-1)*w,py=h-Math.min(1,v/20)*(h-6)-3;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
@@ -258,10 +759,10 @@ function dist(){let d=0;for(let i=1;i<pts.length;i++)d+=hav(pts[i-1],pts[i]);ret
 function startGPS(){
   if(!("geolocation" in navigator)){toast("不支援定位");return}
   if(watch!=null)return;
-  setTag("gTag","等待定位…","warn");log("開始定位");
+  hideErr("gErr");setTag("gTag","等待定位…","warn");log("開始定位");
   watch=navigator.geolocation.watchPosition(p=>{
     const c=p.coords;last={lat:c.latitude,lon:c.longitude,acc:c.accuracy,alt:c.altitude,t:p.timestamp};
-    setTag("gTag","定位中","ok");
+    setTag("gTag","定位中","ok");hideErr("gErr");
     $("gLat").textContent=c.latitude.toFixed(6);$("gLon").textContent=c.longitude.toFixed(6);
     $("gAcc").textContent="±"+c.accuracy.toFixed(0)+" m";
     $("gAlt").textContent=c.altitude!=null?c.altitude.toFixed(0)+" m":"–";
@@ -272,8 +773,9 @@ function startGPS(){
   },err=>{
     const m={1:"被拒絕",2:"無法取得位置",3:"逾時"}[err.code]||err.message;
     setTag("gTag",m,"bad");log("定位錯誤："+m);
-    if(err.code===1)toast("定位被拒絕，見下方說明");
-    if(err.code===1){navigator.geolocation.clearWatch(watch);watch=null}
+    if(err.code===1){toast("定位被拒絕，見說明");showErr("gErr","定位權限被拒絕",fixSteps("loc"));navigator.geolocation.clearWatch(watch);watch=null}
+    else if(err.code===2)showErr("gErr","暫時拿不到位置",[],"到室外或窗邊試試，打開 Wi-Fi 也能幫助定位。會繼續嘗試。");
+    else if(err.code===3)showErr("gErr","定位逾時",[],"訊號不好，會繼續嘗試。");
   },{enableHighAccuracy:true,maximumAge:0,timeout:20000});
 }
 function stopGPS(){if(watch!=null){navigator.geolocation.clearWatch(watch);watch=null;setTag("gTag","已停止");log("停止定位")}}
@@ -283,7 +785,7 @@ function updTrackInfo(){
   if(pts.length>1){const s=(pts[pts.length-1].t-pts[0].t)/1000;$("gTime").textContent="經過 "+Math.floor(s/60)+" 分 "+Math.round(s%60)+" 秒"}else $("gTime").textContent="–";
 }
 function drawTrack(){
-  if(!T)return;const {x,w,h}=T;x.clearRect(0,0,w,h);
+  const T=CV.track;if(!T||!T.w||cur!=="gps")return;const {x,w,h}=T;x.clearRect(0,0,w,h);
   const all=pts.slice();if(last)all.push(last);
   if(!all.length){x.fillStyle="#8a94a3";x.font="13px sans-serif";x.textAlign="center";x.fillText("還沒有軌跡，按「開始定位」後走一走",w/2,h/2);return}
   const o=all[0],k=Math.cos(o.lat*Math.PI/180),m=111320;
@@ -306,30 +808,647 @@ function exportGPX(){
   const name="track-"+new Date().toISOString().slice(0,16).replace(/[:T]/g,"")+".gpx";
   const file=new File([gpx],name,{type:"application/gpx+xml"});
   if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:name}).catch(()=>{})}
-  else{const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+  else downloadBlob(file,name);
   log("匯出 GPX："+pts.length+" 個點");
 }
+ENTER.gps=()=>{drawTrack()};
 
-/* ---------- 螢幕常亮 ---------- */
+/* ---------- 檔案分享／下載 ---------- */
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+async function shareBlob(blob,name,type){
+  const file=new File([blob],name,{type:type||blob.type});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name})}catch(e){if(e.name!=="AbortError"){toast("分享失敗，改用下載");downloadBlob(blob,name)}}}
+  else{toast("這個瀏覽器不能分享檔案，改用下載");downloadBlob(blob,name)}
+}
+
+/* ---------- 相機 ---------- */
+const cam={stream:null,track:null,facing:ls.get("sl-facing","environment"),mode:"view",photos:[],tok:0,lastAna:0,lastQR:0,qrDet:null,qrBusy:false,torchOK:false,torch:false};
+const ana=document.createElement("canvas");ana.width=32;ana.height=24;const ax=ana.getContext("2d",{willReadFrequently:true});
+function updCamBtns(){
+  const on=!!cam.stream;$("camBtn").textContent=on?"關閉相機":"開啟相機";$("camBtn").className="btn"+(on?" ghost":"");
+  $("shotBtn").disabled=!on;$("camPh").hidden=on;
+  $("flipBtn").disabled=cam.mode==="heart";
+}
+async function camStart(){
+  hideErr("camErr");
+  if(cam.stream)return true;
+  const tok=++cam.tok;
+  setTag("camTag","開啟中…","warn");$("camPh").textContent="開啟中…";
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:cam.facing},width:{ideal:1280},height:{ideal:720}}});
+    if(tok!==cam.tok||cur!=="camera"){s.getTracks().forEach(t=>t.stop());return false}
+    cam.stream=s;cam.track=s.getVideoTracks()[0];
+    const v=$("camVideo");v.srcObject=s;v.classList.toggle("mirror",cam.facing==="user");
+    try{await v.play()}catch(e){}
+    setTag("camTag",cam.facing==="user"?"前鏡頭":"後鏡頭","ok");
+    updCamBtns();checkTorch();log("相機開啟："+(cam.track.label||cam.facing));
+    if(cam.mode==="heart")hrStart();
+    return true;
+  }catch(e){
+    if(tok!==cam.tok)return false;
+    setTag("camTag","開啟失敗","bad");$("camPh").textContent="相機沒有開啟";mediaErr(e,"camera","camErr");log("相機錯誤："+(e.name||e.message));return false;
+  }
+}
+function camStop(why){
+  cam.tok++;hrStop();
+  if(cam.stream){cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null;cam.track=null;log("相機已關閉"+(why?"（"+why+"）":""))}
+  $("camVideo").srcObject=null;setTag("camTag",why||"已關閉");$("camPh").textContent=why?`相機已關閉（${why}），要用請再按「開啟相機」`:"按下「開啟相機」";
+  cam.torchOK=false;cam.torch=false;$("torchBtn").hidden=true;updCamBtns();
+}
+async function camFlip(){
+  if(cam.mode==="heart"){toast("測心跳只能用後鏡頭");return}
+  cam.facing=cam.facing==="user"?"environment":"user";ls.set("sl-facing",cam.facing);
+  if(cam.stream){camStop();await camStart()}else toast(cam.facing==="user"?"下次開啟用前鏡頭":"下次開啟用後鏡頭");
+}
+function checkTorch(){
+  let caps=null;try{caps=cam.track&&cam.track.getCapabilities?cam.track.getCapabilities():null}catch(e){}
+  cam.torchOK=!!(caps&&caps.torch);$("torchBtn").hidden=!cam.torchOK;
+  if(cam.torchOK){log("這顆鏡頭支援閃光燈控制");if(cam.mode==="heart")setTorch(true)}
+}
+async function setTorch(on){
+  if(!cam.torchOK||!cam.track)return;
+  try{await cam.track.applyConstraints({advanced:[{torch:on}]});cam.torch=on;$("torchBtn").textContent="🔦 閃光燈："+(on?"開":"關")}catch(e){log("閃光燈失敗："+e.message)}
+}
+function setMode(m){
+  if(m===cam.mode)return;
+  const was=cam.mode;cam.mode=m;
+  document.querySelectorAll("#camSeg button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
+  $("camView").hidden=m==="heart";$("hrBox").hidden=m!=="heart";$("qrBox").hidden=m!=="qr";
+  if(was==="heart"){hrStop()}
+  if(m==="heart"){
+    fitIn($("hrBox"));
+    if(cam.facing!=="environment"){cam.facing="environment";if(cam.stream){camStop();camStart();updCamBtns();return}}
+    if(cam.stream)hrStart();else $("hrStat").textContent="先按「開啟相機」";
+  }
+  if(m==="qr"&&!cam.qrDet){try{cam.qrDet=new BarcodeDetector({formats:["qr_code"]})}catch(e){$("qrOut").textContent="QR 掃描初始化失敗："+e.message}}
+  updCamBtns();
+}
+function colorName(r,g,b){
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/510;
+  if(mx<40)return"黑";if(d<22)return l>.78?"白":"灰";
+  let h;if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h=(h*60+360)%360;
+  if(h<15||h>=345)return"紅";if(h<40)return l<.35?"棕":"橙";if(h<68)return"黃";if(h<160)return"綠";if(h<200)return"青";if(h<255)return"藍";if(h<290)return"紫";return"粉紅";
+}
+function meanRGB(v,crop){
+  const sw=v.videoWidth,sh=v.videoHeight;
+  if(crop){const cw=sw*.5,ch=sh*.5;ax.drawImage(v,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,32,24)}else ax.drawImage(v,0,0,32,24);
+  const d=ax.getImageData(0,0,32,24).data;let r=0,g=0,b=0;for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2]}
+  const n=d.length/4;return{r:r/n,g:g/n,b:b/n};
+}
+function camTick(t){
+  if(!cam.stream)return;const v=$("camVideo");if(!v.videoWidth)return;
+  if(cam.mode!=="heart"&&t-cam.lastAna>250){
+    cam.lastAna=t;const {r,g,b}=meanRGB(v,false),l=.2126*r+.7152*g+.0722*b;
+    $("camLum").textContent=Math.round(l)+" / 255";$("camLumBar").style.width=(l/255*100)+"%";
+    const hex="#"+[r,g,b].map(c=>Math.round(c).toString(16).padStart(2,"0")).join("");
+    $("camSw").style.background=hex;$("camHex").textContent=hex.toUpperCase();$("camColor").textContent=colorName(r,g,b);
+  }
+  if(cam.mode==="qr"&&cam.qrDet&&!cam.qrBusy&&t-cam.lastQR>400){
+    cam.lastQR=t;cam.qrBusy=true;
+    cam.qrDet.detect(v).then(rs=>{if(rs&&rs.length){const s=rs[0].rawValue;if(s!==cam.qrLast){cam.qrLast=s;$("qrOut").textContent=s;log("掃到 QR："+s.slice(0,60));toast("掃到 QR Code");const isUrl=/^https?:\/\//i.test(s);$("qrOpen").hidden=!isUrl;if(isUrl)$("qrOpen").href=s}}}).catch(()=>{}).finally(()=>{cam.qrBusy=false});
+  }
+  if(cam.mode==="heart"&&hr.on){if(!hr.rv)hrSample(t);if(t-hr.lastCalc>500)hrCalc(t);drawHeart()}
+}
+function takePhoto(){
+  const v=$("camVideo");if(!cam.stream||!v.videoWidth){toast("先開相機");return}
+  const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);
+  const f=$("flash");f.classList.add("on");setTimeout(()=>f.classList.remove("on"),60);
+  c.toBlob(b=>{if(!b){toast("拍照失敗");return}const name="photo-"+stamp()+".jpg";cam.photos.unshift({b,url:URL.createObjectURL(b),name});
+    while(cam.photos.length>8){URL.revokeObjectURL(cam.photos.pop().url)}renderPhotos();log(`拍照 ${c.width}×${c.height}`);toast("📸 已拍下")},"image/jpeg",.92);
+}
+function renderPhotos(){
+  const el=$("photos");el.innerHTML="";setTag("phCount",cam.photos.length+" 張",cam.photos.length?"ok":"");
+  if(!cam.photos.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">還沒有照片</div>';return}
+  cam.photos.forEach(p=>{
+    const d=document.createElement("div");d.className="photo";
+    const img=document.createElement("img");img.src=p.url;img.alt=p.name;
+    const bs=document.createElement("div");bs.className="btns";
+    const s=document.createElement("button");s.className="btn";s.textContent="分享";s.onclick=()=>shareBlob(p.b,p.name,"image/jpeg");
+    const dl=document.createElement("button");dl.className="btn ghost";dl.textContent="下載";dl.onclick=()=>downloadBlob(p.b,p.name);
+    bs.append(s,dl);d.append(img,bs);el.append(d);
+  });
+}
+LEAVE.camera=()=>camStop();
+
+/* 測心跳（PPG）：手指蓋住鏡頭，紅色亮度會隨每次心跳的血量起伏 */
+const hr={on:false,S:[],hist:[],lastCalc:0,wave:null,rv:false,gen:0};
+function hrStart(){
+  hr.on=true;hr.S=[];hr.hist=[];hr.wave=null;hr.gen++;$("hrBpm").textContent="–";$("hrStat").textContent="把手指蓋上後鏡頭…";
+  const v=$("camVideo"),g=hr.gen;
+  if(v.requestVideoFrameCallback){hr.rv=true;const cb=()=>{if(!hr.on||g!==hr.gen||!cam.stream)return;hrSample(performance.now());v.requestVideoFrameCallback(cb)};v.requestVideoFrameCallback(cb)}else hr.rv=false;
+  if(cam.torchOK)setTorch(true);
+  fitIn($("hrBox"));
+}
+function hrStop(){if(hr.on){hr.on=false;hr.gen++;if(cam.torch)setTorch(false)}}
+function hrSample(now){
+  const v=$("camVideo");if(!v.videoWidth)return;
+  const {r,g,b}=meanRGB(v,true);
+  hr.S.push({t:now,v:r,f:r>35&&g<r*.6&&b<r*.6});
+  while(hr.S.length&&now-hr.S[0].t>15000)hr.S.shift();
+  hr.lastR=r;
+}
+function ma(a,w){const n=a.length,h=w>>1,p=new Float64Array(n+1);for(let i=0;i<n;i++)p[i+1]=p[i]+a[i];const o=new Array(n);for(let i=0;i<n;i++){const l=Math.max(0,i-h),r=Math.min(n,i+h+1);o[i]=(p[r]-p[l])/(r-l)}return o}
+function hrStatus(m,cls){const e=$("hrStat");e.textContent=m;e.style.color=cls==="ok"?"var(--acc)":cls==="warn"?"var(--warn)":"var(--mute)"}
+function hrCalc(now){
+  hr.lastCalc=now;const S=hr.S;
+  if(hr.lastR!=null)$("hrRed").textContent="紅色亮度 "+Math.round(hr.lastR);
+  if(S.length<10){hrStatus("等待畫面…");return}
+  const finger=S.slice(-8).filter(s=>s.f).length>=6;
+  if(!finger){hrStatus("把食指指腹輕輕蓋住後鏡頭，連旁邊一起蓋滿","warn");hr.hist=[];hr.wave=null;$("hrBpm").textContent="–";$("hrDur").textContent="–";return}
+  let k=S.length-1;while(k>0&&S[k-1].f)k--;const seg=S.slice(k);
+  const dur=(seg[seg.length-1].t-seg[0].t)/1000;$("hrDur").textContent="已量 "+dur.toFixed(0)+" 秒";
+  if(dur<1.5){hrStatus("偵測到手指，保持不動…");return}
+  // 重新取樣成固定 30 Hz
+  const fs=30,n=Math.floor(dur*fs),u=new Array(n);let j=0;
+  for(let i=0;i<n;i++){const t=seg[0].t+i*1000/fs;while(j<seg.length-2&&seg[j+1].t<t)j++;const a=seg[j],b=seg[j+1]||a;const f=b.t>a.t?Math.min(1,Math.max(0,(t-a.t)/(b.t-a.t))):0;u[i]=a.v+(b.v-a.v)*f}
+  // 去掉慢速漂移（1 秒移動平均），再反相：血量多 → 比較暗 → 波峰
+  const base=ma(u,31),s=ma(u.map((v,i)=>base[i]-v),5);
+  const P=[],W=8;
+  for(let i=W;i<n-W;i++){if(s[i]<=0)continue;let m=true;for(let q=i-W;q<=i+W;q++)if(s[q]>s[i]){m=false;break}if(m&&(!P.length||i-P[P.length-1]>=10))P.push(i)}
+  const off=Math.max(0,n-fs*6);hr.wave={s:s.slice(off),P:P.filter(i=>i>=off).map(i=>i-off)};
+  if(dur<6){hrStatus(`量測中… 再 ${Math.ceil(6-dur)} 秒`);return}
+  const rec=P.filter(i=>i>=n-fs*10),iv=[];for(let i=1;i<rec.length;i++)iv.push((rec[i]-rec[i-1])/fs);
+  const ok=iv.filter(x=>x>=.3&&x<=1.5);
+  if(ok.length<4){hrStatus("訊號太弱：換到更亮的地方，手指別壓太緊","warn");return}
+  const mean=ok.reduce((a,b)=>a+b,0)/ok.length,sd=Math.sqrt(ok.reduce((a,b)=>a+(b-mean)**2,0)/ok.length);
+  if(sd/mean>.25){hrStatus("訊號不穩，手指和手機都別動","warn");return}
+  hr.hist.push(60/median(ok));if(hr.hist.length>6)hr.hist.shift();
+  $("hrBpm").textContent=Math.round(median(hr.hist));hrStatus("量測中（多量幾秒會更穩）","ok");
+}
+function drawHeart(){
+  const H=CV.hrWave;if(!H||!H.w||cam.mode!=="heart")return;const {x,w,h}=H;x.clearRect(0,0,w,h);
+  if(!hr.wave||hr.wave.s.length<5){x.fillStyle="#8a94a3";x.font="13px sans-serif";x.textAlign="center";x.fillText("脈搏波形會出現在這裡",w/2,h/2);return}
+  const s=hr.wave.s,mn=Math.min(...s),mx=Math.max(...s),rg=(mx-mn)||1,X=i=>i/(180-1)*w,Y=v=>h-8-(v-mn)/rg*(h-16);
+  x.strokeStyle="#ef6b6b";x.lineWidth=2;x.beginPath();s.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));x.stroke();
+  x.fillStyle="#fff";hr.wave.P.forEach(i=>{x.beginPath();x.arc(X(i),Y(s[i]),3.5,0,7);x.fill()});
+}
+
+/* ---------- 麥克風 ---------- */
+const mic={stream:null,ctx:null,an:null,td:null,fd:null,tok:0,maxDb:-Infinity,lastTxt:0,fr:0,ph:[],rec:null,recT:0,clips:[],lastWF:0};
+const NOTE=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],SOL=["Do","Do#","Re","Re#","Mi","Fa","Fa#","Sol","Sol#","La","La#","Si"];
+const WF=document.createElement("canvas");WF.width=240;WF.height=100;const wfx=WF.getContext("2d",{willReadFrequently:true});const wcol=wfx.createImageData(1,100);
+wfx.fillStyle="#11151a";wfx.fillRect(0,0,240,100);
+const LUT=[];for(let i=0;i<256;i++){const v=i/255;LUT.push([Math.min(255,Math.max(0,(v*2.2-1)*255))|0,Math.min(255,Math.max(0,(v*1.6-.3)*230))|0,Math.min(255,Math.max(20,Math.sin(Math.min(1,v*1.4)*Math.PI)*220+20))|0])}
+function updMicBtns(){
+  const on=!!mic.stream;$("micBtn").textContent=on?"■ 停止收音":"🎤 開始收音";$("micBtn").className="btn"+(on?" ghost":"");
+  const hasRec=typeof MediaRecorder!=="undefined",recOn=!!(mic.rec&&mic.rec.state==="recording");
+  $("recBtn").disabled=!hasRec||!on;
+  $("recBtn").textContent=!hasRec?"這個瀏覽器不支援錄音":recOn?"■ 停止錄音":"● 開始錄音";$("recBtn").className="btn"+(recOn?" rec":"");
+  setTag("recTag",!hasRec?"不支援":recOn?"錄音中":on?"可以錄":"先開收音",recOn?"bad":on?"ok":"");
+}
+async function micStart(){
+  hideErr("micErr");if(mic.stream)return;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const tok=++mic.tok;
+  let ctx=null;try{ctx=new AC()}catch(e){showErr("micErr","無法建立音訊處理："+e.message,[]);return}
+  mic.ctx=ctx;setTag("micTag","開啟中…","warn");
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
+    if(tok!==mic.tok||cur!=="mic"){s.getTracks().forEach(t=>t.stop());try{ctx.close()}catch(e){}return}
+    mic.stream=s;if(ctx.state==="suspended"){try{await ctx.resume()}catch(e){}}
+    const src=ctx.createMediaStreamSource(s),an=ctx.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=.55;src.connect(an);
+    mic.an=an;mic.td=new Float32Array(an.fftSize);mic.fd=new Uint8Array(an.frequencyBinCount);mic.maxDb=-Infinity;mic.ph=[];
+    setTag("micTag","收音中","ok");updMicBtns();log("麥克風開啟，取樣率 "+ctx.sampleRate+" Hz");
+  }catch(e){
+    if(tok!==mic.tok)return;try{ctx.close()}catch(_){}mic.ctx=null;
+    setTag("micTag","開啟失敗","bad");mediaErr(e,"mic","micErr");log("麥克風錯誤："+(e.name||e.message));
+  }
+}
+function micStop(why){
+  mic.tok++;
+  if(mic.rec&&mic.rec.state!=="inactive"){try{mic.rec.stop()}catch(e){}}
+  if(mic.stream){mic.stream.getTracks().forEach(t=>t.stop());mic.stream=null;log("麥克風已關閉"+(why?"（"+why+"）":""))}
+  if(mic.ctx){try{mic.ctx.close()}catch(e){}mic.ctx=null}
+  mic.an=null;setTag("micTag",why||"已關閉");$("dbBar").style.width="0";updMicBtns();
+}
+function pitch(buf,sr){
+  const N=buf.length;let rms=0;for(let i=0;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/N);if(rms<.01)return -1;
+  const minL=Math.floor(sr/1500),maxL=Math.min((N>>1)-2,Math.ceil(sr/60)),c=new Float32Array(maxL+2);
+  for(let l=0;l<=maxL+1;l++){let s=0;for(let j=0;j<N-l;j++)s+=buf[j]*buf[j+l];c[l]=s}
+  let d=0;while(d<maxL&&c[d]>c[d+1])d++;
+  let bv=-Infinity,pos=-1;for(let l=Math.max(d,minL);l<=maxL;l++)if(c[l]>bv){bv=c[l];pos=l}
+  if(pos<1||(c[pos]/(N-pos))/(c[0]/N)<.5)return -1;
+  const x1=c[pos-1],x2=c[pos],x3=c[pos+1],a=(x1+x3-2*x2)/2,b=(x3-x1)/2,T=a?pos-b/(2*a):pos;
+  return sr/T;
+}
+function showNote(f){
+  const n=12*Math.log2(f/440)+69,r=Math.round(n),c=Math.round((n-r)*100),i=((r%12)+12)%12;
+  $("pFreq").textContent=f.toFixed(1)+" Hz";$("pNote").textContent=NOTE[i]+(Math.floor(r/12)-1);$("pSol").textContent=SOL[i];
+  $("pCents").textContent=(c>0?"+":"")+c+" 音分"+(Math.abs(c)<=5?" ✓":"");$("pDot").style.left=(50+c)+"%";
+}
+function micTick(t){
+  const an=mic.an;if(!an)return;
+  an.getFloatTimeDomainData(mic.td);let s=0;for(let i=0;i<mic.td.length;i++)s+=mic.td[i]*mic.td[i];
+  const rms=Math.sqrt(s/mic.td.length),db=rms>1e-5?20*Math.log10(rms):-100;mic.maxDb=Math.max(mic.maxDb,db);
+  const p=Math.max(0,Math.min(100,(db+90)/90*100));$("dbBar").style.width=p+"%";$("dbBar").style.background=db>-10?"var(--bad)":db>-30?"var(--warn)":"var(--acc)";
+  if(t-mic.lastTxt>120){mic.lastTxt=t;$("dbNow").textContent=db.toFixed(1);$("dbMax").textContent="最大 "+mic.maxDb.toFixed(1)+" dBFS";
+    $("dbWord").textContent=db<-65?"很安靜":db<-45?"安靜":db<-28?"說話音量":db<-12?"大聲":"非常大聲（接近破音）";
+    if(mic.rec&&mic.rec.state==="recording")$("recBtn").textContent="■ 停止錄音 "+((performance.now()-mic.recT)/1000).toFixed(0)+" 秒"}
+  if(++mic.fr%3===0){const f=pitch(mic.td,mic.ctx.sampleRate);if(f>0){mic.ph.push(f);if(mic.ph.length>5)mic.ph.shift();showNote(median(mic.ph))}else if(rms<.01)mic.ph=[]}
+  an.getByteFrequencyData(mic.fd);drawSpec();if(t-mic.lastWF>25){mic.lastWF=t;drawWF()}
+}
+const FMIN=50,fmax=()=>Math.min(16000,mic.ctx?mic.ctx.sampleRate/2:16000);
+function binOf(f){return Math.min(mic.fd.length-1,Math.round(f/(mic.ctx.sampleRate/2)*mic.fd.length))}
+function drawSpec(){
+  const P=CV.spec;if(!P||!P.w)return;const {x,w,h}=P,FM=fmax(),L=Math.log(FM/FMIN);x.clearRect(0,0,w,h);
+  x.fillStyle="#5c6573";x.font="10px sans-serif";x.textAlign="center";
+  [100,1000,10000].forEach(f=>{if(f>FM)return;const px=w*Math.log(f/FMIN)/L;x.fillRect(px,0,1,h-12);x.fillText(f>=1000?f/1000+"k":f,px,h-2)});
+  x.beginPath();x.moveTo(0,h-14);for(let px=0;px<=w;px+=2){const f=FMIN*Math.exp(px/w*L),v=mic.fd[binOf(f)]/255;x.lineTo(px,h-14-v*(h-18))}x.lineTo(w,h-14);x.closePath();
+  const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,"#f0b35a");g.addColorStop(1,"#5fd1b3");x.fillStyle=g;x.globalAlpha=.85;x.fill();x.globalAlpha=1;
+}
+function drawWF(){
+  const P=CV.wf;const H=100,FM=Math.min(12000,fmax());
+  wfx.putImageData(wfx.getImageData(1,0,239,H),0,0);
+  for(let r=0;r<H;r++){const f=FM*Math.pow(FMIN/FM,r/(H-1)),v=mic.fd[binOf(f)],c=LUT[v],o=r*4;wcol.data[o]=c[0];wcol.data[o+1]=c[1];wcol.data[o+2]=c[2];wcol.data[o+3]=255}
+  wfx.putImageData(wcol,239,0);
+  if(!P||!P.w)return;const {x,w,h}=P;x.imageSmoothingEnabled=true;x.drawImage(WF,0,0,w,h);
+  x.fillStyle="rgba(232,236,241,.7)";x.font="10px sans-serif";x.textAlign="left";
+  [100,1000,5000].forEach(f=>{const y=h*Math.log(FM/f)/Math.log(FM/FMIN);x.fillText(f>=1000?f/1000+"k":String(f),4,Math.max(10,Math.min(h-3,y+3)))});
+}
+function recToggle(){
+  if(typeof MediaRecorder==="undefined"){toast("這個瀏覽器不支援錄音");return}
+  if(!mic.stream){toast("先按「開始收音」");return}
+  if(mic.rec&&mic.rec.state==="recording"){mic.rec.stop();return}
+  const type=["audio/mp4","audio/webm;codecs=opus","audio/webm","audio/aac"].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||"";
+  let r;try{r=new MediaRecorder(mic.stream,type?{mimeType:type}:{})}catch(e){toast("錄音失敗");log("錄音失敗："+e.message);return}
+  const chunks=[],t0=performance.now();
+  r.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  r.onstop=()=>{const mt=(r.mimeType||type||"audio/mp4").split(";")[0];const b=new Blob(chunks,{type:mt});addClip(b,(performance.now()-t0)/1000);if(mic.rec===r)mic.rec=null;updMicBtns()};
+  r.onerror=e=>{log("錄音錯誤："+(e.error&&e.error.message||""))};
+  r.start();mic.rec=r;mic.recT=t0;updMicBtns();log("開始錄音："+(type||"預設格式"));
+}
+function addClip(b,sec){
+  if(!b.size){toast("沒錄到聲音");return}
+  const ext=/mp4|m4a/.test(b.type)?"m4a":/webm/.test(b.type)?"webm":/aac/.test(b.type)?"aac":/ogg/.test(b.type)?"ogg":"audio";
+  const c={b,url:URL.createObjectURL(b),name:`錄音-${stamp()}.${ext}`,sec,n:(mic.clips[0]?mic.clips[0].n:0)+1};
+  mic.clips.unshift(c);while(mic.clips.length>5)URL.revokeObjectURL(mic.clips.pop().url);
+  renderClips();log(`錄音完成 ${sec.toFixed(1)} 秒（${b.type||"未知格式"}，${(b.size/1024).toFixed(0)} KB）`);toast("錄音已存好");
+}
+function renderClips(){
+  const el=$("clips");el.innerHTML="";
+  mic.clips.forEach(c=>{
+    const d=document.createElement("div");d.className="clip";
+    const t=document.createElement("div");t.className="t";t.textContent=`錄音 ${c.n} · ${c.sec.toFixed(1)} 秒 · ${(c.b.size/1024).toFixed(0)} KB`;
+    const a=document.createElement("audio");a.controls=true;a.preload="metadata";a.setAttribute("playsinline","");a.src=c.url;
+    const bs=document.createElement("div");bs.className="btns";
+    const s=document.createElement("button");s.className="btn ghost";s.textContent="分享";s.onclick=()=>shareBlob(c.b,c.name);
+    const dl=document.createElement("button");dl.className="btn ghost";dl.textContent="下載";dl.onclick=()=>downloadBlob(c.b,c.name);
+    bs.append(s,dl);d.append(t,a,bs);el.append(d);
+  });
+}
+LEAVE.mic=()=>micStop();
+ENTER.mic=()=>updMicBtns();
+
+/* ---------- 多點觸控 ---------- */
+const tch={act:new Map(),ended:[],max:0,best:ls.get("sl-tbest",0),base:null};
+const TCOL=["#5fd1b3","#f0b35a","#5a96ff","#ef6b6b","#c38bff","#ffd75a","#4fd6ff","#ff8fc8","#9be36a","#ffffff"];
+function tPos(e){const r=$("touchCv").getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+function updTouch(){
+  const n=tch.act.size;$("tNow").textContent=n;$("tMax").textContent=tch.max;$("tBest").textContent=tch.best;setTag("tTag",n+" 指",n?"ok":"");
+  $("tList").textContent=n?[...tch.act.values()].sort((a,b)=>a.slot-b.slot).map(f=>`#${f.slot+1}(${Math.round(f.x)},${Math.round(f.y)})`).join("  "):"把手指放上畫布";
+}
+function updPinch(){
+  if(tch.act.size!==2){tch.base=null;return}
+  const ids=[...tch.act.keys()].sort((a,b)=>a-b),a=tch.act.get(ids[0]),b=tch.act.get(ids[1]);
+  const d=Math.hypot(b.x-a.x,b.y-a.y),ang=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI,key=ids.join(",");
+  if(!tch.base||tch.base.key!==key)tch.base={key,d:Math.max(1,d),prev:ang,acc:0};
+  let dl=ang-tch.base.prev;dl=((dl+540)%360)-180;tch.base.acc+=dl;tch.base.prev=ang;
+  $("tScale").textContent=(d/tch.base.d).toFixed(2)+"×";$("tRot").textContent=(tch.base.acc>0?"+":"")+tch.base.acc.toFixed(0)+"°";$("tDist").textContent=Math.round(d)+" px";
+}
+function initTouch(){
+  const c=$("touchCv");
+  c.addEventListener("pointerdown",e=>{
+    e.preventDefault();try{c.setPointerCapture(e.pointerId)}catch(_){}
+    const used=new Set([...tch.act.values()].map(f=>f.slot));let slot=0;while(used.has(slot))slot++;
+    const p=tPos(e);tch.act.set(e.pointerId,{slot,x:p.x,y:p.y,trail:[p]});
+    tch.max=Math.max(tch.max,tch.act.size);if(tch.act.size>tch.best){tch.best=tch.act.size;ls.set("sl-tbest",tch.best)}
+    updTouch();updPinch();
+  });
+  c.addEventListener("pointermove",e=>{
+    const f=tch.act.get(e.pointerId);if(!f)return;e.preventDefault();
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];(evs.length?evs:[e]).forEach(ev=>f.trail.push(tPos(ev)));
+    if(f.trail.length>160)f.trail.splice(0,f.trail.length-160);
+    const p=f.trail[f.trail.length-1];f.x=p.x;f.y=p.y;updPinch();updTouch();
+  });
+  const end=e=>{const f=tch.act.get(e.pointerId);if(!f)return;tch.ended.push({...f,t:performance.now()});tch.act.delete(e.pointerId);updPinch();updTouch()};
+  c.addEventListener("pointerup",end);c.addEventListener("pointercancel",end);c.addEventListener("lostpointercapture",end);
+  // 再保險：擋掉 iOS 的捲動、雙指縮放與長按選單
+  c.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+  c.addEventListener("touchstart",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+  ["gesturestart","gesturechange","gestureend","contextmenu"].forEach(ev=>c.addEventListener(ev,e=>e.preventDefault()));
+  $("tClear").onclick=()=>{tch.ended=[];tch.max=tch.act.size;tch.best=tch.act.size;ls.set("sl-tbest",tch.best);$("tScale").textContent=$("tRot").textContent=$("tDist").textContent="–";updTouch();toast("已清除")};
+}
+function drawTouch(t){
+  const P=CV.touchCv;if(!P||!P.w)return;const {x,w,h}=P;x.clearRect(0,0,w,h);
+  x.strokeStyle="#1c2128";x.lineWidth=1;for(let gx=40;gx<w;gx+=40){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,h);x.stroke()}for(let gy=40;gy<h;gy+=40){x.beginPath();x.moveTo(0,gy);x.lineTo(w,gy);x.stroke()}
+  tch.ended=tch.ended.filter(f=>t-f.t<1400);
+  const trail=(f,al)=>{if(f.trail.length<2)return;x.globalAlpha=al;x.strokeStyle=TCOL[f.slot%TCOL.length];x.lineWidth=4;x.lineCap=x.lineJoin="round";x.beginPath();f.trail.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));x.stroke();x.globalAlpha=1};
+  tch.ended.forEach(f=>trail(f,.6*(1-(t-f.t)/1400)));
+  const act=[...tch.act.values()];
+  act.forEach(f=>trail(f,.75));
+  if(act.length===2){const [a,b]=act;x.setLineDash([6,6]);x.strokeStyle="#8a94a3";x.lineWidth=2;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke();x.setLineDash([]);x.fillStyle="#8a94a3";x.beginPath();x.arc((a.x+b.x)/2,(a.y+b.y)/2,5,0,7);x.fill()}
+  act.forEach(f=>{const c=TCOL[f.slot%TCOL.length];x.fillStyle=c+"33";x.strokeStyle=c;x.lineWidth=3;x.beginPath();x.arc(f.x,f.y,34,0,7);x.fill();x.stroke();x.fillStyle=c;x.font="bold 16px sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(f.slot+1,f.x,f.y-50)});
+  if(!act.length&&!tch.ended.length){x.fillStyle="#8a94a3";x.font="15px sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText("用好幾根手指在這裡畫",w/2,h/2-12);x.font="13px sans-serif";x.fillText("兩指可以看縮放與旋轉",w/2,h/2+12)}
+}
+LEAVE.touch=()=>{tch.act.clear();tch.base=null;updTouch()};
+
+/* ---------- 語音辨識 ---------- */
+const sr={r:null,on:false,finals:[],done:new Set(),sess:0};
+const ALIAS={home:["總覽","首頁","主頁"],gyro:["陀螺儀","指南針","滾球"],motion:["動作","計步","搖一搖"],gps:["gps","定位","軌跡","地圖"],camera:["相機","鏡頭","攝影機","照相"],mic:["麥克風","錄音","分貝","收音"],touch:["觸控","手指","觸碰"],speech:["語音辨識","辨識"],tts:["朗讀","唸","念"],orient:["方向","旋轉"],pad:["手把","搖桿","遊戲"],faceid:["faceid","臉部","通行金鑰","驗證"],share:["分享","剪貼簿"],baro:["氣壓"],light:["環境光"],prox:["距離"],lidar:["lidar","光達"],vib:["震動","振動"],torch:["閃光燈","手電筒"],nfc:["nfc"],bt:["藍牙"],bat:["電池"],net:["網路"]};
+function parseCmd(raw){
+  const s=raw.replace(/[\s，。！？、,.!?]/g,"").toLowerCase();
+  if(/拍(一|個|張)*照|拍一張/.test(s))return{k:"photo"};
+  if(/幾點|現在時間/.test(s))return{k:"time"};
+  if(/清除|清空/.test(s))return{k:"clear"};
+  if(/停止|停下|結束聆聽|不要聽/.test(s))return{k:"stop"};
+  if(/切|換|跳|去|到|打開|開啟|進入|看/.test(s)){for(const k in ALIAS)for(const a of ALIAS[k])if(s.includes(a))return{k:"tab",tab:k}}
+  return null;
+}
+function renderFinals(){
+  const el=$("srFinal");el.innerHTML="";
+  if(!sr.finals.length){el.innerHTML='<span style="color:var(--mute)">（還沒有）</span>';return}
+  sr.finals.slice(0,12).forEach(f=>{const d=document.createElement("div");d.className="fin";d.textContent=f.t;if(f.c){const c=document.createElement("div");c.className="c";c.textContent="→ "+f.c;d.append(c)}el.append(d)});
+}
+function speakText(s){if(!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang="zh-TW";const v=pickVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
+function runCmd(c,item){
+  const label={photo:"拍照",time:"報時",clear:"清除",stop:"停止聆聽"}[c.k]||("切到"+TAB[c.tab].n);
+  if(item)item.c=label;log("語音指令："+label);toast("🗣 "+label);
+  if(c.k==="tab"){if(c.tab==="speech")return;show(c.tab)}
+  else if(c.k==="photo"){
+    show("camera");if(cam.mode==="heart")setMode("view");
+    camStart().then(ok=>{if(!ok)return;const v=$("camVideo"),t0=performance.now();const wait=()=>{if(!cam.stream)return;if(v.videoWidth&&performance.now()-t0>700)takePhoto();else if(performance.now()-t0<6000)setTimeout(wait,150)};wait()});
+  }
+  else if(c.k==="time"){const d=new Date(),s=`現在時間 ${d.getHours()} 點 ${d.getMinutes()} 分`;sr.finals.unshift({t:s,c:"🔊 唸出來"});speakText(s)}
+  else if(c.k==="clear"){sr.finals=[];setTimeout(renderFinals,0)}
+  else if(c.k==="stop"){srStop()}
+}
+function srStart(){
+  hideErr("srErr");if(sr.on||sr.r){srStop();return}
+  let r;try{r=new SRC()}catch(e){showErr("srErr","語音辨識啟動失敗："+e.message,[]);return}
+  r.lang="zh-TW";r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+  const sess=++sr.sess;sr.done=new Set();
+  r.onstart=()=>{sr.on=true;setTag("srTag","聆聽中…","ok");$("srBtn").textContent="■ 停止聆聽";$("srBtn").className="btn ghost";log("語音辨識開始")};
+  r.onresult=e=>{
+    let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const res=e.results[i],txt=res[0].transcript;let item=null;
+      if(res.isFinal){item={t:txt.trim()};if(item.t)sr.finals.unshift(item)}else interim+=txt;
+      const c=parseCmd(txt);
+      if(c){const key=sess+":"+i+":"+c.k+(c.tab||"");if(!sr.done.has(key)){sr.done.add(key);runCmd(c,item)}else if(item){item.c="（已執行）"}}
+    }
+    $("srInterim").textContent=interim||"…";renderFinals();
+  };
+  r.onerror=e=>{
+    const c=e.error;log("語音辨識錯誤："+c);
+    if(c==="not-allowed")showErr("srErr","麥克風或語音辨識權限被拒絕",CHROME_IOS?fixSteps("mic"):["點網址列左邊的「大小」按鈕（ᴀA）→「網站設定」→「麥克風」改成「允許」","「設定」→「隱私權與安全性」→「語音辨識」，確認 Safari 是打開的","重新整理後再按一次「開始聽」"]);
+    else if(c==="service-not-allowed")showErr("srErr","系統的語音辨識服務沒有開放給網頁",["「設定」→「一般」→「鍵盤」→ 打開「啟用聽寫」","若有開「螢幕使用時間」，確認沒有限制 Siri 與聽寫","重新整理後再試"]);
+    else if(c==="no-speech")toast("沒聽到聲音，再按一次試試");
+    else if(c==="audio-capture")showErr("srErr","抓不到麥克風",["結束通話或其他正在用麥克風的 App","回到這頁再按一次「開始聽」"]);
+    else if(c==="network")showErr("srErr","語音辨識需要網路",[],"確認有連上網路後再試。");
+    else if(c!=="aborted")showErr("srErr","語音辨識發生錯誤："+c,[]);
+  };
+  r.onend=()=>{if(sr.r===r){sr.r=null;sr.on=false}setTag("srTag","已停止");$("srBtn").textContent="🎙 開始聽（中文）";$("srBtn").className="btn";$("srInterim").textContent="…";log("語音辨識結束")};
+  sr.r=r;try{r.start();setTag("srTag","啟動中…","warn")}catch(e){sr.r=null;showErr("srErr","語音辨識啟動失敗："+e.message,[])}
+}
+function srStop(){const r=sr.r;if(r){try{r.abort()}catch(e){}}}
+LEAVE.speech=()=>srStop();
+
+/* ---------- 語音朗讀 ---------- */
+let voices=[];
+function vScore(v){const l=(v.lang||"").replace("_","-").toLowerCase();return l==="zh-tw"?0:l.startsWith("zh-hant")?0:l==="zh-hk"?1:l.startsWith("zh")||l.startsWith("cmn")||l.startsWith("yue")?2:3}
+function loadVoices(){
+  if(!("speechSynthesis" in window))return;
+  const all=speechSynthesis.getVoices();if(!all.length)return;
+  voices=all.slice().sort((a,b)=>vScore(a)-vScore(b)||a.name.localeCompare(b.name));
+  const sel=$("ttsVoice"),saved=ls.get("sl-voice",null);sel.innerHTML="";
+  const groups=[["中文（台灣）",0],["中文（香港）",1],["中文（其他）",2],["其他語言",3]];
+  groups.forEach(([n,s])=>{const vs=voices.filter(v=>vScore(v)===s);if(!vs.length)return;const g=document.createElement("optgroup");g.label=n;vs.forEach(v=>{const o=document.createElement("option");o.value=v.voiceURI;o.textContent=`${v.name}（${v.lang}）${v.localService===false?" ☁︎":""}`;g.append(o)});sel.append(g)});
+  const zh=voices.filter(v=>vScore(v)<3).length;
+  $("ttsCount").textContent=`（共 ${voices.length} 個，中文 ${zh} 個）`;
+  if(saved&&voices.some(v=>v.voiceURI===saved))sel.value=saved;else if(voices[0])sel.value=voices[0].voiceURI;
+}
+function pickVoice(){const u=$("ttsVoice").value;return voices.find(v=>v.voiceURI===u)||voices[0]||null}
+function ttsSpeak(){
+  const text=$("ttsText").value.trim();if(!text){toast("先輸入文字");return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text),v=pickVoice();
+  if(v){u.voice=v;u.lang=v.lang}else u.lang="zh-TW";
+  u.rate=+$("ttsRate").value;u.pitch=+$("ttsPitch").value;
+  u.onstart=()=>setTag("ttsTag","朗讀中","ok");
+  u.onend=()=>setTag("ttsTag","唸完了");
+  u.onerror=e=>{if(e.error!=="interrupted"&&e.error!=="canceled"){setTag("ttsTag","失敗","bad");log("朗讀錯誤："+e.error)}};
+  u.onboundary=e=>{if(e.charIndex!=null)setTag("ttsTag",`朗讀中 ${Math.min(text.length,e.charIndex+1)}/${text.length}`,"ok")};
+  speechSynthesis.speak(u);log("朗讀："+(v?v.name:"預設聲音"));
+}
+function initTTS(){
+  if(!("speechSynthesis" in window))return;
+  loadVoices();setTimeout(loadVoices,400);setTimeout(loadVoices,1500);setTimeout(()=>{if(!voices.length){$("ttsVoice").innerHTML="<option>（找不到聲音清單，會用系統預設中文）</option>"}},3000);
+  if(speechSynthesis.addEventListener)speechSynthesis.addEventListener("voiceschanged",loadVoices);else speechSynthesis.onvoiceschanged=loadVoices;
+  ["你好，今天過得好嗎？","一二三四五，上山打老虎。","紅鯉魚與綠鯉魚與驢。","The quick brown fox jumps over the lazy dog."].forEach(s=>{const b=document.createElement("button");b.className="chip";b.textContent=s.length>12?s.slice(0,12)+"…":s;b.onclick=()=>{$("ttsText").value=s};$("ttsChips").append(b)});
+  $("ttsVoice").onchange=()=>ls.set("sl-voice",$("ttsVoice").value);
+  $("ttsRate").oninput=()=>$("ttsRateV").textContent=(+$("ttsRate").value).toFixed(1);
+  $("ttsPitch").oninput=()=>$("ttsPitchV").textContent=(+$("ttsPitch").value).toFixed(1);
+  $("ttsPlay").onclick=ttsSpeak;
+  $("ttsPause").onclick=()=>{if(speechSynthesis.paused){speechSynthesis.resume();$("ttsPause").textContent="⏸ 暫停";setTag("ttsTag","朗讀中","ok")}else if(speechSynthesis.speaking){speechSynthesis.pause();$("ttsPause").textContent="▶ 繼續";setTag("ttsTag","暫停","warn")}};
+  $("ttsStop").onclick=()=>{speechSynthesis.cancel();$("ttsPause").textContent="⏸ 暫停";setTag("ttsTag","已停止")};
+}
+LEAVE.tts=()=>{try{speechSynthesis.cancel()}catch(e){}$("ttsPause").textContent="⏸ 暫停";setTag("ttsTag","待命")};
+ENTER.tts=()=>loadVoices();
+
+/* ---------- 螢幕方向 ---------- */
+let orRot=0,orN=0;
+const OR_NAME={"portrait-primary":"直向","portrait-secondary":"直向（倒過來）","landscape-primary":"橫向","landscape-secondary":"橫向（反向）"};
+function readOri(ev){
+  if(ev)orN++;
+  const so=screen.orientation,wo=typeof window.orientation==="number"?window.orientation:null;
+  const type=so?so.type:(wo==null?"?":Math.abs(wo)===90?"landscape":"portrait");
+  const angle=so?so.angle:(wo==null?0:(wo+360)%360);
+  $("orType").textContent=OR_NAME[type]||(type.startsWith("landscape")?"橫向":type.startsWith("portrait")?"直向":type);
+  $("orAng").textContent=angle+"°";$("orWin").textContent=innerWidth+"×"+innerHeight;
+  setTag("orTag",type.startsWith("landscape")?"橫向":"直向","ok");
+  let target=-angle,d=((target-orRot)%360+540)%360-180;orRot+=d;$("phone").style.transform=`rotate(${orRot}deg)`;
+  const rows=[["screen.orientation.type",so?so.type:"（沒有）"],["screen.orientation.angle",so?so.angle+"°":"（沒有）"],["window.orientation（舊）",wo==null?"（沒有）":wo+"°"],["CSS 媒體查詢",matchMedia("(orientation: portrait)").matches?"portrait":"landscape"],["變化事件次數",orN]];
+  $("orRaw").innerHTML=rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${esc(v)}</div>`).join("");
+}
+if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener("change",()=>readOri(1));
+else addEventListener("orientationchange",()=>setTimeout(()=>readOri(1),50));
+addEventListener("resize",()=>{if(cur==="orient")readOri()});
+ENTER.orient=()=>readOri();
+
+/* ---------- 遊戲手把 ---------- */
+const PADN=["A ✕","B ○","X □","Y △","LB","RB","LT","RT","選擇","開始","L3","R3","↑","↓","←","→","首頁","觸控板"];
+let padSig="";
+function getPads(){try{return Array.from(navigator.getGamepads?navigator.getGamepads():[]).filter(Boolean)}catch(e){return[]}}
+function buildPads(pads){
+  $("padEmpty").hidden=pads.length>0;setTag("padTag",pads.length?`已連接 ${pads.length} 個`:"未連接",pads.length?"ok":"");
+  const box=$("pads");box.innerHTML="";
+  pads.forEach(p=>{
+    const d=document.createElement("div");d.className="pad";d.dataset.i=p.index;
+    const h=document.createElement("div");h.className="padName";h.textContent=`#${p.index+1} ${p.id}`+(p.mapping==="standard"?"（標準按鍵配置）":"（非標準配置，按鍵用編號顯示）");d.append(h);
+    if(p.axes.length>=2){const st=document.createElement("div");st.className="sticks";for(let a=0;a+1<p.axes.length&&a<4;a+=2)st.insertAdjacentHTML("beforeend",`<div class="stick"><div class="box"><i></i></div>${a===0?"左搖桿":"右搖桿"}</div>`);d.append(st)}
+    const bg=document.createElement("div");bg.className="pbtns";
+    p.buttons.forEach((b,i)=>{const e=document.createElement("div");e.className="pb";e.innerHTML=`<i></i><span>${esc(p.mapping==="standard"&&PADN[i]?PADN[i]:"B"+i)}</span>`;bg.append(e)});d.append(bg);
+    const axs=document.createElement("div");axs.className="axes";p.axes.forEach((_,i)=>axs.insertAdjacentHTML("beforeend",`<div class="ax"><span>軸 ${i}</span><div class="axbar"><i></i></div><b>0.00</b></div>`));d.append(axs);
+    box.append(d);
+  });
+}
+function padTick(){
+  const pads=getPads(),sig=pads.map(p=>p.index+":"+p.id+":"+p.buttons.length+":"+p.axes.length).join("|");
+  if(sig!==padSig){padSig=sig;buildPads(pads)}
+  pads.forEach(p=>{
+    const d=document.querySelector(`.pad[data-i="${p.index}"]`);if(!d)return;
+    const pb=d.querySelectorAll(".pb");p.buttons.forEach((b,i)=>{const e=pb[i];if(!e)return;const v=typeof b==="object"?b.value:b,pr=typeof b==="object"?b.pressed:b>.5;e.classList.toggle("on",pr);e.firstChild.style.height=(v*100)+"%"});
+    const sk=d.querySelectorAll(".stick i");sk.forEach((e,j)=>{const ax=p.axes[j*2]||0,ay=p.axes[j*2+1]||0;e.style.left=(50+ax*38)+"%";e.style.top=(50+ay*38)+"%"});
+    const rows=d.querySelectorAll(".ax");p.axes.forEach((v,i)=>{const r=rows[i];if(!r)return;const bar=r.querySelector("i");bar.style.left=(50+Math.min(0,v)*50)+"%";bar.style.width=(Math.abs(v)*50)+"%";r.querySelector("b").textContent=v.toFixed(2)});
+  });
+}
+addEventListener("gamepadconnected",e=>{log("手把連接："+e.gamepad.id);toast("🎮 手把已連接");padSig=""});
+addEventListener("gamepaddisconnected",e=>{log("手把斷線："+e.gamepad.id);toast("手把已斷線");padSig=""});
+ENTER.pad=()=>{padSig=""};
+
+/* ---------- Face ID（WebAuthn 通行金鑰示範）---------- */
+const b64u=buf=>{const a=new Uint8Array(buf);let s="";for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")};
+const unb64u=s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+let fidCred=ls.get("sl-cred",null);
+function renderCred(){
+  $("fidHost").textContent=location.hostname||"這個網站";
+  const rows=[["網站（RP ID）",location.hostname||"（本機檔案，無法使用）"],["已建立的憑證",fidCred?fidCred.id.slice(0,12)+"…":"還沒有"],["建立時間",fidCred?new Date(fidCred.t).toLocaleString("zh-TW",{hour12:false}):"–"],["上次驗證",fidCred&&fidCred.last?new Date(fidCred.last).toLocaleString("zh-TW",{hour12:false}):"–"]];
+  $("fidInfo").innerHTML=rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${esc(v)}</div>`).join("");
+  $("fidGo").disabled=!fidCred;$("fidForget").disabled=!fidCred;
+  setTag("fidTag",fidCred?"已有憑證":"示範",fidCred?"ok":"");
+}
+function fidResult(ok,title,sub){const r=$("fidRes");r.hidden=false;r.className="result "+(ok?"pass":"fail");r.innerHTML=esc(title)+(sub?`<small>${esc(sub)}</small>`:"")}
+function fidError(e,act){
+  const n=e&&e.name;log(`Face ID ${act}失敗：${n} ${e&&e.message||""}`);setTag("fidTag",act+"失敗","bad");
+  if(n==="NotAllowedError")showErr("fidErr",`${act}被取消或逾時`,["確認「設定」→「Face ID 與密碼」已經設定好 Face ID（或至少有密碼）","通行金鑰存在 iCloud 鑰匙圈：「設定」→ 你的名字 →「iCloud」→「密碼」（或「密碼與鑰匙圈」）要打開","再按一次，看到 Face ID 提示時看著手機"]);
+  else if(n==="InvalidStateError")showErr("fidErr","這台裝置已經有這個網站的示範金鑰了",[],"直接按「② 用 Face ID 驗證」就好；想重建就先到「密碼」App 刪掉它。");
+  else if(n==="SecurityError")showErr("fidErr","網址不符合通行金鑰的安全要求",[],"要用 https 的正式網址打開（不能用本機檔案或 IP 位址）。");
+  else if(n==="NotSupportedError")showErr("fidErr","這台裝置不支援這種通行金鑰",[]);
+  else showErr("fidErr",`${act}失敗：${(e&&e.message)||n||"未知錯誤"}`,[]);
+  fidResult(false,"❌ "+act+"沒有完成");
+}
+// iOS 要求 create()/get() 直接在點擊事件裡呼叫，中間不能先 await 別的東西
+function fidCreate(){
+  hideErr("fidErr");$("fidRes").hidden=true;
+  let uid=ls.get("sl-uid",null);if(!uid){uid=b64u(rnd(16));ls.set("sl-uid",uid)}
+  const pk={challenge:rnd(32),rp:{name:"感測器實驗室"},user:{id:unb64u(uid),name:"sensor-lab-demo",displayName:"感測器實驗室示範"},
+    pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred",requireResidentKey:false},timeout:60000,attestation:"none"};
+  if(fidCred)pk.excludeCredentials=[{type:"public-key",id:unb64u(fidCred.id),transports:["internal"]}];
+  setTag("fidTag","等待 Face ID…","warn");
+  navigator.credentials.create({publicKey:pk}).then(c=>{
+    fidCred={id:b64u(c.rawId),t:Date.now()};ls.set("sl-cred",fidCred);renderCred();
+    fidResult(true,"✅ 通行金鑰建立好了","接著按「② 用 Face ID 驗證」");log("Face ID：建立憑證 "+fidCred.id.slice(0,12)+"…");
+  }).catch(e=>fidError(e,"建立"));
+}
+function fidVerify(){
+  hideErr("fidErr");$("fidRes").hidden=true;
+  if(!fidCred){toast("先按「① 建立通行金鑰」");return}
+  setTag("fidTag","等待 Face ID…","warn");
+  navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:"public-key",id:unb64u(fidCred.id),transports:["internal"]}],userVerification:"required",timeout:60000}}).then(a=>{
+    const ad=new Uint8Array(a.response.authenticatorData),fl=ad[32],uv=!!(fl&4),cnt=ad.length>=37?new DataView(ad.buffer,ad.byteOffset+33,4).getUint32(0):0;
+    fidCred.last=Date.now();ls.set("sl-cred",fidCred);renderCred();setTag("fidTag","通過","ok");
+    fidResult(uv,uv?"✅ Face ID 驗證通過":"⚠️ 有回應，但沒有做使用者驗證",`系統回報：使用者驗證（UV）${uv?"是":"否"}，簽章計數 ${cnt}。網頁收到的只有這些，沒有臉部資料。`);
+    log("Face ID：驗證"+(uv?"通過":"未含使用者驗證"));
+  }).catch(e=>fidError(e,"驗證"));
+}
+function fidForget(){fidCred=null;ls.del("sl-cred");renderCred();$("fidRes").hidden=true;toast("已忘記；記得到「密碼」App 刪除金鑰")}
+ENTER.faceid=()=>renderCred();
+async function fidDetect(){
+  if(TAB.faceid.st!=="ok")return;
+  try{if(PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable){const ok=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();if(!ok)markUnsup("faceid","這台裝置沒有可用的平台驗證器。請到「設定」→「Face ID 與密碼」設定 Face ID 或密碼；用 iOS 上的其他瀏覽器時，也可能是瀏覽器沒有開放。")}}catch(e){}
+}
+
+/* ---------- 分享與剪貼簿 ---------- */
+function initShare(){
+  setTag("shTag",navigator.share?"可用":"不支援",navigator.share?"ok":"bad");
+  setTag("cbTag",navigator.clipboard?"可用":"部分支援",navigator.clipboard?"ok":"warn");
+  if(!navigator.share){$("shBtn").disabled=true;$("shBtn").textContent="這個瀏覽器沒有分享選單"}
+  if(!(navigator.clipboard&&navigator.clipboard.readText)){$("cbR").disabled=true;$("cbR").textContent="不能讀取"}
+  $("shBtn").onclick=async()=>{
+    hideErr("shErr");const d={title:"感測器實驗室",text:$("shText").value};if($("shUrl").checked)d.url=location.href.split("#")[0];
+    try{await navigator.share(d);log("已打開分享選單並分享");toast("分享完成")}catch(e){if(e.name!=="AbortError"){showErr("shErr","分享失敗："+(e.message||e.name),[]);log("分享失敗："+e.name)}}
+  };
+  $("cbW").onclick=async()=>{
+    hideErr("cbErr");const t=$("cbIn").value;
+    try{if(!navigator.clipboard)throw new Error("no api");await navigator.clipboard.writeText(t);toast("已寫入剪貼簿");log("寫入剪貼簿")}
+    catch(e){const ta=document.createElement("textarea");ta.value=t;ta.style.cssText="position:fixed;opacity:0";document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(_){}ta.remove();if(ok){toast("已寫入剪貼簿（舊方法）")}else showErr("cbErr","寫入剪貼簿失敗",[],"iPhone 只允許在按按鈕的當下寫入，請再按一次。")}
+  };
+  $("cbR").onclick=async()=>{
+    hideErr("cbErr");
+    try{const t=await navigator.clipboard.readText();const o=$("cbOut");o.textContent=t||"（剪貼簿是空的，或內容不是文字）";log("讀取剪貼簿："+t.length+" 字")}
+    catch(e){showErr("cbErr","讀取剪貼簿被拒絕",["按「讀取剪貼簿」後，按鈕旁會跳出「貼上」小泡泡，要點它","如果點到旁邊、泡泡消失了，就再按一次"])}
+  };
+}
+
+/* ---------- 螢幕常亮（全域） ---------- */
 let wake=null,wantWake=false;
+function wakeUI(){const b=$("wakeBtn");b.textContent="💡 常亮："+(wake?"開":"關");b.classList.toggle("on",!!wake);b.setAttribute("aria-pressed",!!wake)}
 async function toggleWake(){
   if(wake){wantWake=false;await wake.release();return}
-  if(!("wakeLock" in navigator)){toast("這個瀏覽器不支援");return}
-  try{wake=await navigator.wakeLock.request("screen");wantWake=true;$("wakeBtn").textContent="螢幕常亮：開";wake.addEventListener("release",()=>{wake=null;$("wakeBtn").textContent="螢幕常亮：關"});log("螢幕常亮已開啟")}
-  catch(e){log("螢幕常亮失敗："+e.message);toast("螢幕常亮失敗")}
+  if(!("wakeLock" in navigator)){toast("這個瀏覽器不支援螢幕常亮");return}
+  try{wake=await navigator.wakeLock.request("screen");wantWake=true;wakeUI();toast("螢幕常亮已開啟");wake.addEventListener("release",()=>{wake=null;wakeUI()});log("螢幕常亮已開啟")}
+  catch(e){log("螢幕常亮失敗："+e.message);toast("螢幕常亮失敗："+(e.name==="NotAllowedError"?"低電量模式下可能不允許":e.message))}
 }
-document.addEventListener("visibilitychange",async()=>{if(document.visibilityState==="visible"&&wantWake&&!wake){try{wake=await navigator.wakeLock.request("screen");$("wakeBtn").textContent="螢幕常亮：開"}catch(e){}}});
+document.addEventListener("visibilitychange",async()=>{
+  if(document.visibilityState==="visible"&&wantWake&&!wake){try{wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>{wake=null;wakeUI()});wakeUI()}catch(e){}}
+  // 切到背景時關掉相機、麥克風、語音辨識
+  if(document.visibilityState==="hidden"){if(cam.stream)camStop("切到背景");if(mic.stream)micStop("切到背景");srStop()}
+});
+addEventListener("online",()=>{const e=$("netNow");if(e)e.textContent="網頁唯一能知道的：目前有連線。"});
+addEventListener("offline",()=>{const e=$("netNow");if(e)e.textContent="網頁唯一能知道的：目前沒有連線。"});
+
+/* ---------- 主迴圈 ---------- */
+let lastT=performance.now(),hzT=performance.now();
+function frame(t){
+  const dt=Math.min(.05,(t-lastT)/1000);lastT=t;
+  if(t-hzT>1000){$("hz").textContent="事件頻率 "+Math.round(evN*1000/(t-hzT))+" Hz";evN=0;hzT=t}
+  if(cur==="gyro"){
+    if(ori.b!=null){
+      $("oB").textContent=(ori.b-zero.b).toFixed(1)+"°";$("oG").textContent=(ori.g-zero.g).toFixed(1)+"°";
+      $("oA").textContent=ori.a!=null?ori.a.toFixed(0)+"°":"–";
+      $("head").textContent=ori.head!=null?"方位 "+ori.head.toFixed(0)+"° "+dirName(ori.head):"方位：此裝置沒有提供";
+    }
+    drawBall(dt);drawCompass();
+  }else if(cur==="motion"){
+    $("accTxt").textContent=`x ${lin.x.toFixed(1)} y ${lin.y.toFixed(1)} z ${lin.z.toFixed(1)}`;
+    $("peak").textContent="最大衝擊 "+peak.toFixed(1)+" m/s²";
+    drawShake();
+  }else if(cur==="camera")camTick(t);
+  else if(cur==="mic")micTick(t);
+  else if(cur==="touch")drawTouch(t);
+  else if(cur==="pad")padTick();
+  requestAnimationFrame(frame);
+}
 
 /* ---------- 綁定 ---------- */
-$("oBtn").onclick=enableMotion;
+$("oBtn").onclick=enableMotion;$("mBtn").onclick=enableMotion;
 $("zeroBtn").onclick=()=>{if(ori.b==null){toast("先啟用感測");return}zero={b:ori.b,g:ori.g};ls.set("sl-zero",zero);ball={x:0,y:0,vx:0,vy:0};toast("已歸零")};
 $("resetBtn").onclick=()=>{stats={shake:0,steps:0,flip:0};peak=0;save();$("dAir").textContent="–";$("dHigh").textContent="–";toast("已歸零")};
 $("gBtn").onclick=startGPS;$("gStop").onclick=stopGPS;
 $("gpxBtn").onclick=exportGPX;
 $("gClear").onclick=()=>{pts=[];ls.set("sl-track",pts);updTrackInfo();drawTrack();toast("已清除")};
-$("wakeBtn").onclick=toggleWake;
+$("wakeBtn").onclick=toggleWake;if(!("wakeLock" in navigator)){$("wakeBtn").disabled=true;$("wakeBtn").textContent="💡 不支援常亮"}
+$("logClear").onclick=()=>{$("log").textContent=""};
+$("camBtn").onclick=()=>{cam.stream?camStop():camStart()};
+$("flipBtn").onclick=camFlip;$("shotBtn").onclick=takePhoto;$("torchBtn").onclick=()=>setTorch(!cam.torch);
+document.querySelectorAll("#camSeg button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+$("qrCopy").onclick=()=>{const t=cam.qrLast;if(!t){toast("還沒掃到");return}(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("已複製"),()=>toast("複製失敗"))};
+$("micBtn").onclick=()=>{mic.stream?micStop():micStart()};$("recBtn").onclick=recToggle;
+$("srBtn").onclick=srStart;
+$("fidNew").onclick=fidCreate;$("fidGo").onclick=fidVerify;$("fidForget").onclick=fidForget;
 
-diag();save();fitAll();updTrackInfo();requestAnimationFrame(frame);log("頁面載入完成");
+/* ---------- 啟動 ---------- */
+buildTabs();checkNeeds();renderTiles();diag();save();updTrackInfo();initTouch();initTTS();initShare();renderCred();updMicBtns();updCamBtns();
+if("BarcodeDetector" in window){
+  $("qrSeg").hidden=false;
+  try{if(BarcodeDetector.getSupportedFormats)BarcodeDetector.getSupportedFormats().then(f=>{if(!f.includes("qr_code"))$("qrSeg").hidden=true}).catch(()=>{})}catch(e){}
+}
+{const h=location.hash.slice(1);show(TAB[h]?h:ls.get("sl-tab","home"))}
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TAB[h])show(h)});
+fidDetect();
+requestAnimationFrame(frame);log("頁面載入完成");
 </script>
 </body>
 </html>
