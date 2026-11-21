@@ -4,20 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f1216">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="感測器">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <title>感測器實驗室</title>
 <style>
 :root{--bg:#0f1216;--card:#181c22;--line:#2a3039;--ink:#e8ecf1;--mute:#8a94a3;--acc:#5fd1b3;--warn:#f0b35a;--bad:#ef6b6b;--ff:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;--px:max(14px,env(safe-area-inset-left));--pxr:max(14px,env(safe-area-inset-right))}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--ff);padding:12px var(--pxr) calc(48px + env(safe-area-inset-bottom)) var(--px);max-width:640px;margin:0 auto;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
-.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:env(safe-area-inset-top)}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--ff);padding:calc(12px + env(safe-area-inset-top)) var(--pxr) calc(48px + env(safe-area-inset-bottom)) var(--px);max-width:640px;margin:0 auto;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+/* 主畫面 App（black-translucent）時內容會跑到狀態列底下：用固定色塊蓋住狀態列，分頁列黏在它下面 */
+#sbar{position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top);background:var(--bg);z-index:40}
 h1{font-size:22px;margin:2px 0}
 .lead{color:var(--mute);font-size:13px;margin:0 0 4px}
 .pill{flex:0 0 auto;border:1px solid var(--line);background:#181c22;color:var(--ink);font:600 14px/1 var(--ff);padding:10px 12px;border-radius:99px;min-height:40px}
 .pill.on{background:#16352d;border-color:var(--acc);color:var(--acc)}
 .pill:disabled{opacity:.45}
 /* 分頁列 */
-#tabbar{position:sticky;top:0;z-index:20;margin:6px calc(-1 * var(--pxr)) 12px calc(-1 * var(--px));padding:calc(6px + env(safe-area-inset-top)) 0 8px;background:rgba(15,18,22,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+#tabbar{position:sticky;top:env(safe-area-inset-top);z-index:20;margin:6px calc(-1 * var(--pxr)) 12px calc(-1 * var(--px));padding:6px 0 8px;background:rgba(15,18,22,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 #tabs{position:relative;display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;padding:0 var(--pxr) 0 var(--px);scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 26px),transparent)}
 #tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;min-width:62px;min-height:56px;padding:6px 8px 5px;border-radius:12px;border:1px solid transparent;background:#181c22;color:var(--ink);font:500 13px/1.2 var(--ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
@@ -148,9 +157,43 @@ video.mirror{transform:scaleX(-1)}
 .result{text-align:center;padding:16px;border-radius:12px;margin-top:10px;font-size:18px;font-weight:700}
 .result.pass{background:#16352d;color:var(--acc)}.result.fail{background:#3a1c1c;color:var(--bad)}
 .result small{display:block;font-size:13px;font-weight:500;color:var(--mute);margin-top:4px}
+/* 相機疊圖（濾鏡、骨架）：大小跟著影片實際顯示範圍，不走 fit() */
+canvas.ov{position:absolute;background:transparent;border-radius:0;pointer-events:none}
+canvas.ov.mirror{transform:scaleX(-1)}
+.ovtag{position:absolute;top:8px;left:8px;background:rgba(15,18,22,.75);color:var(--ink);font:600 12px var(--ff);padding:4px 8px;border-radius:99px;pointer-events:none}
+.cheer{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) scale(.6);font:700 28px var(--ff);color:#fff;background:rgba(95,209,179,.85);padding:10px 18px;border-radius:16px;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.cheer.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.chip.on{background:#16352d;border-color:var(--acc);color:var(--acc)}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#11151a;border-radius:10px;padding:8px 12px;margin-top:10px;min-height:52px}
+.tog .t{font-size:15px}.tog .t small{display:block;font-size:12px;color:var(--mute)}
+.sw{position:relative;width:52px;height:32px;flex:0 0 auto;border-radius:99px;border:0;background:#2a313b;transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#e8ecf1;transition:.2s}
+.sw.on{background:var(--acc)}.sw.on::after{left:23px}
+/* 停用區塊 */
+.dis{opacity:.5;pointer-events:none}
+.disnote{font-size:13px;color:var(--warn);margin-top:8px}
+/* 折疊說明 */
+details{background:#11151a;border-radius:10px;margin-top:10px}
+details summary{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--acc);font-size:14px;font-weight:600;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸";margin-right:8px;transition:.2s}
+details[open] summary::before{transform:rotate(90deg)}
+details ol{padding:0 14px 12px 34px;font-size:14px;color:var(--ink)}details li{margin:6px 0}
+details li b{color:var(--warn)}
+.scname{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--mute);margin-top:6px}
+.scname code{font:600 14px var(--ff);color:var(--ink);background:#222831;padding:3px 8px;border-radius:6px}
+.hist{margin-top:8px}.hrow{padding:8px 0;border-bottom:1px solid #222831;font-size:14px}.hrow:last-child{border:0}
+.hrow .m{font-size:12px;color:var(--mute)}.hrow .r{word-break:break-all;-webkit-user-select:text;user-select:text}
+.hrow.bad .r{color:var(--bad)}.hrow.warn .r{color:var(--warn)}
+input[type=number]{width:100%;background:#11151a;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:16px var(--ff);-webkit-user-select:text;user-select:text}
+.urlbox{font:13px/1.4 ui-monospace,Menlo,monospace;word-break:break-all}
+/* 更新提示 */
+#upd{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:45;border:0;background:var(--warn);color:#2b1c05;font:700 15px var(--ff);padding:12px 18px;border-radius:99px;box-shadow:0 6px 24px rgba(0,0,0,.5);white-space:nowrap}
 </style>
 </head>
 <body>
+<div id="sbar"></div>
+<button id="upd" hidden>🔄 有新版本，點我更新</button>
 <header class="top">
   <div>
     <h1>感測器實驗室</h1>
@@ -257,11 +300,17 @@ video.mirror{transform:scaleX(-1)}
       <button data-m="heart">❤️ 測心跳</button>
       <button data-m="qr" id="qrSeg" hidden>🔳 掃 QR</button>
     </div>
-    <div class="vwrap"><video id="camVideo" playsinline muted autoplay></video><div class="flash" id="flash"></div><div class="vph" id="camPh">按下「開啟相機」</div></div>
+    <div class="vwrap" id="vwrap"><video id="camVideo" playsinline muted autoplay></video><canvas class="ov" id="fxCv" hidden></canvas><canvas class="ov" id="poseCv" hidden></canvas><div class="ovtag" id="poseTag" hidden></div><div class="cheer" id="cheer">🙌 舉雙手！</div><div class="flash" id="flash"></div><div class="vph" id="camPh">按下「開啟相機」</div></div>
     <div class="btns"><button class="btn" id="camBtn">開啟相機</button><button class="btn ghost" id="flipBtn">🔄 前／後鏡頭</button></div>
     <div class="btns"><button class="btn ghost" id="shotBtn" disabled>📸 拍照</button><button class="btn ghost" id="torchBtn" hidden>🔦 閃光燈：關</button></div>
     <div class="err" id="camErr" hidden></div>
 
+    <div id="camFx">
+      <div class="sub">濾鏡（拍照也會套用）</div>
+      <div class="chips" id="fxChips" style="margin-top:0"></div>
+      <div class="tog"><div class="t">🦴 骨架偵測<small id="poseSub">MediaPipe 姿勢模型，第一次開要下載約 6 MB</small></div><button class="sw" id="poseSw" aria-label="骨架偵測開關"></button></div>
+      <div class="err" id="poseErr" hidden></div>
+    </div>
     <div id="camView">
       <div class="nums two" style="margin-top:12px">
         <div class="num"><div class="l">畫面平均亮度</div><div class="x" id="camLum">–</div><div class="meter"><i id="camLumBar"></i></div></div>
@@ -457,6 +506,115 @@ video.mirror{transform:scaleX(-1)}
   </div>
 </section>
 
+<!-- 主畫面 App -->
+<section class="panel" data-k="pwa">
+  <div class="card">
+    <h2>主畫面 App <span class="tag" id="pwaTag">–</span></h2>
+    <div class="diag" id="pwaInfo"></div>
+    <div class="btns"><button class="btn ghost" id="pwaCheck">檢查更新</button><button class="btn ghost" id="pwaReset">清快取並重新載入</button></div>
+    <p class="hint">這頁每次開都會先上網抓最新版（網路優先），只有離線時才用快取，所以不會卡在舊版。若右下角跳出「有新版本」，點一下就換新。</p>
+  </div>
+  <div class="card" id="a2hsCard">
+    <h2>加入主畫面</h2>
+    <div id="a2hsYes" class="info" hidden>✅ 你現在就是從主畫面打開的，可以玩下面的通知和 App 標記。</div>
+    <div id="a2hsNo">
+      <div class="sub" style="margin-top:0">用 Safari</div>
+      <ol class="cmds">
+        <li>點下方工具列中間的「<b>分享</b>」按鈕（方框加向上箭頭）。網址列在上方或是精簡版時，先點網址旁的「⋯」再點「分享」。</li>
+        <li>往下滑，點「<b>加入主畫面</b>」。</li>
+        <li>名稱可以改，按右上角「<b>加入</b>」。</li>
+        <li>回到主畫面，點新的「感測器」圖示打開。</li>
+      </ol>
+      <div class="sub">用 iOS 上的 Chrome（iOS 16.4 以上）</div>
+      <ol class="cmds">
+        <li>點網址列右邊的「<b>分享</b>」按鈕（方框加向上箭頭）。</li>
+        <li>點「<b>加入主畫面</b>」，再按「加入」。</li>
+        <li>從主畫面的圖示打開，就會是全螢幕的 App 模式。</li>
+      </ol>
+      <p class="hint">注意：主畫面 App 跟 Safari 的資料是分開存的（軌跡、紀錄、Face ID 示範憑證都不共用）。</p>
+    </div>
+  </div>
+  <div class="card" id="notiCard">
+    <h2>通知 <span class="tag" id="notiTag">–</span></h2>
+    <div id="notiBody">
+      <button class="btn" id="notiAsk">允許通知</button>
+      <button class="btn ghost" id="notiNow">🔔 立即通知</button>
+      <label class="f">幾秒後通知</label>
+      <div class="btns" style="align-items:center"><input type="number" id="notiSec" min="1" max="3600" value="10" inputmode="numeric" style="flex:1"><button class="btn ghost" id="notiLater" style="flex:1.4">⏱ 稍後通知</button></div>
+      <div class="row" id="notiCount"></div>
+    </div>
+    <div class="disnote" id="notiWhy" hidden></div>
+    <div class="err" id="notiErr" hidden></div>
+    <p class="hint">「稍後通知」是用頁面裡的計時器做的：<b>App 開著才會準時跳</b>，關掉 App 或切到背景太久，iOS 會暫停網頁，通知就不會出現。真正「App 沒開也收得到」的遠端推播需要一台伺服器幫忙送（Web Push），GitHub Pages 只能放靜態檔案做不到；以後可以把推播伺服器架在 NAS 上，這頁的 Service Worker 已經預留好接收推播的程式。</p>
+  </div>
+  <div class="card" id="badgeCard">
+    <h2>App 圖示數字 <span class="tag" id="badgeTag">–</span></h2>
+    <div id="badgeBody">
+      <label class="f" style="margin-top:0">要顯示的數字</label>
+      <input type="number" id="badgeNum" min="0" value="7" inputmode="numeric">
+      <div class="btns"><button class="btn" id="badgeSet">設定數字</button><button class="btn ghost" id="badgeClr">清除</button></div>
+      <button class="btn ghost" id="badgeSteps">👣 設成今天步數</button>
+      <div class="row" id="badgeSrc"></div>
+    </div>
+    <div class="disnote" id="badgeWhy" hidden></div>
+    <p class="hint">iPhone 上要從主畫面打開、而且<b>允許通知</b>後，圖示右上角的紅色數字才會出現。</p>
+  </div>
+</section>
+
+<!-- 捷徑 -->
+<section class="panel" data-k="shortcuts">
+  <div class="card">
+    <h2>捷徑橋接 <span class="tag" id="scTag">–</span></h2>
+    <p style="font-size:15px">網頁拿不到的東西（手電筒、電池、Wi‑Fi、健康資料…），可以請 iOS 的「捷徑」App 代勞：網頁開啟捷徑 → 捷徑做事 → 把結果帶回這頁。</p>
+    <div class="info">
+      <b>使用前先知道：</b>
+      <ol class="cmds" style="margin-top:4px;font-size:14px">
+        <li>每次從網頁開捷徑，iOS 都會先問「要打開捷徑嗎」，按「打開」。</li>
+        <li>捷徑跑完會<b>重新打開這頁</b>，結果從網址帶回來，所以會自動切回這個分頁。</li>
+        <li>請在 <b>Safari</b> 裡用這個分頁：捷徑一定會開回預設瀏覽器，主畫面 App 收不到結果。</li>
+        <li>下面每個按鈕都要先在捷徑 App 建一個<b>名稱完全一樣</b>的捷徑（展開說明照著做）。</li>
+      </ol>
+    </div>
+  </div>
+  <div class="card">
+    <h2>最近結果 <button class="mini" id="scClear">清除紀錄</button></h2>
+    <div class="out sel" id="scLast"><span style="color:var(--mute)">（還沒有）</span></div>
+    <div class="hist" id="scHist"></div>
+  </div>
+  <div id="scCards"></div>
+  <div class="card">
+    <h2>💳 NFC 貼紙 <span class="tag" id="nfcTag">0 次</span></h2>
+    <p style="font-size:15px">捷徑沒辦法隨時讀 NFC，但可以用「自動化」：手機碰到某張 NFC 貼紙時，自動打開這頁並帶上貼紙名稱，這頁就會記一筆。</p>
+    <label class="f">貼紙名稱（例如 書桌、門口、床頭）</label>
+    <input type="text" id="nfcName" value="書桌">
+    <div class="sub">要貼進捷徑的網址</div>
+    <div class="out sel urlbox" id="nfcUrl"></div>
+    <button class="btn ghost" id="nfcCopy">複製網址</button>
+    <details>
+      <summary>怎麼設定 NFC 自動化</summary>
+      <ol>
+        <li>打開「捷徑」App，點下方「<b>自動化</b>」，再點右上角「＋」（第一次會是「新增個人自動化」）。</li>
+        <li>選「<b>NFC</b>」，點「掃描」，把 iPhone 頂端靠近 NFC 貼紙，取一個名字（跟上面填的一樣比較好記）。</li>
+        <li>選「<b>立即執行</b>」（iOS 16 以前是關掉「執行前先詢問」），按「下一步」。</li>
+        <li>選「新增空白自動化」，加入「<b>打開 URL</b>」動作，把上面複製的網址貼進去。</li>
+        <li>完成。之後手機碰那張貼紙，就會打開這頁並自動記一筆碰觸紀錄。</li>
+      </ol>
+    </details>
+    <div class="sub">碰觸紀錄</div>
+    <div class="hist" id="nfcLog"></div>
+    <p class="hint">需要 iPhone XS 以後的機型，以及一般的 NFC 貼紙（NTAG213/215 這類，網路上很便宜）。</p>
+  </div>
+  <div class="card">
+    <h2>🧪 自己的捷徑</h2>
+    <label class="f" style="margin-top:0">捷徑名稱（一字不差）</label>
+    <input type="text" id="scCustomName" placeholder="例如：我的捷徑">
+    <label class="f">要傳進去的文字（可空白）</label>
+    <input type="text" id="scCustomText" placeholder="捷徑輸入">
+    <button class="btn" id="scCustomRun">▶ 執行</button>
+    <p class="hint">捷徑最後用「停止並輸出」輸出文字，結果就會出現在上面的「最近結果」。</p>
+  </div>
+</section>
+
 </main>
 <div id="toast"></div>
 
@@ -520,19 +678,21 @@ const TABS=[
   {k:"orient",i:"🔄",n:"方向",need:()=>!!(screen.orientation||"orientation" in window)||"這個瀏覽器沒有 screen.orientation（iOS 16.4 以上的 Safari 才有）。"},
   {k:"pad",i:"🎮",n:"手把",need:()=>"getGamepads" in navigator||"這個瀏覽器沒有 Gamepad API。"},
   {k:"faceid",i:"🔐",n:"Face ID",need:()=>(!!window.PublicKeyCredential&&!!navigator.credentials)||(window.isSecureContext?"這個瀏覽器沒有 WebAuthn（通行金鑰）。":"不是 HTTPS 安全連線，通行金鑰只能在 HTTPS 網站使用。")},
-  {k:"share",i:"📤",n:"分享",need:()=>!!(navigator.share||navigator.clipboard)||"這個瀏覽器沒有分享選單，也沒有剪貼簿 API。"}
+  {k:"share",i:"📤",n:"分享",need:()=>!!(navigator.share||navigator.clipboard)||"這個瀏覽器沒有分享選單，也沒有剪貼簿 API。"},
+  {k:"pwa",i:"📲",n:"主畫面 App"},
+  {k:"shortcuts",i:"⚡",n:"捷徑"}
 ];
 const OFF=[
   {k:"baro",i:"🌡️",n:"氣壓計",hw:"iPhone 6 之後都有氣壓計，「健康」App 的爬樓層數、海拔變化就是靠它。",web:"Safari 沒有任何讀氣壓的網頁 API（W3C 也還沒有這個標準）。",app:"原生 App 用 Core Motion 的 CMAltimeter 就能讀到氣壓與相對高度。",det:()=>false},
   {k:"light",i:"🔆",n:"環境光",hw:"螢幕上方有環境光感測器，「自動亮度」和原彩顯示都靠它。",web:"W3C 有 Ambient Light Sensor 草案，但 Safari 沒有實作。",app:"這顆連一般原生 App 也沒有公開 API，只有經 Apple 核准的研究用 SensorKit 拿得到。",det:()=>"AmbientLightSensor" in window},
   {k:"prox",i:"📏",n:"距離感測",hw:"講電話時把手機貼到耳朵，螢幕自動關掉，就是距離感測器。",web:"網頁沒有對應的 API（以前的 Proximity 事件已被各家瀏覽器拿掉）。",app:"原生 App 打開 UIDevice 的 isProximityMonitoringEnabled 就能知道有沒有東西靠近。",det:()=>"ProximitySensor" in window},
   {k:"lidar",i:"📡",n:"LiDAR",hw:"Pro 系列 iPhone 的後鏡頭旁有 LiDAR，可以量深度、做 3D 掃描。",web:"iPhone 的 Safari 沒有開放 WebXR 深度資料，網頁拿不到。",app:"原生 App 用 ARKit 的 sceneDepth 或 AVFoundation 的深度資料就拿得到。",det:()=>false},
-  {k:"vib",i:"📳",n:"震動",hw:"iPhone 有 Taptic Engine，按鍵回饋、通知震動都是它。",web:"Safari 沒有實作 navigator.vibrate()（Android 的 Chrome 有）。",app:"原生 App 用 UIFeedbackGenerator 或 Core Haptics 可以做出各種觸感。",det:()=>"vibrate" in navigator},
-  {k:"torch",i:"🔦",n:"閃光燈",hw:"後鏡頭旁的 LED，也就是控制中心的手電筒。",web:"iPhone 的 Safari 不讓網頁開閃光燈（相機的 torch 設定沒有開放）。相機分頁開鏡頭時會再偵測一次，哪天支援了會自動出現開關。",app:"原生 App 用 AVCaptureDevice 的 torchMode 就能開關手電筒。",det:()=>false},
-  {k:"nfc",i:"💳",n:"NFC",hw:"iPhone 有 NFC，Apple Pay、悠遊卡感應都用它。",web:"Web NFC 只有 Android 的 Chrome 有，Safari 沒有。",app:"原生 App 用 Core NFC 可以讀寫 NFC 標籤。",det:()=>"NDEFReader" in window},
+  {k:"vib",via:1,i:"📳",n:"震動",hw:"iPhone 有 Taptic Engine，按鍵回饋、通知震動都是它。",web:"Safari 沒有實作 navigator.vibrate()（Android 的 Chrome 有）。",app:"原生 App 用 UIFeedbackGenerator 或 Core Haptics 可以做出各種觸感。",det:()=>"vibrate" in navigator},
+  {k:"torch",via:1,i:"🔦",n:"閃光燈",hw:"後鏡頭旁的 LED，也就是控制中心的手電筒。",web:"iPhone 的 Safari 不讓網頁開閃光燈（相機的 torch 設定沒有開放）。相機分頁開鏡頭時會再偵測一次，哪天支援了會自動出現開關。",app:"原生 App 用 AVCaptureDevice 的 torchMode 就能開關手電筒。",det:()=>false},
+  {k:"nfc",via:1,i:"💳",n:"NFC",hw:"iPhone 有 NFC，Apple Pay、悠遊卡感應都用它。",web:"Web NFC 只有 Android 的 Chrome 有，Safari 沒有。",app:"原生 App 用 Core NFC 可以讀寫 NFC 標籤。",det:()=>"NDEFReader" in window},
   {k:"bt",i:"🔵",n:"藍牙裝置",hw:"iPhone 當然有藍牙。",web:"Safari 不支援 Web Bluetooth（Apple 以隱私與指紋追蹤疑慮拒絕實作）。遊戲手把是例外：它是先由系統配對，再透過 Gamepad API 給網頁用。",app:"原生 App 用 Core Bluetooth 可以掃描、連線 BLE 裝置。",det:()=>"bluetooth" in navigator},
-  {k:"bat",i:"🔋",n:"電池",hw:"電量和是否在充電，系統當然知道。",web:"Safari 不支援 Battery Status API（這個 API 曾被拿來追蹤使用者）。",app:"原生 App 用 UIDevice 的 batteryLevel、batteryState 就能讀。",det:()=>"getBattery" in navigator},
-  {k:"net",i:"🌐",n:"網路狀態",hw:"系統知道你現在用 Wi-Fi 還是行動網路、訊號多強。",web:"Safari 不支援 Network Information API（navigator.connection），網頁只能用 navigator.onLine 知道「有沒有連線」。",app:"原生 App 用 Network 框架的 NWPathMonitor 可以知道連線類型、是不是計量網路。",det:()=>"connection" in navigator}
+  {k:"bat",via:1,i:"🔋",n:"電池",hw:"電量和是否在充電，系統當然知道。",web:"Safari 不支援 Battery Status API（這個 API 曾被拿來追蹤使用者）。",app:"原生 App 用 UIDevice 的 batteryLevel、batteryState 就能讀。",det:()=>"getBattery" in navigator},
+  {k:"net",via:1,i:"🌐",n:"網路狀態",hw:"系統知道你現在用 Wi-Fi 還是行動網路、訊號多強。",web:"Safari 不支援 Network Information API（navigator.connection），網頁只能用 navigator.onLine 知道「有沒有連線」。",app:"原生 App 用 Network 框架的 NWPathMonitor 可以知道連線類型、是不是計量網路。",det:()=>"connection" in navigator}
 ];
 OFF.forEach(o=>{o.st="off";TABS.push(o)});
 const TAB={};TABS.forEach(t=>{TAB[t.k]=t;if(!t.st)t.st="ok"});
@@ -553,6 +713,7 @@ function buildTabs(){
     let d="";try{if(o.det())d="附註：你現在用的瀏覽器其實有這個 API（大概不是 iPhone 的 Safari），但這頁以 iPhone 為主，沒有實作。"}catch(e){}
     if(o.k==="net")d=`網頁唯一能知道的：目前${navigator.onLine?"有連線":"沒有連線"}。`+(d?" "+d:"");
     c.querySelector(".det").textContent=d;if(o.k==="net")c.querySelector(".det").id="netNow";
+    if(o.via){const v=document.createElement("button");v.className="btn";v.textContent="⚡ 可以透過「捷徑」分頁繞路使用";v.onclick=()=>show("shortcuts");c.append(v)}
     p.append(c);$("panels").append(p);
   });
 }
@@ -582,7 +743,7 @@ function renderTiles(){
 function fit(c){if(!c.dataset.h)c.dataset.h=c.getAttribute("height");const r=window.devicePixelRatio||1,w=c.clientWidth,h=+c.dataset.h;c.width=Math.round(w*r);c.height=Math.round(h*r);c.style.height=h+"px";const x=c.getContext("2d");x.setTransform(r,0,0,r,0,0);return{x,w,h}}
 const CV={};
 // 隱藏分頁裡的 canvas 寬度是 0，略過；切到該分頁時再 fit
-function fitIn(root){if(!root)return;root.querySelectorAll("canvas").forEach(c=>{if(c.clientWidth>0)CV[c.id]=fit(c)});drawTrack();drawHeart()}
+function fitIn(root){if(!root)return;root.querySelectorAll("canvas:not(.ov)").forEach(c=>{if(c.clientWidth>0)CV[c.id]=fit(c)});drawTrack();drawHeart()}
 let lastW=0;function fitAll(){lastW=document.documentElement.clientWidth;fitIn(document.querySelector(".panel.on"))}
 // 手機捲動時網址列伸縮也會觸發 resize，只有寬度真的變了才重算
 addEventListener("resize",()=>{if(document.documentElement.clientWidth!==lastW)fitAll()});
@@ -838,7 +999,7 @@ async function camStart(){
     const s=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:cam.facing},width:{ideal:1280},height:{ideal:720}}});
     if(tok!==cam.tok||cur!=="camera"){s.getTracks().forEach(t=>t.stop());return false}
     cam.stream=s;cam.track=s.getVideoTracks()[0];
-    const v=$("camVideo");v.srcObject=s;v.classList.toggle("mirror",cam.facing==="user");
+    const v=$("camVideo");v.srcObject=s;v.classList.toggle("mirror",cam.facing==="user");ovMirror();ovKey="";
     try{await v.play()}catch(e){}
     setTag("camTag",cam.facing==="user"?"前鏡頭":"後鏡頭","ok");
     updCamBtns();checkTorch();log("相機開啟："+(cam.track.label||cam.facing));
@@ -852,7 +1013,7 @@ async function camStart(){
 function camStop(why){
   cam.tok++;hrStop();
   if(cam.stream){cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null;cam.track=null;log("相機已關閉"+(why?"（"+why+"）":""))}
-  $("camVideo").srcObject=null;setTag("camTag",why||"已關閉");$("camPh").textContent=why?`相機已關閉（${why}），要用請再按「開啟相機」`:"按下「開啟相機」";
+  $("camVideo").srcObject=null;ovHide();setTag("camTag",why||"已關閉");$("camPh").textContent=why?`相機已關閉（${why}），要用請再按「開啟相機」`:"按下「開啟相機」";
   cam.torchOK=false;cam.torch=false;$("torchBtn").hidden=true;updCamBtns();
 }
 async function camFlip(){
@@ -873,7 +1034,8 @@ function setMode(m){
   if(m===cam.mode)return;
   const was=cam.mode;cam.mode=m;
   document.querySelectorAll("#camSeg button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
-  $("camView").hidden=m==="heart";$("hrBox").hidden=m!=="heart";$("qrBox").hidden=m!=="qr";
+  $("camView").hidden=m==="heart";$("hrBox").hidden=m!=="heart";$("qrBox").hidden=m!=="qr";$("camFx").hidden=m==="heart";
+  if(m==="heart")ovHide();
   if(was==="heart"){hrStop()}
   if(m==="heart"){
     fitIn($("hrBox"));
@@ -908,10 +1070,14 @@ function camTick(t){
     cam.qrDet.detect(v).then(rs=>{if(rs&&rs.length){const s=rs[0].rawValue;if(s!==cam.qrLast){cam.qrLast=s;$("qrOut").textContent=s;log("掃到 QR："+s.slice(0,60));toast("掃到 QR Code");const isUrl=/^https?:\/\//i.test(s);$("qrOpen").hidden=!isUrl;if(isUrl)$("qrOpen").href=s}}}).catch(()=>{}).finally(()=>{cam.qrBusy=false});
   }
   if(cam.mode==="heart"&&hr.on){if(!hr.rv)hrSample(t);if(t-hr.lastCalc>500)hrCalc(t);drawHeart()}
+  if(cam.mode!=="heart")fxPoseTick(t,v);
 }
 function takePhoto(){
   const v=$("camVideo");if(!cam.stream||!v.videoWidth){toast("先開相機");return}
-  const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);
+  const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;
+  const x=c.getContext("2d",{willReadFrequently:true});
+  // 拍照時套用目前的濾鏡；骨架開著就一起畫上去（照片本身不鏡像）
+  if(cam.mode!=="heart"){applyFx(x,v,c.width,c.height,cam.fx);if(pose.on&&pose.lm)drawSkeleton(x,pose.lm,c.width,c.height,Math.max(3,c.width/200))}else x.drawImage(v,0,0);
   const f=$("flash");f.classList.add("on");setTimeout(()=>f.classList.remove("on"),60);
   c.toBlob(b=>{if(!b){toast("拍照失敗");return}const name="photo-"+stamp()+".jpg";cam.photos.unshift({b,url:URL.createObjectURL(b),name});
     while(cam.photos.length>8){URL.revokeObjectURL(cam.photos.pop().url)}renderPhotos();log(`拍照 ${c.width}×${c.height}`);toast("📸 已拍下")},"image/jpeg",.92);
@@ -929,6 +1095,139 @@ function renderPhotos(){
   });
 }
 LEAVE.camera=()=>camStop();
+
+/* 濾鏡與骨架：疊在影片上的 canvas。大小直接跟著影片實際顯示的範圍（object-fit: contain 算出來），
+   不走 fit()/data-h，也不讀 canvas.height 回推，所以不會有越拉越長的問題。 */
+const FX=[["none","原始"],["gray","黑白"],["retro","復古"],["invert","負片"],["pixel","像素化"]];
+cam.fx=ls.get("sl-fx","none");if(!FX.some(f=>f[0]===cam.fx))cam.fx="none";cam.lastFx=0;
+const fxc=$("fxCv"),fxx=fxc.getContext("2d",{willReadFrequently:true});
+const pxTmp=document.createElement("canvas"),pxx=pxTmp.getContext("2d");
+let ovKey="";
+function ovMirror(){const m=cam.facing==="user";fxc.classList.toggle("mirror",m);$("poseCv").classList.toggle("mirror",m)}
+function ovHide(){fxc.hidden=true;$("poseCv").hidden=true;$("poseTag").hidden=true;$("cheer").classList.remove("on");ovKey=""}
+function layoutOv(){
+  const v=$("camVideo"),vw=v.videoWidth,vh=v.videoHeight;if(!vw||!vh)return false;
+  const cw=v.clientWidth,ch=v.clientHeight;if(!cw||!ch)return false;
+  const s=Math.min(cw/vw,ch/vh),w=vw*s,h=vh*s,l=v.offsetLeft+(cw-w)/2,tp=v.offsetTop+(ch-h)/2;
+  const key=[vw,vh,cw,ch,Math.round(l),Math.round(tp)].join(",");
+  if(key!==ovKey){
+    ovKey=key;
+    [fxc,$("poseCv")].forEach(c=>{c.style.left=l+"px";c.style.top=tp+"px";c.style.width=w+"px";c.style.height=h+"px"});
+    // 濾鏡用縮小的解析度處理（最寬 480），顯示時再放大，iPhone 上才跑得順
+    const pw=Math.min(480,vw);fxc.width=pw;fxc.height=Math.round(pw*vh/vw);
+    const r=Math.min(2,window.devicePixelRatio||1),pc=$("poseCv");pc.width=Math.round(w*r);pc.height=Math.round(h*r);
+  }
+  return true;
+}
+// 不用 ctx.filter（舊版 Safari 不支援），直接處理像素
+function applyFx(ctx,src,w,h,f){
+  if(f==="pixel"){
+    const b=Math.max(4,Math.round(w/48)),tw=Math.ceil(w/b),th=Math.ceil(h/b);
+    if(pxTmp.width!==tw||pxTmp.height!==th){pxTmp.width=tw;pxTmp.height=th}
+    pxx.drawImage(src,0,0,tw,th);ctx.imageSmoothingEnabled=false;ctx.drawImage(pxTmp,0,0,tw,th,0,0,w,h);ctx.imageSmoothingEnabled=true;return;
+  }
+  ctx.drawImage(src,0,0,w,h);
+  if(f==="none")return;
+  const im=ctx.getImageData(0,0,w,h),d=im.data,n=d.length;
+  if(f==="gray"){for(let i=0;i<n;i+=4){const y=d[i]*.299+d[i+1]*.587+d[i+2]*.114;d[i]=d[i+1]=d[i+2]=y}}
+  else if(f==="invert"){for(let i=0;i<n;i+=4){d[i]=255-d[i];d[i+1]=255-d[i+1];d[i+2]=255-d[i+2]}}
+  else if(f==="retro"){
+    const cx=w/2,cy=h/2,md=cx*cx+cy*cy;
+    for(let y=0,i=0;y<h;y++){const dy=(y-cy)*(y-cy);for(let x=0;x<w;x++,i+=4){
+      const r=d[i],g=d[i+1],b=d[i+2],v=1-.5*((x-cx)*(x-cx)+dy)/md;
+      d[i]=(r*.393+g*.769+b*.189)*v*.95+14;d[i+1]=(r*.349+g*.686+b*.168)*v*.9+10;d[i+2]=(r*.272+g*.534+b*.131)*v*.8+4;
+    }}
+  }
+  ctx.putImageData(im,0,0);
+}
+function renderFx(){
+  const el=$("fxChips");el.innerHTML="";
+  FX.forEach(([k,n])=>{const b=document.createElement("button");b.className="chip"+(cam.fx===k?" on":"");b.textContent=n;b.onclick=()=>{cam.fx=k;ls.set("sl-fx",k);renderFx()};el.append(b)});
+}
+function fxPoseTick(t,v){
+  const on=cam.fx!=="none";
+  if(fxc.hidden===on)fxc.hidden=!on;
+  const pc=$("poseCv");if(pc.hidden===pose.on)pc.hidden=!pose.on;
+  if(!on&&!pose.on)return;
+  if(!layoutOv())return;
+  if(on&&t-cam.lastFx>=30){cam.lastFx=t;applyFx(fxx,v,fxc.width,fxc.height,cam.fx)}
+  if(pose.on&&pose.det&&!pose.recover)poseTick(t,v);
+}
+
+/* 骨架偵測：MediaPipe Tasks Vision PoseLandmarker（按開關才從 CDN 載入）*/
+const MP_VER="1.2.3",MP_BASE=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
+const POSE_MODEL="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const POSE_LINKS=[[0,1],[1,2],[2,3],[3,7],[0,4],[4,5],[5,6],[6,8],[9,10],[11,12],[11,13],[13,15],[15,17],[15,19],[15,21],[17,19],[12,14],[14,16],[16,18],[16,20],[16,22],[18,20],[11,23],[12,24],[23,24],[23,25],[24,26],[25,27],[26,28],[27,29],[28,30],[29,31],[30,32],[27,31],[28,32]];
+const pose={on:false,loading:false,recover:false,det:null,vision:null,fileset:null,delegate:"",lm:null,lastTs:0,lastRun:0,n:0,fpsT:0,fps:0,cheerT:0,up:false,small:document.createElement("canvas")};
+const poseMsg=m=>{$("poseSub").textContent=m};
+function poseCreate(delegate){
+  return pose.vision.PoseLandmarker.createFromOptions(pose.fileset,{baseOptions:{modelAssetPath:POSE_MODEL,delegate},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
+}
+function poseLoadErr(m){
+  showErr("poseErr","骨架模型載入失敗",["確認有連上網路（要連到 cdn.jsdelivr.net 和 storage.googleapis.com）","如果有裝廣告／內容阻擋器，先對這個網站關掉","重新整理頁面後再開一次"],"錯誤訊息："+String(m).slice(0,160));
+}
+async function poseLoad(){
+  if(pose.det)return true;if(pose.loading)return false;
+  pose.loading=true;hideErr("poseErr");
+  try{
+    poseMsg("① 載入 MediaPipe 程式庫…");
+    if(!pose.vision)pose.vision=await import(MP_BASE+"/vision_bundle.mjs");
+    poseMsg("② 載入 WebAssembly…");
+    if(!pose.fileset)pose.fileset=await pose.vision.FilesetResolver.forVisionTasks(MP_BASE+"/wasm");
+    poseMsg("③ 下載模型（約 6 MB），用 GPU 初始化…");
+    try{pose.det=await poseCreate("GPU");pose.delegate="GPU"}
+    catch(e){log("骨架 GPU 失敗，改用 CPU："+((e&&e.message)||e));poseMsg("③ GPU 不行，改用 CPU 初始化…");pose.det=await poseCreate("CPU");pose.delegate="CPU"}
+    poseMsg(`已載入（${pose.delegate}）・退後一點讓上半身入鏡，舉雙手試試`);log("骨架模型載入完成："+pose.delegate);
+    return true;
+  }catch(e){
+    const m=(e&&e.message)||String(e);log("骨架模型載入失敗："+m);poseLoadErr(m);
+    poseMsg("MediaPipe 姿勢模型，第一次開要下載約 6 MB");return false;
+  }finally{pose.loading=false}
+}
+async function poseToggle(){
+  if(pose.on||pose.loading){if(pose.loading)return;pose.on=false;$("poseSw").classList.remove("on");pose.lm=null;$("poseCv").hidden=true;$("poseTag").hidden=true;return}
+  $("poseSw").classList.add("on");
+  const ok=await poseLoad();
+  if(!ok){$("poseSw").classList.remove("on");return}
+  pose.on=true;pose.fpsT=performance.now();pose.n=0;pose.fps=0;
+  if(!cam.stream)toast("骨架已就緒，按「開啟相機」");
+}
+async function poseFail(e){
+  if(pose.recover)return;pose.recover=true;
+  const m=(e&&e.message)||String(e);log("骨架偵測錯誤："+m);
+  try{pose.det&&pose.det.close()}catch(_){}pose.det=null;
+  if(pose.delegate==="GPU"){
+    poseMsg("GPU 出錯，改用 CPU…");
+    try{pose.det=await poseCreate("CPU");pose.delegate="CPU";poseMsg("已改用 CPU")}catch(e2){pose.on=false;$("poseSw").classList.remove("on");poseLoadErr((e2&&e2.message)||e2)}
+  }else{pose.on=false;$("poseSw").classList.remove("on");poseLoadErr(m)}
+  pose.recover=false;
+}
+function poseTick(t,v){
+  if(t-pose.lastRun<40)return; // 最多約 25 次／秒
+  pose.lastRun=t;
+  // 先縮小再丟給模型（模型本身只看 256×256），減少每格上傳到 GPU 的量
+  const sm=pose.small,sw=Math.min(360,v.videoWidth),sh=Math.round(sw*v.videoHeight/v.videoWidth);
+  if(sm.width!==sw||sm.height!==sh){sm.width=sw;sm.height=sh}
+  sm.getContext("2d").drawImage(v,0,0,sw,sh);
+  let ts=performance.now();if(ts<=pose.lastTs)ts=pose.lastTs+1;pose.lastTs=ts;
+  let res;try{res=pose.det.detectForVideo(sm,ts)}catch(e){poseFail(e);return}
+  pose.lm=(res&&res.landmarks&&res.landmarks[0])||null;
+  pose.n++;if(t-pose.fpsT>1000){pose.fps=pose.n*1000/(t-pose.fpsT);pose.n=0;pose.fpsT=t}
+  const c=$("poseCv"),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);
+  if(pose.lm)drawSkeleton(x,pose.lm,c.width,c.height,Math.max(2,c.width/200));
+  const tg=$("poseTag");tg.hidden=false;tg.textContent=`🦴 ${pose.fps.toFixed(0)} FPS · ${pose.delegate}`+(pose.lm?"":" · 沒看到人");
+  // 小趣味：兩手腕都高過鼻子就算「舉雙手」
+  const lm=pose.lm,vis=p=>p&&(p.visibility==null||p.visibility>.5);
+  const up=!!(lm&&vis(lm[0])&&vis(lm[15])&&vis(lm[16])&&lm[15].y<lm[0].y&&lm[16].y<lm[0].y);
+  if(up&&!pose.up&&t-pose.cheerT>1500){pose.cheerT=t;const ch=$("cheer");ch.classList.add("on");setTimeout(()=>ch.classList.remove("on"),1200);log("骨架：舉雙手！")}
+  pose.up=up;
+}
+function drawSkeleton(x,lm,W,H,s){
+  const vis=p=>p&&(p.visibility==null||p.visibility>.5);
+  x.lineWidth=s*1.6;x.lineCap="round";
+  POSE_LINKS.forEach(([a,b])=>{const p=lm[a],q=lm[b];if(!vis(p)||!vis(q))return;x.strokeStyle=(a%2&&b%2)?"#5fd1b3":(a%2||b%2)?"#e8ecf1":"#f0b35a";x.beginPath();x.moveTo(p.x*W,p.y*H);x.lineTo(q.x*W,q.y*H);x.stroke()});
+  lm.forEach((p,i)=>{if(!vis(p))return;x.fillStyle=i<11?"#ffffff":i%2?"#5fd1b3":"#f0b35a";x.beginPath();x.arc(p.x*W,p.y*H,s*2.2,0,7);x.fill()});
+}
 
 /* 測心跳（PPG）：手指蓋住鏡頭，紅色亮度會隨每次心跳的血量起伏 */
 const hr={on:false,S:[],hist:[],lastCalc:0,wave:null,rv:false,gen:0};
@@ -1394,10 +1693,215 @@ async function toggleWake(){
 document.addEventListener("visibilitychange",async()=>{
   if(document.visibilityState==="visible"&&wantWake&&!wake){try{wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>{wake=null;wakeUI()});wakeUI()}catch(e){}}
   // 切到背景時關掉相機、麥克風、語音辨識
+  if(document.visibilityState==="visible"&&pwa.reg)pwa.reg.update().catch(()=>{});
   if(document.visibilityState==="hidden"){if(cam.stream)camStop("切到背景");if(mic.stream)micStop("切到背景");srStop()}
 });
 addEventListener("online",()=>{const e=$("netNow");if(e)e.textContent="網頁唯一能知道的：目前有連線。"});
 addEventListener("offline",()=>{const e=$("netNow");if(e)e.textContent="網頁唯一能知道的：目前沒有連線。"});
+
+/* ---------- 主畫面 App（PWA）---------- */
+const APP_VERSION="sl-2026.11.21-2"; // 改版時跟 sw.js 的 VERSION 一起改
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true;
+const dispMode=()=>["fullscreen","standalone","minimal-ui","browser"].find(m=>matchMedia(`(display-mode: ${m})`).matches)||"browser";
+const pwa={reg:null,sw:"檢查中…",cacheVer:"–",waiting:null,updating:false,later:[]};
+function swVersion(){
+  const c=navigator.serviceWorker&&navigator.serviceWorker.controller;
+  if(!c){pwa.cacheVer="（這次載入還沒由 SW 接手，重新整理後就有）";renderPwa();return}
+  const ch=new MessageChannel();ch.port1.onmessage=e=>{pwa.cacheVer=(e.data&&e.data.version)||"?";renderPwa()};c.postMessage({type:"version"},[ch.port2]);
+}
+function showUpd(w){pwa.waiting=w;$("upd").hidden=false;pwa.sw="有新版待更新";renderPwa();log("偵測到新版本")}
+async function swInit(){
+  if(!("serviceWorker" in navigator)){pwa.sw="這個瀏覽器不支援";renderPwa();return}
+  if(!/^https?:$/.test(location.protocol)){pwa.sw="本機檔案無法註冊";renderPwa();return}
+  try{
+    const reg=await navigator.serviceWorker.register("sw.js",{scope:"./"});pwa.reg=reg;
+    pwa.sw=reg.active?"啟用中":"安裝中…";
+    if(reg.waiting&&navigator.serviceWorker.controller)showUpd(reg.waiting);
+    reg.addEventListener("updatefound",()=>{const w=reg.installing;if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)showUpd(w)})});
+    navigator.serviceWorker.ready.then(()=>{if(pwa.sw==="安裝中…")pwa.sw="啟用中";renderPwa();setTimeout(swVersion,300)});
+  }catch(e){pwa.sw="註冊失敗："+e.message;log("Service Worker 註冊失敗："+e.message)}
+  renderPwa();
+}
+if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(pwa.updating){pwa.updating=false;location.reload()}else swVersion()});
+function notiAvail(){
+  const st=isStandalone();
+  if(!("Notification" in window))return IOS&&!st?"iPhone 上要先「加入主畫面」，再從主畫面的圖示打開，才能用通知（iOS 16.4 以上）。":"這個瀏覽器沒有通知 API。";
+  if(IOS&&!st)return"iPhone 上要從主畫面的圖示打開才能用通知。";
+  if(!("serviceWorker" in navigator)||!/^https?:$/.test(location.protocol))return"需要 Service Worker（正式的 https 網址），本機檔案不能用通知。";
+  return true;
+}
+function badgeAvail(){
+  const st=isStandalone();
+  if(!("setAppBadge" in navigator))return IOS&&!st?"iPhone 上要從主畫面的圖示打開，才有 App 圖示數字（iOS 16.4 以上）。":"這個瀏覽器不支援 App 圖示數字（Badging API）。";
+  if(IOS&&!st)return"iPhone 上要從主畫面的圖示打開才有 App 圖示數字。";
+  return true;
+}
+const notiPerm=()=>"Notification" in window?({granted:"已允許",denied:"已拒絕",default:"還沒問過"}[Notification.permission]||Notification.permission):"不支援";
+function renderPwa(){
+  const st=isStandalone();
+  const rows=[["開啟方式",st?"主畫面 App":"瀏覽器分頁"],["display-mode",dispMode()],["navigator.standalone",navigator.standalone===undefined?"（沒有）":String(navigator.standalone)],["Service Worker",pwa.sw],["快取版本",pwa.cacheVer],["頁面版本",APP_VERSION],["通知權限",notiPerm()],["App 圖示數字","setAppBadge" in navigator?"有 API":"沒有 API"]];
+  $("pwaInfo").innerHTML=rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${esc(v)}</div>`).join("");
+  setTag("pwaTag",st?"主畫面 App":"瀏覽器分頁",st?"ok":"");
+  $("a2hsYes").hidden=!st;$("a2hsNo").hidden=st;
+  const n=notiAvail();$("notiBody").classList.toggle("dis",n!==true);$("notiWhy").hidden=n===true;$("notiWhy").textContent=n===true?"":"⚠️ "+n;
+  setTag("notiTag",n!==true?"不能用":notiPerm(),n!==true?"":Notification.permission==="granted"?"ok":Notification.permission==="denied"?"bad":"warn");
+  if(n===true&&Notification.permission==="granted")$("notiAsk").hidden=true;
+  const b=badgeAvail();$("badgeBody").classList.toggle("dis",b!==true);$("badgeWhy").hidden=b===true;$("badgeWhy").textContent=b===true?"":"⚠️ "+b;
+  setTag("badgeTag",b===true?"可以用":"不能用",b===true?"ok":"");
+  const s=todaySteps();$("badgeSrc").textContent=`今天步數 ${s.n}（來源：${s.src}）`;
+}
+function notiDenied(){showErr("notiErr","通知被拒絕了",["打開 iPhone「設定」→「通知」","找到「感測器」，打開「允許通知」","回到 App 再試一次"])}
+async function askNoti(){
+  hideErr("notiErr");
+  try{const p=await Notification.requestPermission();log("通知權限："+p);if(p==="denied")notiDenied();else if(p==="granted")toast("已允許通知")}catch(e){showErr("notiErr","要求通知權限失敗："+e.message,[])}
+  renderPwa();
+}
+async function notify(body){
+  hideErr("notiErr");
+  if(Notification.permission!=="granted"){const p=await Notification.requestPermission();renderPwa();if(p!=="granted"){notiDenied();return}}
+  try{
+    const reg=pwa.reg||await navigator.serviceWorker.getRegistration();if(!reg)throw new Error("Service Worker 還沒準備好");
+    await reg.showNotification("感測器實驗室",{body,icon:"icons/icon-192.png",badge:"icons/icon-192.png",tag:"sl-"+Date.now(),data:{url:"./#pwa"}});
+    log("送出通知："+body);
+  }catch(e){showErr("notiErr","通知送不出去："+e.message,[]);log("通知失敗："+e.message)}
+}
+function notifyLater(){
+  const sec=Math.max(1,Math.min(3600,Math.round(+$("notiSec").value||10)));
+  if(Notification.permission!=="granted"){askNoti().then(()=>{if(Notification.permission==="granted")notifyLater()});return}
+  const due=Date.now()+sec*1000;pwa.later.push(due);
+  setTimeout(()=>{pwa.later=pwa.later.filter(d=>d!==due);notify(`⏱ ${sec} 秒到了！`)},sec*1000);
+  toast(`${sec} 秒後通知，App 要開著`);log(`排定 ${sec} 秒後通知`);
+}
+function laterTick(){
+  const el=$("notiCount");if(!el)return;const now=Date.now(),L=pwa.later.filter(d=>d>now);
+  el.textContent=L.length?`等待中：${L.map(d=>Math.ceil((d-now)/1000)+" 秒").join("、")}`:"";
+}
+function sameDay(t){const a=new Date(t),b=new Date();return a.toDateString()===b.toDateString()}
+function todaySteps(){const h=ls.get("sl-health",null);if(h&&h.steps!=null&&sameDay(h.t))return{n:h.steps,src:"健康 App（經由捷徑）"};return{n:stats.steps,src:"🏃 動作分頁的計步"}}
+async function setBadge(n){
+  if(badgeAvail()!==true){toast("目前不能設定 App 圖示數字");return}
+  n=Math.max(0,Math.round(n||0));
+  try{await navigator.setAppBadge(n);toast(n?`App 圖示數字設成 ${n}`:"已清除數字");log("App 圖示數字："+n);
+    if(IOS&&"Notification" in window&&Notification.permission!=="granted")toast("還要先允許通知，數字才會出現")}
+  catch(e){toast("設定失敗："+e.message);log("setAppBadge 失敗："+e.message)}
+}
+ENTER.pwa=()=>{renderPwa();swVersion()};
+
+/* ---------- 捷徑橋接 ---------- */
+const SC_END="加入「<b>停止並輸出</b>」動作，輸出選上一步的「文字」（若出現「如果沒有輸出」，選「不做任何事」），按「完成」。";
+const SC_START=n=>[`打開「捷徑」App，在「捷徑」頁點右上角「＋」。`,`點最上方的名稱，改成「<b>${n}</b>」（一個字都不能差）。`];
+const SCS=[
+  {k:"torch",i:"🔦",n:"手電筒",name:"實驗室手電筒",btns:[["💡 開","開"],["🌑 關","關"]],steps:[
+    "加入「<b>如果</b>」動作：第一格選「捷徑輸入」，條件選「是」，文字填「開」。（找不到「捷徑輸入」的話：點下方 ⓘ，打開「在分享表單中顯示」，編輯畫面最上方會出現「接收…輸入」，類型留「文字」，就能選到了。）",
+    "在「如果」裡面加「<b>設定手電筒</b>」，設成「開啟」；在「否則」裡面再加一個「設定手電筒」，設成「關閉」。",
+    "在「結束如果」下面加「<b>文字</b>」動作，輸入「手電筒：」，再插入變數「捷徑輸入」。"]},
+  {k:"battery",i:"🔋",n:"電池",name:"實驗室電池",steps:[
+    "加入「<b>取得電池電量</b>」。","加入「<b>是否正在充電</b>」（iOS 16.2 以後才有，沒有就略過）。",
+    "加入「<b>文字</b>」：輸入「電量 」插入變數「電池電量」，再輸入「%，充電中：」插入變數「是否正在充電」。"]},
+  {k:"vibrate",i:"📳",n:"震動",name:"實驗室震動",steps:[
+    "加入「<b>震動裝置</b>」。","加入「<b>文字</b>」，輸入「已震動」。"],note:"「設定」→「聲音與觸覺」裡關掉震動時，可能不會震。"},
+  {k:"network",i:"🌐",n:"網路狀態",name:"實驗室網路",steps:[
+    "加入「<b>取得網路詳細資訊</b>」，網路選「Wi‑Fi」，項目選「網路名稱」。",
+    "再加一個「取得網路詳細資訊」，選「行動網路」→「電信業者名稱」。","再加一個，選「行動網路」→「無線電技術」。",
+    "加入「<b>文字</b>」：輸入「Wi‑Fi：」插入「網路名稱」，再輸入「，行動網路：」插入「電信業者名稱」和「無線電技術」。"]},
+  {k:"device",i:"📱",n:"裝置資訊",name:"實驗室裝置資訊",steps:[
+    "加入「<b>取得裝置詳細資訊</b>」，選「裝置型號」。","再加三個「取得裝置詳細資訊」，分別選「系統版本」「螢幕亮度」「目前音量」。",
+    "加入「<b>文字</b>」：「型號 」[裝置型號]「，iOS 」[系統版本]「，亮度 」[螢幕亮度]「，音量 」[目前音量]（方括號是插入變數）。"],note:"亮度和音量是 0 到 1 的小數。"},
+  {k:"health",i:"❤️",n:"健康資料",name:"實驗室健康",steps:[
+    "加入「<b>尋找健康樣本</b>」：條件「類型 是 步數」，點「新增過濾條件」再加「開始日期 是 今天」。",
+    "加入「<b>計算統計資料</b>」，選「總和」，輸入選上一步的「健康樣本」。",
+    "再加一個「尋找健康樣本」：條件「類型 是 心率」，排序方式「開始日期」，順序「最新優先」，打開「限制」設 1 個。",
+    "加入「<b>文字</b>」：輸入「步數 」插入「統計資料」，再輸入「，心率 」插入第二個「健康樣本」。"],note:"第一次執行時會問要不要讓捷徑讀取健康資料，選允許。步數會同步到「📲 主畫面 App」分頁，可以拿來設 App 圖示數字。"}
+];
+const SC_BASE=()=>location.origin+location.pathname;
+function scUrl(key,name,text){
+  const cb=s=>`${SC_BASE()}?sc=${encodeURIComponent(key)}&cb=${s}#shortcuts`;
+  let u="shortcuts://x-callback-url/run-shortcut?name="+encodeURIComponent(name);
+  if(text!=null&&text!=="")u+="&input=text&text="+encodeURIComponent(text);
+  return u+"&x-success="+encodeURIComponent(cb("success"))+"&x-cancel="+encodeURIComponent(cb("cancel"))+"&x-error="+encodeURIComponent(cb("error"));
+}
+function runSC(key,name,text){
+  if(!name){toast("先填捷徑名稱");return}
+  if(!IOS)toast("這需要 iPhone 的「捷徑」App");
+  ls.set("sl-sc-pending",{sc:key,name,t:Date.now()});log(`開啟捷徑「${name}」`);
+  location.href=scUrl(key,name,text);
+}
+function copyText(t,msg){
+  const done=()=>toast(msg||"已複製");
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
+  function fallback(){const ta=document.createElement("textarea");ta.value=t;ta.style.cssText="position:fixed;opacity:0";document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(_){}ta.remove();ok?done():toast("複製失敗，請手動選取")}
+}
+function buildSc(){
+  const box=$("scCards");box.innerHTML="";
+  SCS.forEach(sc=>{
+    const c=document.createElement("div");c.className="card";
+    c.innerHTML=`<h2>${sc.i} ${esc(sc.n)}</h2><div class="scname"><span>捷徑名稱 <code></code></span><button class="mini">複製名稱</button></div><div class="btns"></div><div class="row" id="scr-${sc.k}"></div>`;
+    c.querySelector("code").textContent=sc.name;c.querySelector(".mini").onclick=()=>copyText(sc.name,"已複製捷徑名稱");
+    const bs=c.querySelector(".btns");
+    (sc.btns||[["▶ 執行",""]]).forEach(([l,v])=>{const b=document.createElement("button");b.className="btn";b.textContent=l;b.onclick=()=>runSC(sc.k,sc.name,v);bs.append(b)});
+    const d=document.createElement("details");
+    d.innerHTML=`<summary>怎麼在捷徑 App 建立「${esc(sc.name)}」</summary><ol>${SC_START(sc.name).concat(sc.steps,[SC_END]).map(s=>`<li>${s}</li>`).join("")}</ol>`+(sc.note?`<p class="hint" style="padding:0 14px 12px">${esc(sc.note)}</p>`:"");
+    c.append(d);box.append(c);
+  });
+}
+function fmtT(t){return new Date(t).toLocaleString("zh-TW",{hour12:false,month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})}
+function renderSc(){
+  setTag("scTag",IOS?"iPhone":"需要 iPhone",IOS?"ok":"warn");
+  const L=ls.get("sl-sc-hist",[]);
+  const last=$("scLast");
+  if(L.length){const e=L[0];last.textContent="";const m=document.createElement("div");m.style.cssText="font-size:13px;color:var(--mute)";m.textContent=`${e.name} · ${fmtT(e.t)} · ${{success:"成功",cancel:"已取消",error:"失敗"}[e.st]||e.st}`;const r=document.createElement("div");r.textContent=e.text;r.style.color=e.st==="success"?"var(--ink)":e.st==="cancel"?"var(--warn)":"var(--bad)";last.append(m,r)}
+  else last.innerHTML='<span style="color:var(--mute)">（還沒有）</span>';
+  const h=$("scHist");h.innerHTML="";
+  L.slice(1,15).forEach(e=>{const d=document.createElement("div");d.className="hrow"+(e.st==="error"?" bad":e.st==="cancel"?" warn":"");d.innerHTML='<div class="m"></div><div class="r"></div>';d.querySelector(".m").textContent=`${e.name} · ${fmtT(e.t)}`;d.querySelector(".r").textContent=e.text;h.append(d)});
+  SCS.forEach(sc=>{const el=$("scr-"+sc.k);if(!el)return;const e=L.find(x=>x.k===sc.k);el.textContent=e?`上次（${fmtT(e.t)}）：${e.text}`:"還沒執行過"});
+  // NFC
+  const N=ls.get("sl-nfc",[]);setTag("nfcTag",N.length+" 次",N.length?"ok":"");
+  const nl=$("nfcLog");nl.innerHTML="";
+  if(!N.length)nl.innerHTML='<div class="empty">還沒有碰觸紀錄</div>';
+  else{const cnt={};N.forEach(e=>cnt[e.tag]=(cnt[e.tag]||0)+1);const s=document.createElement("div");s.className="row big";s.textContent=Object.entries(cnt).map(([k,v])=>`${k} ×${v}`).join("　");nl.append(s);
+    N.slice(0,20).forEach(e=>{const d=document.createElement("div");d.className="hrow";d.innerHTML='<div class="r"></div><div class="m"></div>';d.querySelector(".r").textContent="📇 "+e.tag;d.querySelector(".m").textContent=fmtT(e.t);nl.append(d)})}
+  $("nfcUrl").textContent=nfcUrl();
+}
+const nfcUrl=()=>`${SC_BASE()}?nfc=${encodeURIComponent($("nfcName").value.trim()||"貼紙")}#shortcuts`;
+function parseHealth(txt){
+  const n=s=>s==null?null:Math.round(parseFloat(String(s).replace(/,/g,"")));
+  const st=txt.match(/步數\D*([\d,.]+)/),hr=txt.match(/心率\D*([\d.]+)/);
+  if(st||hr){ls.set("sl-health",{steps:st?n(st[1]):null,hr:hr?n(hr[1]):null,t:Date.now()});log("健康資料：步數 "+(st?n(st[1]):"–")+"，心率 "+(hr?n(hr[1]):"–"))}
+}
+// 解析網址上的回呼參數：捷徑可能把 result 接在 ?query 後面，也可能接在 #hash 後面，兩種都處理
+function readCallback(){
+  const q={};
+  new URLSearchParams(location.search).forEach((v,k)=>{q[k]=v});
+  let h=location.hash.slice(1);const i=h.search(/[?&]/);
+  if(i>=0){new URLSearchParams(h.slice(i+1)).forEach((v,k)=>{if(!(k in q))q[k]=v});h=h.slice(0,i)}
+  // 有些 App 會直接在既有網址後面再接「?result=」，造成值裡夾著第二個 ?
+  Object.keys(q).forEach(k=>{if(k==="result"||k==="errorMessage")return;const v=q[k],j=v.indexOf("?");if(j>=0&&/^[\w-]+=/.test(v.slice(j+1))){q[k]=v.slice(0,j);new URLSearchParams(v.slice(j+1)).forEach((vv,kk)=>{if(!(kk in q))q[kk]=vv})}});
+  try{h=decodeURIComponent(h)}catch(e){}
+  return{q,tab:h};
+}
+function handleCallback(){
+  const {q,tab}=readCallback();
+  const isSc=("result" in q)||("cb" in q)||("errorMessage" in q)||("sc" in q),isNfc="nfc" in q;
+  if(!isSc&&!isNfc)return tab;
+  if(isNfc){
+    const tag=(q.nfc||"貼紙").slice(0,40),L=ls.get("sl-nfc",[]);
+    L.unshift({tag,t:Date.now()});ls.set("sl-nfc",L.slice(0,300));log("NFC 貼紙："+tag);toast(`📇 碰到 NFC「${tag}」`);
+  }
+  if(isSc){
+    const pend=ls.get("sl-sc-pending",null),key=q.sc||(pend&&pend.sc)||"custom",def=SCS.find(s=>s.k===key);
+    const name=def?def.name:(pend&&pend.name)||"自訂捷徑";
+    const st=q.cb||(q.errorMessage!=null?"error":"success");
+    const text=st==="success"?((q.result!=null&&q.result!=="")?q.result:"（捷徑沒有輸出文字）"):st==="cancel"?"已取消":"錯誤："+(q.errorMessage||"捷徑執行失敗，名稱打對了嗎？");
+    const L=ls.get("sl-sc-hist",[]);L.unshift({k:key,name,st,text:text.slice(0,2000),t:Date.now()});ls.set("sl-sc-hist",L.slice(0,40));
+    if(key==="health"&&st==="success")parseHealth(q.result||"");
+    ls.del("sl-sc-pending");log(`捷徑「${name}」回來了：${st}`);
+    toast(st==="success"?`⚡ ${name}：完成`:st==="cancel"?`⚡ ${name}：已取消`:`⚡ ${name}：失敗`);
+  }
+  // 清掉網址上的參數，重新整理才不會重複記錄
+  try{history.replaceState(null,"",location.pathname+"#shortcuts")}catch(e){}
+  return"shortcuts";
+}
+ENTER.shortcuts=()=>renderSc();
 
 /* ---------- 主迴圈 ---------- */
 let lastT=performance.now(),hzT=performance.now();
@@ -1438,16 +1942,26 @@ $("qrCopy").onclick=()=>{const t=cam.qrLast;if(!t){toast("還沒掃到");return}
 $("micBtn").onclick=()=>{mic.stream?micStop():micStart()};$("recBtn").onclick=recToggle;
 $("srBtn").onclick=srStart;
 $("fidNew").onclick=fidCreate;$("fidGo").onclick=fidVerify;$("fidForget").onclick=fidForget;
+$("poseSw").onclick=poseToggle;
+$("upd").onclick=()=>{if(pwa.waiting){pwa.updating=true;pwa.waiting.postMessage({type:"skip"});$("upd").textContent="更新中…";setTimeout(()=>location.reload(),3000)}else location.reload()};
+$("pwaCheck").onclick=async()=>{if(!pwa.reg){toast("Service Worker 還沒註冊");return}try{await pwa.reg.update();setTimeout(()=>{if(!pwa.waiting&&!(pwa.reg&&pwa.reg.installing))toast("已經是最新版")},1500)}catch(e){toast("檢查失敗："+e.message)}};
+$("pwaReset").onclick=async()=>{if(!confirm("清掉這頁的離線快取並重新載入？（軌跡、紀錄等資料不會被刪）"))return;try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith("sl-")).map(k=>caches.delete(k)))}if(pwa.reg)await pwa.reg.unregister()}catch(e){}location.reload()};
+$("notiAsk").onclick=askNoti;$("notiNow").onclick=()=>notify("這是一則立即通知 🔔");$("notiLater").onclick=notifyLater;
+$("badgeSet").onclick=()=>setBadge(+$("badgeNum").value);$("badgeClr").onclick=()=>{if(badgeAvail()!==true){toast("目前不能設定");return}navigator.clearAppBadge().then(()=>toast("已清除數字")).catch(e=>toast("清除失敗："+e.message))};
+$("badgeSteps").onclick=()=>{const s=todaySteps();$("badgeNum").value=s.n;setBadge(s.n)};
+$("scClear").onclick=()=>{ls.del("sl-sc-hist");renderSc();toast("已清除")};
+$("nfcName").oninput=()=>{$("nfcUrl").textContent=nfcUrl()};$("nfcCopy").onclick=()=>copyText(nfcUrl(),"已複製網址");
+$("scCustomRun").onclick=()=>runSC("custom",$("scCustomName").value.trim(),$("scCustomText").value);
 
 /* ---------- 啟動 ---------- */
-buildTabs();checkNeeds();renderTiles();diag();save();updTrackInfo();initTouch();initTTS();initShare();renderCred();updMicBtns();updCamBtns();
+buildTabs();checkNeeds();renderTiles();renderFx();buildSc();renderSc();renderPwa();setInterval(laterTick,1000);diag();save();updTrackInfo();initTouch();initTTS();initShare();renderCred();updMicBtns();updCamBtns();
 if("BarcodeDetector" in window){
   $("qrSeg").hidden=false;
   try{if(BarcodeDetector.getSupportedFormats)BarcodeDetector.getSupportedFormats().then(f=>{if(!f.includes("qr_code"))$("qrSeg").hidden=true}).catch(()=>{})}catch(e){}
 }
-{const h=location.hash.slice(1);show(TAB[h]?h:ls.get("sl-tab","home"))}
-addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TAB[h])show(h)});
-fidDetect();
+{const h=handleCallback();show(TAB[h]?h:ls.get("sl-tab","home"))}
+addEventListener("hashchange",()=>{const h=handleCallback();if(TAB[h])show(h);if(cur==="shortcuts")renderSc()});
+fidDetect();swInit();
 requestAnimationFrame(frame);log("頁面載入完成");
 </script>
 </body>
