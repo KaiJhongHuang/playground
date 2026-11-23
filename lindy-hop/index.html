@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lindy Hop 資源入口 · Lindy Hop Resource Hub</title>
+<meta name="description" content="全球 Lindy Hop / Swing 舞網路資源入口：台灣社群、線上教學、影片、歷史、音樂、活動行事曆。A curated gateway to Lindy Hop resources worldwide.">
+<style>
+:root{
+  --bg:#f6efe2; --paper:#fffaf0; --ink:#1d1a16; --muted:#6b6257; --line:#e0d5c0;
+  --accent:#c2410c; --accent-ink:#fff; --chip:#efe5d2; --shadow:0 1px 2px rgba(60,40,10,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#15120f; --paper:#1f1b17; --ink:#f1e9dc; --muted:#a3988a; --line:#352e26;
+    --accent:#f59e0b; --accent-ink:#1d1a16; --chip:#2a251f; --shadow:none; }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header.hero{padding:28px 0 14px}
+.back{font-size:.85rem;color:var(--muted);text-decoration:none}
+.hero h1{font-family:Georgia,"Times New Roman","Noto Serif TC",serif;font-size:clamp(2rem,7vw,3.2rem);line-height:1.1;margin-top:10px;letter-spacing:-.01em}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero p{margin-top:10px;color:var(--muted);max-width:44em;font-size:1rem}
+.bar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0 8px}
+.row{display:flex;gap:8px;align-items:center}
+#q{flex:1;min-width:0;font-size:16px;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none}
+#q:focus{border-color:var(--accent)}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:none}
+.lang button{font:inherit;font-size:.85rem;padding:9px 12px;border:0;background:var(--paper);color:var(--muted);cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+nav.cats{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav.cats::-webkit-scrollbar{display:none}
+nav.cats a{flex:none;font-size:.85rem;text-decoration:none;padding:6px 12px;border-radius:999px;background:var(--chip);color:var(--ink);white-space:nowrap}
+nav.cats a.on{background:var(--accent);color:var(--accent-ink)}
+section{padding:26px 0 4px;scroll-margin-top:110px}
+section h2{font-family:Georgia,"Noto Serif TC",serif;font-size:1.45rem;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+section h2 small{font-family:inherit;font-size:.8rem;color:var(--muted);font-weight:400}
+section>p.intro{color:var(--muted);font-size:.92rem;margin-top:4px;max-width:46em}
+h3.sub{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:18px 0 8px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
+a.card{display:block;text-decoration:none;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+a.card:hover,a.card:focus-visible{border-color:var(--accent);transform:translateY(-1px);outline:none}
+.card .t{font-weight:700;font-size:1rem;display:flex;justify-content:space-between;gap:8px}
+.card .t::after{content:"↗";color:var(--muted);font-weight:400}
+.card .d{font-size:.9rem;color:var(--muted);margin-top:2px}
+.card .m{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tag{font-size:.7rem;padding:1px 8px;border-radius:999px;background:var(--chip);color:var(--ink)}
+.tag.star{background:var(--accent);color:var(--accent-ink)}
+.host{font-size:.72rem;color:var(--muted);margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
+.empty{display:none;padding:40px 0;text-align:center;color:var(--muted)}
+footer{margin-top:40px;padding:24px 0 48px;border-top:1px solid var(--line);color:var(--muted);font-size:.82rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <a class="back" href="../">← Playground</a>
+    <h1>Lindy Hop <em data-zh="資源入口" data-en="Resource Hub">資源入口</em></h1>
+    <p data-zh="從台灣的舞會教室，到全球的線上課程、比賽影片、歷史文獻、音樂與活動行事曆——想找 Lindy Hop 的東西，從這頁出發。"
+       data-en="From Taiwan’s local scenes to online lessons, competition videos, history, music and event calendars worldwide — start here for anything Lindy Hop."></p>
+  </header>
+</div>
+<div class="bar">
+  <div class="wrap">
+    <div class="row">
+      <input id="q" type="search" placeholder="搜尋 Search…" autocomplete="off" aria-label="Search">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <nav class="cats" id="cats"></nav>
+  </div>
+</div>
+<main class="wrap" id="main"></main>
+<div class="wrap">
+  <p class="empty" id="empty" data-zh="找不到符合的資源，換個關鍵字試試。" data-en="No matching resources. Try another keyword."></p>
+  <footer>
+    <p id="foot"></p>
+  </footer>
+</div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var lang='zh';
+  try{ lang=localStorage.getItem('lindy-lang')||((navigator.language||'zh').toLowerCase().indexOf('zh')===0?'zh':'en'); }catch(e){}
+  var TAGS={zh:{free:'免費',paid:'付費',freemium:'部分免費',zh:'中文',en:'English',pick:'推薦',search:'搜尋連結'},
+            en:{free:'Free',paid:'Paid',freemium:'Freemium',zh:'中文',en:'English',pick:'Pick',search:'Search link'}};
+  var main=document.getElementById('main'), cats=document.getElementById('cats'), q=document.getElementById('q');
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function host(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return ''}}
+  function L(o){return (o&&(o[lang]||o.zh||o.en))||''}
+  function render(){
+    document.documentElement.lang=lang==='zh'?'zh-TW':'en';
+    document.querySelectorAll('[data-zh]').forEach(function(el){el.textContent=el.getAttribute('data-'+lang)});
+    document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.lang===lang)});
+    var total=0, h='', n='';
+    SECTIONS.forEach(function(s){
+      var count=s.groups.reduce(function(a,g){return a+g.items.length},0); total+=count;
+      n+='<a href="#'+s.id+'" data-id="'+s.id+'">'+esc(s.icon+' '+L(s.title))+'</a>';
+      h+='<section id="'+s.id+'"><h2>'+esc(s.icon+' '+L(s.title))+' <small>'+count+'</small></h2>';
+      if(s.intro) h+='<p class="intro">'+esc(L(s.intro))+'</p>';
+      s.groups.forEach(function(g){
+        h+='<div class="group">';
+        if(g.title) h+='<h3 class="sub">'+esc(L(g.title))+'</h3>';
+        h+='<div class="grid">';
+        g.items.forEach(function(it){
+          var tags=(it.tags||[]).map(function(t){return '<span class="tag'+(t==='pick'?' star':'')+'">'+esc(TAGS[lang][t]||t)+'</span>'}).join('');
+          if(it.where) tags+='<span class="tag">'+esc(L(it.where))+'</span>';
+          var text=[it.name,it.zh,it.en,L(it.where),host(it.url),(it.tags||[]).join(' ')].join(' ').toLowerCase();
+          h+='<a class="card" href="'+esc(it.url)+'" target="_blank" rel="noopener" data-s="'+esc(text)+'">'+
+             '<div class="t"><span>'+esc(it.name)+'</span></div>'+
+             '<div class="d">'+esc(lang==='zh'?it.zh:it.en)+'</div>'+
+             '<div class="m">'+tags+'<span class="host">'+esc(host(it.url))+'</span></div></a>';
+        });
+        h+='</div></div>';
+      });
+      h+='</section>';
+    });
+    main.innerHTML=h; cats.innerHTML=n;
+    document.getElementById('foot').textContent=(lang==='zh'
+      ?'共 '+total+' 個資源 · 最後整理：'+UPDATED+' · 連結皆為外部網站，活動日期與課程內容請以官方公告為準。'
+      :total+' resources · Last curated: '+UPDATED+' · All links are external; check official pages for current dates and details.');
+    filter(); spy();
+  }
+  function filter(){
+    var words=q.value.trim().toLowerCase().split(/\s+/).filter(Boolean), any=false;
+    main.querySelectorAll('section').forEach(function(sec){
+      var secHit=false;
+      sec.querySelectorAll('.group').forEach(function(g){
+        var hit=false;
+        g.querySelectorAll('.card').forEach(function(c){
+          var ok=words.every(function(w){return c.dataset.s.indexOf(w)>=0});
+          c.hidden=!ok; if(ok) hit=true;
+        });
+        g.hidden=!hit; if(hit) secHit=true;
+      });
+      sec.hidden=!secHit; if(secHit) any=true;
+      var link=cats.querySelector('[data-id="'+sec.id+'"]'); if(link) link.hidden=!secHit;
+    });
+    document.getElementById('empty').style.display=any?'none':'block';
+  }
+  var io;
+  function spy(){
+    if(!('IntersectionObserver' in window)) return;
+    if(io) io.disconnect();
+    io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          cats.querySelectorAll('a').forEach(function(a){a.classList.toggle('on',a.dataset.id===e.target.id)});
+          var on=cats.querySelector('a.on'); if(on) cats.scrollTo({left:on.offsetLeft-16,behavior:'smooth'});
+        }
+      });
+    },{rootMargin:'-120px 0px -70% 0px'});
+    main.querySelectorAll('section').forEach(function(s){io.observe(s)});
+  }
+  q.addEventListener('input',function(){filter();var b=document.querySelector('.bar');if(b.getBoundingClientRect().top<=0)window.scrollTo(0,main.offsetTop-b.offsetHeight);});
+  document.querySelectorAll('.lang button').forEach(function(b){
+    b.addEventListener('click',function(){lang=b.dataset.lang;try{localStorage.setItem('lindy-lang',lang)}catch(e){}render()});
+  });
+  render();
+})();
+</script>
+</body>
+</html>
